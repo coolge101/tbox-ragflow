@@ -6,5 +6,6 @@
   "auto_create_dataset": true,
   "auto_run_after_upload": true,
   "http_max_retries": 2,
-  "http_retry_backoff_seconds": 1.0
+  "http_retry_backoff_seconds": 1.0,
+  "audit_log_path": "logs/sync_audit.jsonl"
 }
