@@ -10,7 +10,12 @@ from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import send_webhook_notification, should_notify
 from tbox_pipelines.ragflow.client import RagflowClient
-from tbox_pipelines.rbac import configure_policy_from_file, get_policy_meta, require_permission
+from tbox_pipelines.rbac import (
+    configure_policy_from_file,
+    get_policy_meta,
+    require_permission,
+    set_policy_labels,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +44,10 @@ def run_sync(config_path: str | None = None) -> int:
     policy_meta = get_policy_meta()
     try:
         configure_policy_from_file(config.rbac_policy_path)
+        set_policy_labels(
+            version=config.rbac_policy_version,
+            release_tag=config.rbac_policy_release_tag,
+        )
         policy_meta = get_policy_meta()
         require_permission(role, "sync:run")
         if config.source_provider == "http_json":
@@ -108,6 +117,7 @@ def run_sync(config_path: str | None = None) -> int:
             "auto_run_after_upload": config.auto_run_after_upload,
             "status": "failed",
             "reason": "dataset_not_resolved",
+            **policy_meta,
         }
         _emit_sync_summary(summary, config)
         raise SyncConfigError(

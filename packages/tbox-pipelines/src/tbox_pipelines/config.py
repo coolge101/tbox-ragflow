@@ -25,6 +25,8 @@ class PipelineConfig:
     source_timeout_seconds: float
     actor_role: str
     rbac_policy_path: str
+    rbac_policy_version: str
+    rbac_policy_release_tag: str
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -79,6 +81,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_source_timeout = os.getenv("TBOX_SOURCE_TIMEOUT_SECONDS")
     env_actor_role = os.getenv("TBOX_ACTOR_ROLE")
     env_rbac_policy_path = os.getenv("TBOX_RBAC_POLICY_PATH")
+    env_rbac_policy_version = os.getenv("TBOX_RBAC_POLICY_VERSION")
+    env_rbac_policy_release_tag = os.getenv("TBOX_RBAC_POLICY_RELEASE_TAG")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -116,6 +120,10 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     )
     actor_role = str(env_actor_role or payload.get("actor_role", "ingest_bot")).strip().lower()
     rbac_policy_path = str(env_rbac_policy_path or payload.get("rbac_policy_path", ""))
+    rbac_policy_version = str(env_rbac_policy_version or payload.get("rbac_policy_version", ""))
+    rbac_policy_release_tag = str(
+        env_rbac_policy_release_tag or payload.get("rbac_policy_release_tag", "")
+    )
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -135,4 +143,6 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         source_timeout_seconds=max(1.0, source_timeout_seconds),
         actor_role=actor_role or "ingest_bot",
         rbac_policy_path=rbac_policy_path,
+        rbac_policy_version=rbac_policy_version,
+        rbac_policy_release_tag=rbac_policy_release_tag,
     )

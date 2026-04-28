@@ -23,6 +23,8 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `TBOX_SOURCE_TIMEOUT_SECONDS` (default `15.0`)
   - `TBOX_ACTOR_ROLE` (`ingest_bot`/`operator`/`admin`/`viewer`, default `ingest_bot`)
   - `TBOX_RBAC_POLICY_PATH` (optional JSON policy file path, default built-in matrix)
+  - `TBOX_RBAC_POLICY_VERSION` (optional policy version string for audit summary)
+  - `TBOX_RBAC_POLICY_RELEASE_TAG` (optional release tag for audit summary)
 - Airflow 占位 DAG：`airflow/dags/tbox_ingest_dag.py`
 
 > 说明：当前为最小骨架，不接真实 MCP 服务，不写死具体嵌入模型。\n> 入库调用已对齐 RAGFlow `POST /v1/document/upload`（`kb_id` + `file` multipart），
@@ -32,6 +34,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S2.1 起增加最小 RBAC 矩阵校验（角色-动作授权），未授权会以配置错误退出并记录审计。
 > S2.2 起支持从 `rbac_policy_path` 加载角色策略（参考 `config/rbac_policy.sample.json`）。
 > S2.3 起在 `sync_summary` 中记录 `rbac_policy_source` 与 `rbac_policy_fingerprint`，用于策略变更审计。
+> S2.4 起额外记录 `rbac_policy_version` 与 `rbac_policy_release_tag`，支持发布批次审计。
 
 ## 本地开发
 

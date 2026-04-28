@@ -1,4 +1,8 @@
 {
+  "_meta": {
+    "version": "2026.04.28",
+    "release_tag": "baseline"
+  },
   "admin": [
     "sync:run",
     "dataset:auto_create",

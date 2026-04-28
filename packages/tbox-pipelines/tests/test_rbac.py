@@ -29,6 +29,7 @@ def test_configure_policy_from_file(tmp_path) -> None:
     policy_path.write_text(
         json.dumps(
             {
+                "_meta": {"version": "v2", "release_tag": "blue"},
                 "viewer": ["sync:run"],
                 "ingest_bot": [],
             }
@@ -41,6 +42,9 @@ def test_configure_policy_from_file(tmp_path) -> None:
         assert loaded
         assert is_allowed("viewer", "sync:run")
         assert not is_allowed("ingest_bot", "sync:run")
+        meta = get_policy_meta()
+        assert meta["rbac_policy_version"] == "v2"
+        assert meta["rbac_policy_release_tag"] == "blue"
     finally:
         reset_default_policy()
 
@@ -50,3 +54,5 @@ def test_policy_meta_has_fingerprint() -> None:
     meta = get_policy_meta()
     assert meta["rbac_policy_source"] == "builtin:default"
     assert len(meta["rbac_policy_fingerprint"]) == 16
+    assert meta["rbac_policy_version"] == ""
+    assert meta["rbac_policy_release_tag"] == ""
