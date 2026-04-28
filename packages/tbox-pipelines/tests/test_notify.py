@@ -4,7 +4,11 @@ from typing import Any
 
 import pytest
 
-from tbox_pipelines.notify import send_webhook_notification, should_notify
+from tbox_pipelines.notify import (
+    send_webhook_notification,
+    should_notify,
+    should_notify_rbac_event,
+)
 
 
 class _DummyResponse:
@@ -46,3 +50,14 @@ def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> N
     assert len(_DummyClient.calls) == 1
     call = _DummyClient.calls[0]
     assert call["json"]["type"] == "tbox_sync_summary"
+
+
+def test_should_notify_rbac_event_high_risk() -> None:
+    assert should_notify_rbac_event(
+        {"status": "failed", "reason": "permission_denied"},
+        ("permission_denied",),
+    )
+    assert not should_notify_rbac_event(
+        {"status": "ok", "reason": "policy_loaded"},
+        ("permission_denied",),
+    )

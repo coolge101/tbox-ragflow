@@ -8,7 +8,11 @@ from typing import Any
 from tbox_pipelines.audit import append_audit_record, append_rbac_audit_record
 from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
-from tbox_pipelines.notify import send_webhook_notification, should_notify
+from tbox_pipelines.notify import (
+    send_webhook_notification,
+    should_notify,
+    should_notify_rbac_event,
+)
 from tbox_pipelines.ragflow.client import RagflowClient
 from tbox_pipelines.rbac import (
     configure_policy_from_file,
@@ -47,7 +51,7 @@ def _emit_rbac_event(
     config,
     error: str = "",
 ) -> None:
-    payload = {
+    event = {
         "sync_id": sync_id,
         "status": status,
         "reason": reason,
@@ -55,8 +59,16 @@ def _emit_rbac_event(
         **policy_meta,
     }
     if error:
-        payload["error"] = error
-    append_rbac_audit_record(config.rbac_audit_log_path, payload)
+        event["error"] = error
+    append_rbac_audit_record(config.rbac_audit_log_path, event)
+    if should_notify_rbac_event(event, config.rbac_alert_high_risk_reasons):
+        notified = send_webhook_notification(config.rbac_alert_webhook_url, event)
+        logger.info(
+            "rbac_notify reason=%s sync_id=%s notified=%s",
+            event.get("reason"),
+            event.get("sync_id"),
+            notified,
+        )
 
 
 def run_sync(config_path: str | None = None) -> int:
