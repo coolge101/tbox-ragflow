@@ -33,3 +33,20 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 ## Docker
 
 见本目录 `Dockerfile`，由 `deploy/docker-compose.yml` 中 `tbox-worker` 服务引用（可选启用）。
+
+
+## CLI 退出码
+
+- `0`：成功
+- `2`：配置错误（如 dataset 无法解析）
+- `3`：远端/网络错误（RAGFlow API）
+- `1`：未知错误
+
+## Airflow dag_run.conf 可选参数
+
+- `dataset_id`
+- `dataset_name`
+- `auto_create_dataset`
+- `auto_run`
+- `http_max_retries`
+- `http_retry_backoff_seconds`
