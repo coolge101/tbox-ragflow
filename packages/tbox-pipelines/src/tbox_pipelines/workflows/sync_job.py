@@ -10,7 +10,7 @@ from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import send_webhook_notification, should_notify
 from tbox_pipelines.ragflow.client import RagflowClient
-from tbox_pipelines.rbac import require_permission
+from tbox_pipelines.rbac import configure_policy_from_file, require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ def run_sync(config_path: str | None = None) -> int:
     config = load_config(config_path)
     role = config.actor_role
     try:
+        configure_policy_from_file(config.rbac_policy_path)
         require_permission(role, "sync:run")
         if config.source_provider == "http_json":
             require_permission(role, "source:http_json")

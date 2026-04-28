@@ -14,5 +14,6 @@
   "source_api_url": "",
   "source_api_key": "",
   "source_timeout_seconds": 15.0,
-  "actor_role": "ingest_bot"
+  "actor_role": "ingest_bot",
+  "rbac_policy_path": ""
 }
