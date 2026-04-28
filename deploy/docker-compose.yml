@@ -1,0 +1,28 @@
+# TBOX 平台编排入口（按需扩展）。
+# 全量依赖（MySQL / ES / Redis / MinIO 等）可参考上游：
+#   upstream/ragflow/docker/docker-compose-base.yml
+#   upstream/ragflow/docker/docker-compose.yml
+#
+# 典型用法：
+#   1) 先启动上游 base + 官方 ragflow，或把官方 compose 内容 include 进来；
+#   2) 将官方 ragflow 服务镜像改为 tbox-ragflow:local（本仓库构建）。
+
+services:
+  tbox-ragflow:
+    image: tbox-ragflow:local
+    build:
+      context: ..
+      dockerfile: apps/ragflow-server/Dockerfile
+    profiles: ["tbox-image-build"]
+    # 仅用于构建/验证镜像；真正运行请与上游 compose 合并并配置依赖网络。
+
+  tbox-worker:
+    image: tbox-worker:local
+    build:
+      context: ../packages/tbox-pipelines
+      dockerfile: Dockerfile
+    profiles: ["tbox-worker"]
+    env_file:
+      - env.example
+    # environment:
+    #   RAGFLOW_BASE_URL: http://ragflow:9380

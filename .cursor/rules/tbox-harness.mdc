@@ -1,0 +1,14 @@
+---
+description: TBOX-RAGFlow Harness 与仓库协作约束（S0+）
+globs:
+  - "**/*"
+---
+
+# TBOX-RAGFlow 工程规则（摘要）
+
+- 权威基线：`docs/TBOX-RAGFlow-知识库项目基线与Harness约定.md`。
+- 一次改动保持**小步**：单一明确范围；大改动拆 PR。
+- **禁止**在源码与 Markdown 中写入真实 API Key、Token、密码；仅用占位符，密钥走运行环境。
+- 阶段文档固定在 `docs/` 根目录；阶段评审使用 `docs/reviews/` 模板。
+- CI 不依赖内网 RAGFlow；本地联调可与 CI 并存。
+- 上游 RAGFlow 源码在 `upstream/ragflow/`；业务差量优先 `apps/ragflow-server/overlay/` 与 `packages/tbox-pipelines/`。

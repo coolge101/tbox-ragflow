@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Node (若在前端 overlay 中安装依赖)
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 本地环境
+.env
+deploy/.env
+
+# 日志与临时
+*.log
+tmp/
