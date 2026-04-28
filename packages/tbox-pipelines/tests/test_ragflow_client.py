@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from typing import Any
 
 import pytest
 
@@ -9,8 +10,14 @@ from tbox_pipelines.ragflow.client import RagflowClient
 
 
 class _DummyResponse:
+    def __init__(self, payload: dict[str, Any] | None = None) -> None:
+        self._payload = payload or {"data": []}
+
     def raise_for_status(self) -> None:
         return None
+
+    def json(self) -> dict[str, Any]:
+        return self._payload
 
 
 class _DummyClient:
@@ -25,8 +32,10 @@ class _DummyClient:
     def __exit__(self, *_exc) -> None:
         return None
 
-    def post(self, url: str, headers: dict, data: dict, files: dict) -> _DummyResponse:
-        _DummyClient.calls.append({"url": url, "headers": headers, "data": data, "files": files})
+    def post(self, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
+        _DummyClient.calls.append({"url": url, "headers": headers, **kwargs})
+        if url.endswith("/v1/document/upload"):
+            return _DummyResponse(payload={"data": [{"id": "doc_1"}]})
         return _DummyResponse()
 
 
@@ -43,8 +52,9 @@ def test_upload_documents_uses_multipart_endpoint(monkeypatch: pytest.MonkeyPatc
     ]
 
     client = RagflowClient(base_url="http://localhost:9380", api_key="k")
-    client.upload_documents(dataset_id="kb_demo", documents=docs)
+    doc_ids = client.upload_documents(dataset_id="kb_demo", documents=docs)
 
+    assert doc_ids == ["doc_1"]
     assert len(_DummyClient.calls) == 1
     call = _DummyClient.calls[0]
     assert call["url"] == "http://localhost:9380/v1/document/upload"
@@ -60,6 +70,31 @@ def test_upload_documents_skip_when_dataset_missing(monkeypatch: pytest.MonkeyPa
     _DummyClient.calls = []
 
     client = RagflowClient(base_url="http://localhost:9380")
-    client.upload_documents(dataset_id="", documents=[])
+    doc_ids = client.upload_documents(dataset_id="", documents=[])
+
+    assert doc_ids == []
+    assert _DummyClient.calls == []
+
+
+def test_run_documents_calls_run_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.ragflow.client.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    client = RagflowClient(base_url="http://localhost:9380", api_key="k")
+    client.run_documents(["doc_a", "doc_b"])
+
+    assert len(_DummyClient.calls) == 1
+    call = _DummyClient.calls[0]
+    assert call["url"] == "http://localhost:9380/v1/document/run"
+    assert call["json"] == {"doc_ids": ["doc_a", "doc_b"], "run": "1"}
+    assert call["headers"]["Authorization"] == "Bearer k"
+
+
+def test_run_documents_skip_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.ragflow.client.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    client = RagflowClient(base_url="http://localhost:9380")
+    client.run_documents([])
 
     assert _DummyClient.calls == []
