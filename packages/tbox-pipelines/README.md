@@ -15,6 +15,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `RAGFLOW_HTTP_MAX_RETRIES` (default `2`)
   - `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` (default `1.0`)
   - `RAGFLOW_AUDIT_LOG_PATH` (default `logs/sync_audit.jsonl`)
+  - `RAGFLOW_RBAC_AUDIT_LOG_PATH` (default `logs/rbac_audit.jsonl`)
   - `RAGFLOW_NOTIFY_WEBHOOK_URL` (optional, fail alerts by default)
   - `RAGFLOW_NOTIFY_ON_SUCCESS` (default `false`)
   - `TBOX_SOURCE_PROVIDER` (`stub` or `http_json`, default `stub`)
@@ -35,6 +36,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S2.2 起支持从 `rbac_policy_path` 加载角色策略（参考 `config/rbac_policy.sample.json`）。
 > S2.3 起在 `sync_summary` 中记录 `rbac_policy_source` 与 `rbac_policy_fingerprint`，用于策略变更审计。
 > S2.4 起额外记录 `rbac_policy_version` 与 `rbac_policy_release_tag`，支持发布批次审计。
+> S2.5 起将 RBAC 事件单独写入 `rbac_audit_log_path`，与业务同步审计解耦。
 
 ## 本地开发
 

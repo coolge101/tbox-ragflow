@@ -5,7 +5,7 @@ import logging
 import uuid
 from typing import Any
 
-from tbox_pipelines.audit import append_audit_record
+from tbox_pipelines.audit import append_audit_record, append_rbac_audit_record
 from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import send_webhook_notification, should_notify
@@ -37,6 +37,28 @@ def _emit_sync_summary(summary: dict[str, Any], config) -> None:
         )
 
 
+def _emit_rbac_event(
+    *,
+    sync_id: str,
+    status: str,
+    reason: str,
+    actor_role: str,
+    policy_meta: dict[str, Any],
+    config,
+    error: str = "",
+) -> None:
+    payload = {
+        "sync_id": sync_id,
+        "status": status,
+        "reason": reason,
+        "actor_role": actor_role,
+        **policy_meta,
+    }
+    if error:
+        payload["error"] = error
+    append_rbac_audit_record(config.rbac_audit_log_path, payload)
+
+
 def run_sync(config_path: str | None = None) -> int:
     sync_id = uuid.uuid4().hex
     config = load_config(config_path)
@@ -49,6 +71,14 @@ def run_sync(config_path: str | None = None) -> int:
             release_tag=config.rbac_policy_release_tag,
         )
         policy_meta = get_policy_meta()
+        _emit_rbac_event(
+            sync_id=sync_id,
+            status="ok",
+            reason="policy_loaded",
+            actor_role=role,
+            policy_meta=policy_meta,
+            config=config,
+        )
         require_permission(role, "sync:run")
         if config.source_provider == "http_json":
             require_permission(role, "source:http_json")
@@ -57,6 +87,15 @@ def run_sync(config_path: str | None = None) -> int:
         if config.auto_run_after_upload:
             require_permission(role, "ragflow:run_documents")
     except ValueError as exc:
+        _emit_rbac_event(
+            sync_id=sync_id,
+            status="failed",
+            reason="rbac_policy_invalid",
+            actor_role=role,
+            policy_meta=policy_meta,
+            config=config,
+            error=str(exc),
+        )
         summary = {
             "sync_id": sync_id,
             "documents_fetched": 0,
@@ -73,6 +112,15 @@ def run_sync(config_path: str | None = None) -> int:
         _emit_sync_summary(summary, config)
         raise SyncConfigError(str(exc)) from exc
     except PermissionError as exc:
+        _emit_rbac_event(
+            sync_id=sync_id,
+            status="failed",
+            reason="permission_denied",
+            actor_role=role,
+            policy_meta=policy_meta,
+            config=config,
+            error=str(exc),
+        )
         summary = {
             "sync_id": sync_id,
             "documents_fetched": 0,

@@ -8,6 +8,7 @@
   "http_max_retries": 2,
   "http_retry_backoff_seconds": 1.0,
   "audit_log_path": "logs/sync_audit.jsonl",
+  "rbac_audit_log_path": "logs/rbac_audit.jsonl",
   "notify_webhook_url": "",
   "notify_on_success": false,
   "source_provider": "stub",
