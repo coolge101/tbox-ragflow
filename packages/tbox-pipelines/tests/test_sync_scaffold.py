@@ -145,6 +145,7 @@ def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
     monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
     monkeypatch.setenv("TBOX_RBAC_ALERT_WEBHOOK_URL", "http://example.invalid/rbac")
     monkeypatch.setenv("TBOX_RBAC_ALERT_HIGH_RISK_REASONS", "permission_denied")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_DEDUPE_WINDOW_SECONDS", "0")
     monkeypatch.setenv("RAGFLOW_NOTIFY_WEBHOOK_URL", "")
 
     import pytest
@@ -158,3 +159,36 @@ def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
     rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
     assert len(rbac_calls) == 1
     assert rbac_calls[0]["reason"] == "permission_denied"
+
+
+def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> None:
+    calls: list[dict] = []
+
+    def _fake_notify(_url: str, summary: dict, timeout_seconds: float = 10.0) -> bool:
+        _ = timeout_seconds
+        calls.append(summary)
+        return True
+
+    timeline = iter([1000, 1001])
+    monkeypatch.setattr("tbox_pipelines.workflows.sync_job.time.time", lambda: next(timeline))
+    monkeypatch.setattr("tbox_pipelines.workflows.sync_job.send_webhook_notification", _fake_notify)
+    monkeypatch.setenv("TBOX_ACTOR_ROLE", "viewer")
+    monkeypatch.setenv("RAGFLOW_AUTO_CREATE_DATASET", "false")
+    monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_WEBHOOK_URL", "http://example.invalid/rbac")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_HIGH_RISK_REASONS", "permission_denied")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_DEDUPE_WINDOW_SECONDS", "300")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_DEDUPE_STATE_PATH", str(tmp_path / "dedupe.json"))
+    monkeypatch.setenv("RAGFLOW_NOTIFY_WEBHOOK_URL", "")
+
+    import pytest
+
+    from tbox_pipelines.workflows.sync_job import SyncConfigError
+
+    with pytest.raises(SyncConfigError):
+        run_sync()
+    with pytest.raises(SyncConfigError):
+        run_sync()
+
+    rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
+    assert len(rbac_calls) == 1

@@ -30,6 +30,8 @@ class PipelineConfig:
     rbac_policy_release_tag: str
     rbac_alert_webhook_url: str
     rbac_alert_high_risk_reasons: tuple[str, ...]
+    rbac_alert_dedupe_window_seconds: int
+    rbac_alert_dedupe_state_path: str
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -73,6 +75,12 @@ def _to_csv_tuple(value: str | None, default: tuple[str, ...]) -> tuple[str, ...
     return items or default
 
 
+def _to_str(value: str | int | float | bool | None, default: str = "") -> str:
+    if value is None:
+        return default
+    return str(value)
+
+
 def load_config(config_path: str | None = None) -> PipelineConfig:
     env_base_url = os.getenv("RAGFLOW_BASE_URL")
     env_api_key = os.getenv("RAGFLOW_API_KEY", "")
@@ -96,6 +104,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_rbac_policy_release_tag = os.getenv("TBOX_RBAC_POLICY_RELEASE_TAG")
     env_rbac_alert_webhook_url = os.getenv("TBOX_RBAC_ALERT_WEBHOOK_URL", "")
     env_rbac_alert_high_risk_reasons = os.getenv("TBOX_RBAC_ALERT_HIGH_RISK_REASONS")
+    env_rbac_alert_dedupe_window = os.getenv("TBOX_RBAC_ALERT_DEDUPE_WINDOW_SECONDS")
+    env_rbac_alert_dedupe_state_path = os.getenv("TBOX_RBAC_ALERT_DEDUPE_STATE_PATH")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -145,9 +155,17 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_rbac_alert_webhook_url or payload.get("rbac_alert_webhook_url", "")
     )
     rbac_alert_high_risk_reasons = _to_csv_tuple(
-        env_rbac_alert_high_risk_reasons
-        or payload.get("rbac_alert_high_risk_reasons", "permission_denied"),
+        _to_str(env_rbac_alert_high_risk_reasons)
+        or _to_str(payload.get("rbac_alert_high_risk_reasons"), "permission_denied"),
         ("permission_denied",),
+    )
+    rbac_alert_dedupe_window_seconds = _to_int(
+        env_rbac_alert_dedupe_window,
+        _to_int(payload.get("rbac_alert_dedupe_window_seconds"), 300),
+    )
+    rbac_alert_dedupe_state_path = _to_str(
+        env_rbac_alert_dedupe_state_path
+        or payload.get("rbac_alert_dedupe_state_path", "logs/rbac_alert_dedupe.json"),
     )
 
     return PipelineConfig(
@@ -173,4 +191,6 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         rbac_policy_release_tag=rbac_policy_release_tag,
         rbac_alert_webhook_url=rbac_alert_webhook_url,
         rbac_alert_high_risk_reasons=rbac_alert_high_risk_reasons,
+        rbac_alert_dedupe_window_seconds=max(0, rbac_alert_dedupe_window_seconds),
+        rbac_alert_dedupe_state_path=rbac_alert_dedupe_state_path,
     )

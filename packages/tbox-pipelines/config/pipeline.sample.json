@@ -20,5 +20,7 @@
   "rbac_policy_version": "",
   "rbac_policy_release_tag": "",
   "rbac_alert_webhook_url": "",
-  "rbac_alert_high_risk_reasons": "permission_denied"
+  "rbac_alert_high_risk_reasons": "permission_denied",
+  "rbac_alert_dedupe_window_seconds": 300,
+  "rbac_alert_dedupe_state_path": "logs/rbac_alert_dedupe.json"
 }
