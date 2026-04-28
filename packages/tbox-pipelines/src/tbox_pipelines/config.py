@@ -14,6 +14,8 @@ class PipelineConfig:
     target_dataset_name: str
     auto_create_dataset: bool
     auto_run_after_upload: bool
+    http_max_retries: int
+    http_retry_backoff_seconds: float
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -32,6 +34,24 @@ def _to_bool(value: str | bool | None, default: bool) -> bool:
     return default
 
 
+def _to_int(value: str | int | None, default: int) -> int:
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+
+def _to_float(value: str | float | int | None, default: float) -> float:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
 def load_config(config_path: str | None = None) -> PipelineConfig:
     env_base_url = os.getenv("RAGFLOW_BASE_URL")
     env_api_key = os.getenv("RAGFLOW_API_KEY", "")
@@ -39,8 +59,10 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_dataset_name = os.getenv("RAGFLOW_DATASET_NAME", "")
     env_auto_create_dataset = os.getenv("RAGFLOW_AUTO_CREATE_DATASET")
     env_auto_run = os.getenv("RAGFLOW_AUTO_RUN")
+    env_http_max_retries = os.getenv("RAGFLOW_HTTP_MAX_RETRIES")
+    env_http_retry_backoff = os.getenv("RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS")
 
-    payload: dict[str, str | bool] = {}
+    payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
     if target_path.exists():
         payload = json.loads(target_path.read_text(encoding="utf-8"))
@@ -54,6 +76,11 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         _to_bool(payload.get("auto_create_dataset"), True),
     )
     auto_run = _to_bool(env_auto_run, _to_bool(payload.get("auto_run_after_upload"), True))
+    max_retries = _to_int(env_http_max_retries, _to_int(payload.get("http_max_retries"), 2))
+    backoff = _to_float(
+        env_http_retry_backoff,
+        _to_float(payload.get("http_retry_backoff_seconds"), 1.0),
+    )
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -62,4 +89,6 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         target_dataset_name=str(dataset_name),
         auto_create_dataset=auto_create_dataset,
         auto_run_after_upload=auto_run,
+        http_max_retries=max(0, max_retries),
+        http_retry_backoff_seconds=max(0.0, backoff),
     )
