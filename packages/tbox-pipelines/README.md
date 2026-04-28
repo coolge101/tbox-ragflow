@@ -21,12 +21,14 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `TBOX_SOURCE_API_URL` (required when `TBOX_SOURCE_PROVIDER=http_json`)
   - `TBOX_SOURCE_API_KEY` (optional bearer token for source API)
   - `TBOX_SOURCE_TIMEOUT_SECONDS` (default `15.0`)
+  - `TBOX_ACTOR_ROLE` (`ingest_bot`/`operator`/`admin`/`viewer`, default `ingest_bot`)
 - Airflow 占位 DAG：`airflow/dags/tbox_ingest_dag.py`
 
 > 说明：当前为最小骨架，不接真实 MCP 服务，不写死具体嵌入模型。\n> 入库调用已对齐 RAGFlow `POST /v1/document/upload`（`kb_id` + `file` multipart），
 > 并支持在上传后调用 `POST /v1/document/run` 触发解析（默认开启）。
 > 网络/服务抖动下会按配置进行重试，并输出结构化 `sync_summary` 日志。
 > S2.0 起支持通过 `http_json` 来源读取真实文档（可由 MCP 网关暴露为 HTTP JSON）。
+> S2.1 起增加最小 RBAC 矩阵校验（角色-动作授权），未授权会以配置错误退出并记录审计。
 
 ## 本地开发
 
