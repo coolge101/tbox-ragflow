@@ -2,10 +2,24 @@
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
+from airflow.utils.context import Context
+
+from tbox_pipelines.reporting import format_failure_summary, load_latest_sync_summary
+
+
+def _on_sync_failed(context: Context) -> None:
+    _ = context
+    audit_log_path = os.getenv("RAGFLOW_AUDIT_LOG_PATH", "logs/sync_audit.jsonl")
+    summary = load_latest_sync_summary(audit_log_path, status="failed")
+    if not summary:
+        print(f"sync_failed_summary not_found audit_log_path={audit_log_path}")
+        return
+    print(format_failure_summary(summary))
 
 
 with DAG(
@@ -13,7 +27,11 @@ with DAG(
     start_date=datetime(2026, 1, 1),
     schedule="0 */6 * * *",
     catchup=False,
-    default_args={"retries": 2, "retry_delay": timedelta(minutes=5)},
+    default_args={
+        "retries": 2,
+        "retry_delay": timedelta(minutes=5),
+        "on_failure_callback": _on_sync_failed,
+    },
     tags=["tbox", "ragflow", "s1"],
 ):
     # S1.5: support dag_run.conf to override dataset/retry knobs per run.
