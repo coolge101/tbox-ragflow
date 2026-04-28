@@ -17,6 +17,8 @@ class PipelineConfig:
     http_max_retries: int
     http_retry_backoff_seconds: float
     audit_log_path: str
+    notify_webhook_url: str
+    notify_on_success: bool
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -63,6 +65,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_http_max_retries = os.getenv("RAGFLOW_HTTP_MAX_RETRIES")
     env_http_retry_backoff = os.getenv("RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS")
     env_audit_log_path = os.getenv("RAGFLOW_AUDIT_LOG_PATH")
+    env_notify_webhook_url = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_URL", "")
+    env_notify_on_success = os.getenv("RAGFLOW_NOTIFY_ON_SUCCESS")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -84,6 +88,11 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         _to_float(payload.get("http_retry_backoff_seconds"), 1.0),
     )
     audit_log_path = env_audit_log_path or payload.get("audit_log_path", "logs/sync_audit.jsonl")
+    notify_webhook_url = env_notify_webhook_url or payload.get("notify_webhook_url", "")
+    notify_on_success = _to_bool(
+        env_notify_on_success,
+        _to_bool(payload.get("notify_on_success"), False),
+    )
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -95,4 +104,6 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         http_max_retries=max(0, max_retries),
         http_retry_backoff_seconds=max(0.0, backoff),
         audit_log_path=str(audit_log_path),
+        notify_webhook_url=str(notify_webhook_url),
+        notify_on_success=notify_on_success,
     )

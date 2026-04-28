@@ -8,6 +8,7 @@ from typing import Any
 from tbox_pipelines.audit import append_audit_record
 from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_stub_documents
+from tbox_pipelines.notify import send_webhook_notification, should_notify
 from tbox_pipelines.ragflow.client import RagflowClient
 
 logger = logging.getLogger(__name__)
@@ -17,9 +18,17 @@ class SyncConfigError(ValueError):
     """Raised when required sync configuration is missing or invalid."""
 
 
-def _emit_sync_summary(summary: dict[str, Any], audit_log_path: str) -> None:
+def _emit_sync_summary(summary: dict[str, Any], config) -> None:
     logger.info("sync_summary %s", json.dumps(summary, ensure_ascii=False))
-    append_audit_record(audit_log_path, summary)
+    append_audit_record(config.audit_log_path, summary)
+    if should_notify(summary, notify_on_success=config.notify_on_success):
+        notified = send_webhook_notification(config.notify_webhook_url, summary)
+        logger.info(
+            "sync_notify status=%s sync_id=%s notified=%s",
+            summary.get("status"),
+            summary.get("sync_id"),
+            notified,
+        )
 
 
 def run_sync(config_path: str | None = None) -> int:
@@ -49,7 +58,7 @@ def run_sync(config_path: str | None = None) -> int:
             "status": "failed",
             "reason": "dataset_not_resolved",
         }
-        _emit_sync_summary(summary, config.audit_log_path)
+        _emit_sync_summary(summary, config)
         raise SyncConfigError(
             "Unable to resolve target dataset id. Set RAGFLOW_DATASET_ID or RAGFLOW_DATASET_NAME."
         )
@@ -74,5 +83,5 @@ def run_sync(config_path: str | None = None) -> int:
         "auto_run_after_upload": config.auto_run_after_upload,
         "status": "ok",
     }
-    _emit_sync_summary(summary, config.audit_log_path)
+    _emit_sync_summary(summary, config)
     return len(docs)

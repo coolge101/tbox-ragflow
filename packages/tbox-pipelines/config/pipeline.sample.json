@@ -7,5 +7,7 @@
   "auto_run_after_upload": true,
   "http_max_retries": 2,
   "http_retry_backoff_seconds": 1.0,
-  "audit_log_path": "logs/sync_audit.jsonl"
+  "audit_log_path": "logs/sync_audit.jsonl",
+  "notify_webhook_url": "",
+  "notify_on_success": false
 }

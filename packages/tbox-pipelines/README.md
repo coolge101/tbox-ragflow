@@ -15,6 +15,8 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `RAGFLOW_HTTP_MAX_RETRIES` (default `2`)
   - `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` (default `1.0`)
   - `RAGFLOW_AUDIT_LOG_PATH` (default `logs/sync_audit.jsonl`)
+  - `RAGFLOW_NOTIFY_WEBHOOK_URL` (optional, fail alerts by default)
+  - `RAGFLOW_NOTIFY_ON_SUCCESS` (default `false`)
 - Airflow 占位 DAG：`airflow/dags/tbox_ingest_dag.py`
 
 > 说明：当前为最小骨架，不接真实 MCP 服务，不写死具体嵌入模型。\n> 入库调用已对齐 RAGFlow `POST /v1/document/upload`（`kb_id` + `file` multipart），
@@ -66,3 +68,10 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 
 每次 `run_sync`（成功或失败）都会向 `audit_log_path` 追加一行 JSON，
 字段与 `sync_summary` 一致，可直接用于 Airflow 后续告警或追踪。
+
+
+## Webhook 告警（轻量）
+
+- 配置 `notify_webhook_url` 后，`run_sync` 会在失败时发送 JSON 告警。
+- 若 `notify_on_success=true`，成功也会通知。
+- 通知失败不会中断主流程，会记录 `sync_notify` 日志。
