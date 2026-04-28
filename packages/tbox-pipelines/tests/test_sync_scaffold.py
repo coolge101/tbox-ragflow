@@ -21,11 +21,11 @@ class _DummyClient:
         _DummyClient.resolve_called = True
         return dataset_id or "kb_auto"
 
-    def upload_documents(self, dataset_id: str, documents: list) -> list[str]:
+    def upload_documents(self, dataset_id: str, documents: list, sync_id: str = "") -> list[str]:
         _DummyClient.upload_called = True
         return ["doc_1"]
 
-    def run_documents(self, doc_ids: list[str]) -> None:
+    def run_documents(self, doc_ids: list[str], sync_id: str = "") -> None:
         _DummyClient.run_called = True
 
 
