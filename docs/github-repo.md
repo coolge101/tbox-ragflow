@@ -18,6 +18,29 @@ git branch -M main
 git remote add origin git@github.com:<org>/tbox-ragflow-platform.git
 ```
 
+### 本机已执行（模板仓）
+
+已在目录 **`tbox-ragflow-platform`** 根完成：
+
+- `git init -b main`
+- 删除 **`upstream/ragflow/.git`**，避免嵌套仓库，便于单仓推送
+- 首条提交：`chore: initial commit for TBOX RAGFlow platform (S0)`
+
+你只需在 GitHub 上**新建空仓库**（不要勾选「自动添加 README」），然后：
+
+```bash
+cd /home/vboxuser/ragflow/tbox-ragflow-platform
+git remote add origin git@github.com:<org>/<repo>.git   # 若已存在 origin 则改为 set-url
+git push -u origin main
+```
+
+或使用 GitHub CLI（已登录时）：
+
+```bash
+cd /home/vboxuser/ragflow/tbox-ragflow-platform
+gh repo create <org>/tbox-ragflow-platform --private --source=. --remote=origin --push
+```
+
 首次推送前请将 **`upstream/ragflow`** 的体积与是否纳入 LFS 纳入团队策略（大仓可选 `git submodule` 替代全量拷贝）。
 
 ### 独立仓初始化与「内层 `.git`」
