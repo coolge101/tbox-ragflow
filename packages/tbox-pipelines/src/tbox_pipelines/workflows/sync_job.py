@@ -10,7 +10,7 @@ from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import send_webhook_notification, should_notify
 from tbox_pipelines.ragflow.client import RagflowClient
-from tbox_pipelines.rbac import configure_policy_from_file, require_permission
+from tbox_pipelines.rbac import configure_policy_from_file, get_policy_meta, require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,10 @@ def run_sync(config_path: str | None = None) -> int:
     sync_id = uuid.uuid4().hex
     config = load_config(config_path)
     role = config.actor_role
+    policy_meta = get_policy_meta()
     try:
         configure_policy_from_file(config.rbac_policy_path)
+        policy_meta = get_policy_meta()
         require_permission(role, "sync:run")
         if config.source_provider == "http_json":
             require_permission(role, "source:http_json")
@@ -45,6 +47,22 @@ def run_sync(config_path: str | None = None) -> int:
             require_permission(role, "dataset:auto_create")
         if config.auto_run_after_upload:
             require_permission(role, "ragflow:run_documents")
+    except ValueError as exc:
+        summary = {
+            "sync_id": sync_id,
+            "documents_fetched": 0,
+            "resolved_dataset_id": "",
+            "uploaded_doc_ids": [],
+            "run_triggered": False,
+            "auto_run_after_upload": config.auto_run_after_upload,
+            "status": "failed",
+            "reason": "rbac_policy_invalid",
+            "actor_role": role,
+            "error": str(exc),
+            **policy_meta,
+        }
+        _emit_sync_summary(summary, config)
+        raise SyncConfigError(str(exc)) from exc
     except PermissionError as exc:
         summary = {
             "sync_id": sync_id,
@@ -57,6 +75,7 @@ def run_sync(config_path: str | None = None) -> int:
             "reason": "permission_denied",
             "actor_role": role,
             "error": str(exc),
+            **policy_meta,
         }
         _emit_sync_summary(summary, config)
         raise SyncConfigError(str(exc)) from exc
@@ -115,6 +134,7 @@ def run_sync(config_path: str | None = None) -> int:
         "run_triggered": run_triggered,
         "auto_run_after_upload": config.auto_run_after_upload,
         "status": "ok",
+        **policy_meta,
     }
     _emit_sync_summary(summary, config)
     return len(docs)

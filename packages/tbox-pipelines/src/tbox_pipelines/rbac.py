@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -27,6 +28,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, set[str]] = {
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     role: set(actions) for role, actions in DEFAULT_ROLE_PERMISSIONS.items()
 }
+POLICY_SOURCE = "builtin:default"
+POLICY_FINGERPRINT = ""
 
 
 def normalize_role(role: str) -> str:
@@ -66,6 +69,7 @@ def configure_policy_from_file(path: str) -> bool:
     if not isinstance(payload, dict):
         raise ValueError("RBAC policy file must be a role->actions JSON object")
     configure_policy(payload)
+    _set_policy_meta(source=f"file:{target}")
     return True
 
 
@@ -74,3 +78,22 @@ def reset_default_policy() -> None:
     ROLE_PERMISSIONS.update(
         {role: set(actions) for role, actions in DEFAULT_ROLE_PERMISSIONS.items()}
     )
+    _set_policy_meta(source="builtin:default")
+
+
+def get_policy_meta() -> dict[str, str]:
+    return {
+        "rbac_policy_source": POLICY_SOURCE,
+        "rbac_policy_fingerprint": POLICY_FINGERPRINT,
+    }
+
+
+def _set_policy_meta(source: str) -> None:
+    global POLICY_SOURCE, POLICY_FINGERPRINT
+    POLICY_SOURCE = source
+    normalized = {role: sorted(actions) for role, actions in sorted(ROLE_PERMISSIONS.items())}
+    encoded = json.dumps(normalized, ensure_ascii=False, separators=(",", ":"))
+    POLICY_FINGERPRINT = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+_set_policy_meta(source="builtin:default")
