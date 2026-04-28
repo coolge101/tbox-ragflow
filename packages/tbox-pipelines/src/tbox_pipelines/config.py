@@ -16,6 +16,7 @@ class PipelineConfig:
     auto_run_after_upload: bool
     http_max_retries: int
     http_retry_backoff_seconds: float
+    audit_log_path: str
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -61,6 +62,7 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_auto_run = os.getenv("RAGFLOW_AUTO_RUN")
     env_http_max_retries = os.getenv("RAGFLOW_HTTP_MAX_RETRIES")
     env_http_retry_backoff = os.getenv("RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS")
+    env_audit_log_path = os.getenv("RAGFLOW_AUDIT_LOG_PATH")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -81,6 +83,7 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_http_retry_backoff,
         _to_float(payload.get("http_retry_backoff_seconds"), 1.0),
     )
+    audit_log_path = env_audit_log_path or payload.get("audit_log_path", "logs/sync_audit.jsonl")
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -91,4 +94,5 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         auto_run_after_upload=auto_run,
         http_max_retries=max(0, max_retries),
         http_retry_backoff_seconds=max(0.0, backoff),
+        audit_log_path=str(audit_log_path),
     )

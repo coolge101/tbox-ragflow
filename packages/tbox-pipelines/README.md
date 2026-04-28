@@ -14,6 +14,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `RAGFLOW_AUTO_RUN` (default `true`)
   - `RAGFLOW_HTTP_MAX_RETRIES` (default `2`)
   - `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` (default `1.0`)
+  - `RAGFLOW_AUDIT_LOG_PATH` (default `logs/sync_audit.jsonl`)
 - Airflow 占位 DAG：`airflow/dags/tbox_ingest_dag.py`
 
 > 说明：当前为最小骨架，不接真实 MCP 服务，不写死具体嵌入模型。\n> 入库调用已对齐 RAGFlow `POST /v1/document/upload`（`kb_id` + `file` multipart），
@@ -59,3 +60,9 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 - 写入上传文档的 Markdown front matter（`source_url`、`sync_id`）
 - 透传为 RAGFlow 请求头 `X-Request-Id`
 - 出现在 `sync_summary` 结构化日志中
+
+
+## JSONL 审计日志
+
+每次 `run_sync`（成功或失败）都会向 `audit_log_path` 追加一行 JSON，
+字段与 `sync_summary` 一致，可直接用于 Airflow 后续告警或追踪。
