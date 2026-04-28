@@ -23,6 +23,7 @@ class PipelineConfig:
     source_api_url: str
     source_api_key: str
     source_timeout_seconds: float
+    actor_role: str
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -75,6 +76,7 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_source_api_url = os.getenv("TBOX_SOURCE_API_URL", "")
     env_source_api_key = os.getenv("TBOX_SOURCE_API_KEY", "")
     env_source_timeout = os.getenv("TBOX_SOURCE_TIMEOUT_SECONDS")
+    env_actor_role = os.getenv("TBOX_ACTOR_ROLE")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -110,6 +112,7 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_source_timeout,
         _to_float(payload.get("source_timeout_seconds"), 15.0),
     )
+    actor_role = str(env_actor_role or payload.get("actor_role", "ingest_bot")).strip().lower()
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -127,4 +130,5 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         source_api_url=source_api_url,
         source_api_key=source_api_key,
         source_timeout_seconds=max(1.0, source_timeout_seconds),
+        actor_role=actor_role or "ingest_bot",
     )

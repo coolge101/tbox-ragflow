@@ -72,3 +72,16 @@ def test_run_sync_triggers_run_when_enabled(monkeypatch) -> None:
     assert _DummyClient.resolve_called
     assert _DummyClient.upload_called
     assert _DummyClient.run_called
+
+
+def test_run_sync_denied_for_viewer_role(monkeypatch) -> None:
+    monkeypatch.setenv("TBOX_ACTOR_ROLE", "viewer")
+    monkeypatch.setenv("RAGFLOW_AUTO_CREATE_DATASET", "false")
+    monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
+
+    import pytest
+
+    from tbox_pipelines.workflows.sync_job import SyncConfigError
+
+    with pytest.raises(SyncConfigError):
+        run_sync()
