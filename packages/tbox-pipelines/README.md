@@ -69,6 +69,9 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 每次 `run_sync`（成功或失败）都会向 `audit_log_path` 追加一行 JSON，
 字段与 `sync_summary` 一致，可直接用于 Airflow 后续告警或追踪。
 
+- S1.9：Airflow 任务失败时会读取最新失败记录并打印可读摘要
+  （格式示例：`sync_failed sync_id=... reason=... uploaded_count=...`）。
+
 
 ## Webhook 告警（轻量）
 
