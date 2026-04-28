@@ -101,9 +101,9 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_notify_on_success,
         _to_bool(payload.get("notify_on_success"), False),
     )
-    source_provider = str(
-        env_source_provider or payload.get("source_provider", "stub")
-    ).strip().lower()
+    source_provider = (
+        str(env_source_provider or payload.get("source_provider", "stub")).strip().lower()
+    )
     source_api_url = str(env_source_api_url or payload.get("source_api_url", ""))
     source_api_key = str(env_source_api_key or payload.get("source_api_key", ""))
     source_timeout_seconds = _to_float(
