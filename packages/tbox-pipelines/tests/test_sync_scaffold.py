@@ -98,3 +98,34 @@ def test_run_sync_invalid_rbac_policy_path(monkeypatch) -> None:
 
     with pytest.raises(SyncConfigError):
         run_sync()
+
+
+def test_run_sync_writes_rbac_audit_log(tmp_path) -> None:
+    cfg = {
+        "ragflow_base_url": "http://localhost:9380",
+        "ragflow_api_key": "",
+        "target_dataset_id": "",
+        "target_dataset_name": "",
+        "auto_create_dataset": False,
+        "auto_run_after_upload": False,
+        "http_max_retries": 0,
+        "http_retry_backoff_seconds": 0.0,
+        "audit_log_path": str(tmp_path / "sync_audit.jsonl"),
+        "rbac_audit_log_path": str(tmp_path / "rbac_audit.jsonl"),
+        "actor_role": "viewer",
+    }
+    cfg_path = tmp_path / "pipeline.json"
+    cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+
+    import pytest
+
+    from tbox_pipelines.workflows.sync_job import SyncConfigError
+
+    with pytest.raises(SyncConfigError):
+        run_sync(str(cfg_path))
+
+    records = (tmp_path / "rbac_audit.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    assert len(records) >= 1
+    last = json.loads(records[-1])
+    assert last["reason"] == "permission_denied"
+    assert last["actor_role"] == "viewer"
