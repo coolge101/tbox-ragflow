@@ -9,6 +9,8 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `RAGFLOW_BASE_URL`
   - `RAGFLOW_API_KEY`
   - `RAGFLOW_DATASET_ID`
+  - `RAGFLOW_DATASET_NAME` (when dataset id is empty)
+  - `RAGFLOW_AUTO_CREATE_DATASET` (default `true`)
   - `RAGFLOW_AUTO_RUN` (default `true`)
 - Airflow 占位 DAG：`airflow/dags/tbox_ingest_dag.py`
 
