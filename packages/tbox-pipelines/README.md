@@ -28,6 +28,8 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `TBOX_RBAC_POLICY_RELEASE_TAG` (optional release tag for audit summary)
   - `TBOX_RBAC_ALERT_WEBHOOK_URL` (optional webhook for RBAC high-risk failed events)
   - `TBOX_RBAC_ALERT_HIGH_RISK_REASONS` (CSV, default `permission_denied`)
+  - `TBOX_RBAC_ALERT_DEDUPE_WINDOW_SECONDS` (default `300`, set `0` to disable dedupe)
+  - `TBOX_RBAC_ALERT_DEDUPE_STATE_PATH` (default `logs/rbac_alert_dedupe.json`)
 - Airflow 占位 DAG：`airflow/dags/tbox_ingest_dag.py`
 
 > 说明：当前为最小骨架，不接真实 MCP 服务，不写死具体嵌入模型。\n> 入库调用已对齐 RAGFlow `POST /v1/document/upload`（`kb_id` + `file` multipart），
@@ -40,6 +42,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S2.4 起额外记录 `rbac_policy_version` 与 `rbac_policy_release_tag`，支持发布批次审计。
 > S2.5 起将 RBAC 事件单独写入 `rbac_audit_log_path`，与业务同步审计解耦。
 > S2.6 起支持 RBAC 高风险失败事件独立告警（默认仅 `permission_denied`）。
+> S2.7 起对 RBAC 告警做时间窗去重（`reason+fingerprint+role`）。
 
 ## 本地开发
 

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 from tbox_pipelines.audit import append_audit_record, append_rbac_audit_record
@@ -61,7 +63,8 @@ def _emit_rbac_event(
     if error:
         event["error"] = error
     append_rbac_audit_record(config.rbac_audit_log_path, event)
-    if should_notify_rbac_event(event, config.rbac_alert_high_risk_reasons):
+    should_alert = should_notify_rbac_event(event, config.rbac_alert_high_risk_reasons)
+    if should_alert and _should_emit_rbac_alert(event, config):
         notified = send_webhook_notification(config.rbac_alert_webhook_url, event)
         logger.info(
             "rbac_notify reason=%s sync_id=%s notified=%s",
@@ -69,6 +72,37 @@ def _emit_rbac_event(
             event.get("sync_id"),
             notified,
         )
+
+
+def _should_emit_rbac_alert(event: dict[str, Any], config) -> bool:
+    dedupe_window = int(config.rbac_alert_dedupe_window_seconds)
+    if dedupe_window <= 0:
+        return True
+    key = "|".join(
+        [
+            str(event.get("reason", "")),
+            str(event.get("rbac_policy_fingerprint", "")),
+            str(event.get("actor_role", "")),
+        ]
+    )
+    now = int(time.time())
+    state_path = Path(config.rbac_alert_dedupe_state_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state: dict[str, int] = {}
+    if state_path.exists():
+        try:
+            raw = json.loads(state_path.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                state = {str(k): int(v) for k, v in raw.items()}
+        except Exception:
+            state = {}
+    last_ts = state.get(key, 0)
+    if now - last_ts < dedupe_window:
+        logger.info("rbac_notify_suppressed key=%s dedupe_window=%s", key, dedupe_window)
+        return False
+    state[key] = now
+    state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    return True
 
 
 def run_sync(config_path: str | None = None) -> int:
