@@ -85,3 +85,16 @@ def test_run_sync_denied_for_viewer_role(monkeypatch) -> None:
 
     with pytest.raises(SyncConfigError):
         run_sync()
+
+
+def test_run_sync_invalid_rbac_policy_path(monkeypatch) -> None:
+    monkeypatch.setenv("TBOX_RBAC_POLICY_PATH", "/tmp/path/does/not/exist.json")
+    monkeypatch.setenv("RAGFLOW_AUTO_CREATE_DATASET", "false")
+    monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
+
+    import pytest
+
+    from tbox_pipelines.workflows.sync_job import SyncConfigError
+
+    with pytest.raises(SyncConfigError):
+        run_sync()

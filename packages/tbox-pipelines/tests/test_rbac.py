@@ -6,6 +6,7 @@ import pytest
 
 from tbox_pipelines.rbac import (
     configure_policy_from_file,
+    get_policy_meta,
     is_allowed,
     require_permission,
     reset_default_policy,
@@ -42,3 +43,10 @@ def test_configure_policy_from_file(tmp_path) -> None:
         assert not is_allowed("ingest_bot", "sync:run")
     finally:
         reset_default_policy()
+
+
+def test_policy_meta_has_fingerprint() -> None:
+    reset_default_policy()
+    meta = get_policy_meta()
+    assert meta["rbac_policy_source"] == "builtin:default"
+    assert len(meta["rbac_policy_fingerprint"]) == 16
