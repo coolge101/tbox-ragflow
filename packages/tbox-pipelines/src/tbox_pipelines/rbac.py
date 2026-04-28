@@ -30,6 +30,8 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
 }
 POLICY_SOURCE = "builtin:default"
 POLICY_FINGERPRINT = ""
+POLICY_VERSION = ""
+POLICY_RELEASE_TAG = ""
 
 
 def normalize_role(role: str) -> str:
@@ -68,8 +70,14 @@ def configure_policy_from_file(path: str) -> bool:
     payload = json.loads(target.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("RBAC policy file must be a role->actions JSON object")
+    raw_meta = payload.pop("_meta", None)
     configure_policy(payload)
     _set_policy_meta(source=f"file:{target}")
+    if isinstance(raw_meta, dict):
+        set_policy_labels(
+            version=str(raw_meta.get("version", "")),
+            release_tag=str(raw_meta.get("release_tag", "")),
+        )
     return True
 
 
@@ -79,12 +87,15 @@ def reset_default_policy() -> None:
         {role: set(actions) for role, actions in DEFAULT_ROLE_PERMISSIONS.items()}
     )
     _set_policy_meta(source="builtin:default")
+    set_policy_labels()
 
 
 def get_policy_meta() -> dict[str, str]:
     return {
         "rbac_policy_source": POLICY_SOURCE,
         "rbac_policy_fingerprint": POLICY_FINGERPRINT,
+        "rbac_policy_version": POLICY_VERSION,
+        "rbac_policy_release_tag": POLICY_RELEASE_TAG,
     }
 
 
@@ -94,6 +105,12 @@ def _set_policy_meta(source: str) -> None:
     normalized = {role: sorted(actions) for role, actions in sorted(ROLE_PERMISSIONS.items())}
     encoded = json.dumps(normalized, ensure_ascii=False, separators=(",", ":"))
     POLICY_FINGERPRINT = hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+def set_policy_labels(version: str = "", release_tag: str = "") -> None:
+    global POLICY_VERSION, POLICY_RELEASE_TAG
+    POLICY_VERSION = version.strip()
+    POLICY_RELEASE_TAG = release_tag.strip()
 
 
 _set_policy_meta(source="builtin:default")
