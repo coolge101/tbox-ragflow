@@ -4,5 +4,7 @@
   "target_dataset_id": "",
   "target_dataset_name": "TBOX-KB-DEFAULT",
   "auto_create_dataset": true,
-  "auto_run_after_upload": true
+  "auto_run_after_upload": true,
+  "http_max_retries": 2,
+  "http_retry_backoff_seconds": 1.0
 }

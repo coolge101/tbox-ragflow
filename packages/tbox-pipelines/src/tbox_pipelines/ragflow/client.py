@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from io import BytesIO
 from typing import Any
 
@@ -12,9 +13,17 @@ logger = logging.getLogger(__name__)
 
 
 class RagflowClient:
-    def __init__(self, base_url: str, api_key: str = "") -> None:
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str = "",
+        max_retries: int = 2,
+        retry_backoff_seconds: float = 1.0,
+    ) -> None:
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
+        self._max_retries = max(0, max_retries)
+        self._retry_backoff_seconds = max(0.0, retry_backoff_seconds)
 
     def resolve_dataset_id(
         self,
@@ -49,15 +58,15 @@ class RagflowClient:
             file_content = doc.content_markdown.encode("utf-8")
             file_tuple = (filename, BytesIO(file_content), "text/markdown")
 
-            with httpx.Client(timeout=20.0) as client:
-                response = client.post(
-                    url,
-                    headers=headers,
-                    data={"kb_id": dataset_id},
-                    files={"file": file_tuple},
-                )
-                response.raise_for_status()
-                doc_ids.extend(self._extract_doc_ids(response))
+            response = self._request_with_retry(
+                method="POST",
+                url=url,
+                headers=headers,
+                data={"kb_id": dataset_id},
+                files={"file": file_tuple},
+                operation="upload_document",
+            )
+            doc_ids.extend(self._extract_doc_ids(response))
 
         return doc_ids
 
@@ -68,23 +77,26 @@ class RagflowClient:
         url = f"{self._base_url}/v1/document/run"
         headers = self._build_headers()
         headers["Content-Type"] = "application/json"
-
-        with httpx.Client(timeout=20.0) as client:
-            response = client.post(url, headers=headers, json={"doc_ids": doc_ids, "run": "1"})
-            response.raise_for_status()
+        self._request_with_retry(
+            method="POST",
+            url=url,
+            headers=headers,
+            json={"doc_ids": doc_ids, "run": "1"},
+            operation="run_documents",
+        )
 
     def _find_dataset_id_by_name(self, dataset_name: str) -> str:
         headers = self._build_headers()
         url = f"{self._base_url}/api/v1/datasets"
 
-        with httpx.Client(timeout=20.0) as client:
-            response = client.get(
-                url,
-                headers=headers,
-                params={"name": dataset_name, "page_size": 100},
-            )
-            response.raise_for_status()
-            payload = response.json()
+        response = self._request_with_retry(
+            method="GET",
+            url=url,
+            headers=headers,
+            params={"name": dataset_name, "page_size": 100},
+            operation="find_dataset_by_name",
+        )
+        payload = response.json()
 
         items = payload.get("data") if isinstance(payload, dict) else []
         if not isinstance(items, list):
@@ -102,10 +114,14 @@ class RagflowClient:
         headers["Content-Type"] = "application/json"
         url = f"{self._base_url}/api/v1/datasets"
 
-        with httpx.Client(timeout=20.0) as client:
-            response = client.post(url, headers=headers, json={"name": dataset_name})
-            response.raise_for_status()
-            payload = response.json()
+        response = self._request_with_retry(
+            method="POST",
+            url=url,
+            headers=headers,
+            json={"name": dataset_name},
+            operation="create_dataset",
+        )
+        payload = response.json()
 
         data = payload.get("data") if isinstance(payload, dict) else {}
         if isinstance(data, dict):
@@ -113,6 +129,46 @@ class RagflowClient:
             if isinstance(dataset_id, str):
                 return dataset_id
         return ""
+
+    def _request_with_retry(
+        self,
+        method: str,
+        url: str,
+        operation: str,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        attempts = self._max_retries + 1
+        last_error: Exception | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                with httpx.Client(timeout=20.0) as client:
+                    response = client.request(method=method, url=url, **kwargs)
+                    response.raise_for_status()
+                    return response
+            except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+                last_error = exc
+                should_retry = attempt < attempts
+                logger.warning(
+                    (
+                        "ragflow_request_failed operation=%s method=%s url=%s "
+                        "attempt=%s/%s retry=%s error=%s"
+                    ),
+                    operation,
+                    method,
+                    url,
+                    attempt,
+                    attempts,
+                    should_retry,
+                    exc,
+                )
+                if not should_retry:
+                    break
+                if self._retry_backoff_seconds > 0:
+                    time.sleep(self._retry_backoff_seconds * attempt)
+
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Unexpected empty retry state")
 
     def _build_headers(self) -> dict[str, str]:
         headers: dict[str, str] = {}

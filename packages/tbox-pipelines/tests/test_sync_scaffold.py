@@ -43,6 +43,8 @@ def test_run_sync_without_dataset_id_returns_document_count(tmp_path) -> None:
         "target_dataset_name": "",
         "auto_create_dataset": False,
         "auto_run_after_upload": True,
+        "http_max_retries": 0,
+        "http_retry_backoff_seconds": 0.0,
     }
     cfg_path = tmp_path / "pipeline.json"
     cfg_path.write_text(json.dumps(cfg), encoding="utf-8")

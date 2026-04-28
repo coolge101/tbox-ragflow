@@ -3,6 +3,7 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Any
 
+import httpx
 import pytest
 
 from tbox_pipelines.ingest.models import SourceDocument
@@ -33,19 +34,26 @@ class _DummyClient:
     def __exit__(self, *_exc) -> None:
         return None
 
-    def post(self, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
-        _DummyClient.calls.append({"method": "POST", "url": url, "headers": headers, **kwargs})
+    def request(self, method: str, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
+        _DummyClient.calls.append({"method": method, "url": url, "headers": headers, **kwargs})
         if url.endswith("/v1/document/upload"):
             return _DummyResponse(payload={"data": [{"id": "doc_1"}]})
-        if url.endswith("/api/v1/datasets"):
+        if url.endswith("/api/v1/datasets") and method == "POST":
             return _DummyResponse(payload={"data": {"id": "kb_new"}})
-        return _DummyResponse()
-
-    def get(self, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
-        _DummyClient.calls.append({"method": "GET", "url": url, "headers": headers, **kwargs})
-        if url.endswith("/api/v1/datasets"):
+        if url.endswith("/api/v1/datasets") and method == "GET":
             return _DummyResponse(payload={"data": _DummyClient.datasets_payload})
         return _DummyResponse()
+
+
+class _FlakyClient(_DummyClient):
+    fail_first = True
+
+    def request(self, method: str, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
+        _FlakyClient.calls.append({"method": method, "url": url, "headers": headers, **kwargs})
+        if _FlakyClient.fail_first:
+            _FlakyClient.fail_first = False
+            raise httpx.RequestError("temporary", request=httpx.Request(method, url))
+        return super().request(method=method, url=url, headers=headers, **kwargs)
 
 
 def test_upload_documents_uses_multipart_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -146,3 +154,22 @@ def test_resolve_dataset_id_creates_when_missing(monkeypatch: pytest.MonkeyPatch
     assert _DummyClient.calls[0]["method"] == "GET"
     assert _DummyClient.calls[1]["method"] == "POST"
     assert _DummyClient.calls[1]["json"] == {"name": "TBOX-KB"}
+
+
+def test_request_retry_recovers_from_first_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.ragflow.client.httpx.Client", _FlakyClient)
+    _FlakyClient.calls = []
+    _FlakyClient.fail_first = True
+
+    docs = [
+        SourceDocument(
+            source_url="https://example.invalid/a",
+            title="Retry Test",
+            content_markdown="# retry",
+        )
+    ]
+    client = RagflowClient(base_url="http://localhost:9380", max_retries=1, retry_backoff_seconds=0)
+    doc_ids = client.upload_documents(dataset_id="kb_demo", documents=docs)
+
+    assert doc_ids == ["doc_1"]
+    assert len(_FlakyClient.calls) >= 2
