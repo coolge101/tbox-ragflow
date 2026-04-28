@@ -21,9 +21,15 @@ jobs:
       run:
         working-directory: packages/tbox-pipelines
     steps:
-      - uses: actions/checkout@v4
+      # 仅检出流水线包，避免整仓（含 upstream/ragflow）克隆导致 git 失败或超时
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            packages/tbox-pipelines
+          sparse-checkout-cone-mode: true
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
