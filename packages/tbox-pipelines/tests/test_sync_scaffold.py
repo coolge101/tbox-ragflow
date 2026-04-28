@@ -35,7 +35,7 @@ def test_fetch_stub_documents_returns_one_item() -> None:
     assert docs[0].title
 
 
-def test_run_sync_without_dataset_id_returns_document_count(tmp_path) -> None:
+def test_run_sync_raises_when_dataset_not_resolved(tmp_path) -> None:
     cfg = {
         "ragflow_base_url": "http://localhost:9380",
         "ragflow_api_key": "",
@@ -49,8 +49,12 @@ def test_run_sync_without_dataset_id_returns_document_count(tmp_path) -> None:
     cfg_path = tmp_path / "pipeline.json"
     cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
 
-    count = run_sync(str(cfg_path))
-    assert count == 1
+    import pytest
+
+    from tbox_pipelines.workflows.sync_job import SyncConfigError
+
+    with pytest.raises(SyncConfigError):
+        run_sync(str(cfg_path))
 
 
 def test_run_sync_triggers_run_when_enabled(monkeypatch) -> None:

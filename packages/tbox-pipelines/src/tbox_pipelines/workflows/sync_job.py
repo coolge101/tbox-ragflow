@@ -10,6 +10,10 @@ from tbox_pipelines.ragflow.client import RagflowClient
 logger = logging.getLogger(__name__)
 
 
+class SyncConfigError(ValueError):
+    """Raised when required sync configuration is missing or invalid."""
+
+
 def run_sync(config_path: str | None = None) -> int:
     config = load_config(config_path)
     docs = fetch_stub_documents()
@@ -25,6 +29,26 @@ def run_sync(config_path: str | None = None) -> int:
         dataset_name=config.target_dataset_name,
         auto_create=config.auto_create_dataset,
     )
+    if not resolved_dataset_id:
+        logger.error(
+            "sync_summary %s",
+            json.dumps(
+                {
+                    "documents_fetched": len(docs),
+                    "resolved_dataset_id": "",
+                    "uploaded_doc_ids": [],
+                    "run_triggered": False,
+                    "auto_run_after_upload": config.auto_run_after_upload,
+                    "status": "failed",
+                    "reason": "dataset_not_resolved",
+                },
+                ensure_ascii=False,
+            ),
+        )
+        raise SyncConfigError(
+            "Unable to resolve target dataset id. Set RAGFLOW_DATASET_ID or RAGFLOW_DATASET_NAME."
+        )
+
     doc_ids = client.upload_documents(dataset_id=resolved_dataset_id, documents=docs)
 
     run_triggered = False
@@ -41,6 +65,7 @@ def run_sync(config_path: str | None = None) -> int:
                 "uploaded_doc_ids": doc_ids,
                 "run_triggered": run_triggered,
                 "auto_run_after_upload": config.auto_run_after_upload,
+                "status": "ok",
             },
             ensure_ascii=False,
         ),
