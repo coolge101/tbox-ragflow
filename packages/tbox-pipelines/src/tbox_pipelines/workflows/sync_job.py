@@ -9,5 +9,7 @@ def run_sync(config_path: str | None = None) -> int:
     config = load_config(config_path)
     docs = fetch_stub_documents()
     client = RagflowClient(base_url=config.ragflow_base_url, api_key=config.ragflow_api_key)
-    client.upload_documents(dataset_id=config.target_dataset_id, documents=docs)
+    doc_ids = client.upload_documents(dataset_id=config.target_dataset_id, documents=docs)
+    if config.auto_run_after_upload:
+        client.run_documents(doc_ids)
     return len(docs)

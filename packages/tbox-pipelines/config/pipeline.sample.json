@@ -1,5 +1,6 @@
 {
   "ragflow_base_url": "http://localhost:9380",
   "ragflow_api_key": "",
-  "target_dataset_id": ""
+  "target_dataset_id": "",
+  "auto_run_after_upload": true
 }
