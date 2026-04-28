@@ -129,3 +129,32 @@ def test_run_sync_writes_rbac_audit_log(tmp_path) -> None:
     last = json.loads(records[-1])
     assert last["reason"] == "permission_denied"
     assert last["actor_role"] == "viewer"
+
+
+def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
+    calls: list[dict] = []
+
+    def _fake_notify(_url: str, summary: dict, timeout_seconds: float = 10.0) -> bool:
+        _ = timeout_seconds
+        calls.append(summary)
+        return True
+
+    monkeypatch.setattr("tbox_pipelines.workflows.sync_job.send_webhook_notification", _fake_notify)
+    monkeypatch.setenv("TBOX_ACTOR_ROLE", "viewer")
+    monkeypatch.setenv("RAGFLOW_AUTO_CREATE_DATASET", "false")
+    monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_WEBHOOK_URL", "http://example.invalid/rbac")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_HIGH_RISK_REASONS", "permission_denied")
+    monkeypatch.setenv("RAGFLOW_NOTIFY_WEBHOOK_URL", "")
+
+    import pytest
+
+    from tbox_pipelines.workflows.sync_job import SyncConfigError
+
+    with pytest.raises(SyncConfigError):
+        run_sync()
+
+    assert len(calls) >= 1
+    rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
+    assert len(rbac_calls) == 1
+    assert rbac_calls[0]["reason"] == "permission_denied"

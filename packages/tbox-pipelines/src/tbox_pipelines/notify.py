@@ -42,3 +42,9 @@ def should_notify(summary: dict[str, Any], notify_on_success: bool) -> bool:
     if status == "ok":
         return notify_on_success
     return True
+
+
+def should_notify_rbac_event(event: dict[str, Any], high_risk_reasons: tuple[str, ...]) -> bool:
+    status = str(event.get("status", ""))
+    reason = str(event.get("reason", ""))
+    return status == "failed" and reason in set(high_risk_reasons)

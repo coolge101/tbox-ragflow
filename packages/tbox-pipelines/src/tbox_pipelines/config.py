@@ -28,6 +28,8 @@ class PipelineConfig:
     rbac_policy_path: str
     rbac_policy_version: str
     rbac_policy_release_tag: str
+    rbac_alert_webhook_url: str
+    rbac_alert_high_risk_reasons: tuple[str, ...]
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -64,6 +66,13 @@ def _to_float(value: str | float | int | None, default: float) -> float:
         return default
 
 
+def _to_csv_tuple(value: str | None, default: tuple[str, ...]) -> tuple[str, ...]:
+    if value is None:
+        return default
+    items = tuple(part.strip() for part in value.split(",") if part.strip())
+    return items or default
+
+
 def load_config(config_path: str | None = None) -> PipelineConfig:
     env_base_url = os.getenv("RAGFLOW_BASE_URL")
     env_api_key = os.getenv("RAGFLOW_API_KEY", "")
@@ -85,6 +94,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_rbac_policy_path = os.getenv("TBOX_RBAC_POLICY_PATH")
     env_rbac_policy_version = os.getenv("TBOX_RBAC_POLICY_VERSION")
     env_rbac_policy_release_tag = os.getenv("TBOX_RBAC_POLICY_RELEASE_TAG")
+    env_rbac_alert_webhook_url = os.getenv("TBOX_RBAC_ALERT_WEBHOOK_URL", "")
+    env_rbac_alert_high_risk_reasons = os.getenv("TBOX_RBAC_ALERT_HIGH_RISK_REASONS")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -130,6 +141,14 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     rbac_policy_release_tag = str(
         env_rbac_policy_release_tag or payload.get("rbac_policy_release_tag", "")
     )
+    rbac_alert_webhook_url = str(
+        env_rbac_alert_webhook_url or payload.get("rbac_alert_webhook_url", "")
+    )
+    rbac_alert_high_risk_reasons = _to_csv_tuple(
+        env_rbac_alert_high_risk_reasons
+        or payload.get("rbac_alert_high_risk_reasons", "permission_denied"),
+        ("permission_denied",),
+    )
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -152,4 +171,6 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         rbac_policy_path=rbac_policy_path,
         rbac_policy_version=rbac_policy_version,
         rbac_policy_release_tag=rbac_policy_release_tag,
+        rbac_alert_webhook_url=rbac_alert_webhook_url,
+        rbac_alert_high_risk_reasons=rbac_alert_high_risk_reasons,
     )
