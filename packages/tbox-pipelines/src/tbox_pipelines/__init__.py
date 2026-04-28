@@ -1,11 +1,6 @@
-"""TBOX pipelines package (implement CLI/modules here)."""
+"""TBOX ingestion pipelines package."""
 
+from tbox_pipelines.cli import main
+
+__all__ = ["main"]
 __version__ = "0.1.0"
-
-
-def main() -> None:
-    print("tbox-pipelines: replace with your CLI (ingest / sync to RAGFlow).")
-
-
-if __name__ == "__main__":
-    main()
