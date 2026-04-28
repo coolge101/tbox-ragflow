@@ -50,3 +50,12 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 - `auto_run`
 - `http_max_retries`
 - `http_retry_backoff_seconds`
+
+
+## 可追溯字段
+
+每次同步会生成 `sync_id`，并：
+
+- 写入上传文档的 Markdown front matter（`source_url`、`sync_id`）
+- 透传为 RAGFlow 请求头 `X-Request-Id`
+- 出现在 `sync_summary` 结构化日志中

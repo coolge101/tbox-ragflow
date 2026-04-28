@@ -45,17 +45,22 @@ class RagflowClient:
 
         return self._create_dataset(dataset_name)
 
-    def upload_documents(self, dataset_id: str, documents: list[SourceDocument]) -> list[str]:
+    def upload_documents(
+        self,
+        dataset_id: str,
+        documents: list[SourceDocument],
+        sync_id: str = "",
+    ) -> list[str]:
         if not dataset_id:
-            logger.warning("Target dataset id is empty; skip upload")
+            logger.warning("target_dataset_id_empty skip_upload sync_id=%s", sync_id)
             return []
 
-        headers = self._build_headers()
+        headers = self._build_headers(sync_id=sync_id)
         url = f"{self._base_url}/v1/document/upload"
         doc_ids: list[str] = []
         for idx, doc in enumerate(documents, start=1):
             filename = self._build_filename(doc, idx)
-            file_content = doc.content_markdown.encode("utf-8")
+            file_content = self._build_traceable_markdown(doc, sync_id=sync_id).encode("utf-8")
             file_tuple = (filename, BytesIO(file_content), "text/markdown")
 
             response = self._request_with_retry(
@@ -70,12 +75,12 @@ class RagflowClient:
 
         return doc_ids
 
-    def run_documents(self, doc_ids: list[str]) -> None:
+    def run_documents(self, doc_ids: list[str], sync_id: str = "") -> None:
         if not doc_ids:
             return
 
         url = f"{self._base_url}/v1/document/run"
-        headers = self._build_headers()
+        headers = self._build_headers(sync_id=sync_id)
         headers["Content-Type"] = "application/json"
         self._request_with_retry(
             method="POST",
@@ -168,12 +173,14 @@ class RagflowClient:
 
         if last_error is not None:
             raise last_error
-        raise RuntimeError("Unexpected empty retry state")
+        raise RuntimeError("unexpected_empty_retry_state")
 
-    def _build_headers(self) -> dict[str, str]:
+    def _build_headers(self, sync_id: str = "") -> dict[str, str]:
         headers: dict[str, str] = {}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
+        if sync_id:
+            headers["X-Request-Id"] = sync_id
         return headers
 
     @staticmethod
@@ -181,6 +188,18 @@ class RagflowClient:
         stem = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in document.title)
         stem = stem.strip("_") or f"doc_{index}"
         return f"{stem}.md"
+
+    @staticmethod
+    def _build_traceable_markdown(document: SourceDocument, sync_id: str) -> str:
+        front_matter = [
+            "---",
+            f"title: {document.title}",
+            f"source_url: {document.source_url}",
+            f"sync_id: {sync_id}",
+            "---",
+            "",
+        ]
+        return "\n".join(front_matter) + document.content_markdown
 
     @staticmethod
     def _extract_doc_ids(response: httpx.Response) -> list[str]:
