@@ -19,6 +19,10 @@ class PipelineConfig:
     audit_log_path: str
     notify_webhook_url: str
     notify_on_success: bool
+    source_provider: str
+    source_api_url: str
+    source_api_key: str
+    source_timeout_seconds: float
 
 
 DEFAULT_CONFIG_PATH = Path("config/pipeline.sample.json")
@@ -67,6 +71,10 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_audit_log_path = os.getenv("RAGFLOW_AUDIT_LOG_PATH")
     env_notify_webhook_url = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_URL", "")
     env_notify_on_success = os.getenv("RAGFLOW_NOTIFY_ON_SUCCESS")
+    env_source_provider = os.getenv("TBOX_SOURCE_PROVIDER")
+    env_source_api_url = os.getenv("TBOX_SOURCE_API_URL", "")
+    env_source_api_key = os.getenv("TBOX_SOURCE_API_KEY", "")
+    env_source_timeout = os.getenv("TBOX_SOURCE_TIMEOUT_SECONDS")
 
     payload: dict[str, str | bool | int | float] = {}
     target_path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
@@ -93,6 +101,15 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_notify_on_success,
         _to_bool(payload.get("notify_on_success"), False),
     )
+    source_provider = (
+        str(env_source_provider or payload.get("source_provider", "stub")).strip().lower()
+    )
+    source_api_url = str(env_source_api_url or payload.get("source_api_url", ""))
+    source_api_key = str(env_source_api_key or payload.get("source_api_key", ""))
+    source_timeout_seconds = _to_float(
+        env_source_timeout,
+        _to_float(payload.get("source_timeout_seconds"), 15.0),
+    )
 
     return PipelineConfig(
         ragflow_base_url=str(base_url).rstrip("/"),
@@ -106,4 +123,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         audit_log_path=str(audit_log_path),
         notify_webhook_url=str(notify_webhook_url),
         notify_on_success=notify_on_success,
+        source_provider=source_provider,
+        source_api_url=source_api_url,
+        source_api_key=source_api_key,
+        source_timeout_seconds=max(1.0, source_timeout_seconds),
     )

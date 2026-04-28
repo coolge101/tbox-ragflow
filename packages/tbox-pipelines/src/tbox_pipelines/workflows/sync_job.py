@@ -7,7 +7,7 @@ from typing import Any
 
 from tbox_pipelines.audit import append_audit_record
 from tbox_pipelines.config import load_config
-from tbox_pipelines.ingest.sources import fetch_stub_documents
+from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import send_webhook_notification, should_notify
 from tbox_pipelines.ragflow.client import RagflowClient
 
@@ -34,7 +34,12 @@ def _emit_sync_summary(summary: dict[str, Any], config) -> None:
 def run_sync(config_path: str | None = None) -> int:
     sync_id = uuid.uuid4().hex
     config = load_config(config_path)
-    docs = fetch_stub_documents()
+    docs = fetch_documents(
+        provider=config.source_provider,
+        source_api_url=config.source_api_url,
+        source_api_key=config.source_api_key,
+        timeout_seconds=config.source_timeout_seconds,
+    )
     client = RagflowClient(
         base_url=config.ragflow_base_url,
         api_key=config.ragflow_api_key,
