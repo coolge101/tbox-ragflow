@@ -9,5 +9,9 @@
   "http_retry_backoff_seconds": 1.0,
   "audit_log_path": "logs/sync_audit.jsonl",
   "notify_webhook_url": "",
-  "notify_on_success": false
+  "notify_on_success": false,
+  "source_provider": "stub",
+  "source_api_url": "",
+  "source_api_key": "",
+  "source_timeout_seconds": 15.0
 }
