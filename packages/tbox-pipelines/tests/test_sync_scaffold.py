@@ -1,3 +1,5 @@
+import json
+
 from tbox_pipelines.ingest.sources import fetch_stub_documents
 from tbox_pipelines.workflows.sync_job import run_sync
 
@@ -5,9 +7,19 @@ from tbox_pipelines.workflows.sync_job import run_sync
 class _DummyClient:
     upload_called = False
     run_called = False
+    resolve_called = False
 
     def __init__(self, *args, **kwargs) -> None:
         pass
+
+    def resolve_dataset_id(
+        self,
+        dataset_id: str,
+        dataset_name: str,
+        auto_create: bool = True,
+    ) -> str:
+        _DummyClient.resolve_called = True
+        return dataset_id or "kb_auto"
 
     def upload_documents(self, dataset_id: str, documents: list) -> list[str]:
         _DummyClient.upload_called = True
@@ -23,12 +35,24 @@ def test_fetch_stub_documents_returns_one_item() -> None:
     assert docs[0].title
 
 
-def test_run_sync_without_dataset_id_returns_document_count() -> None:
-    count = run_sync()
+def test_run_sync_without_dataset_id_returns_document_count(tmp_path) -> None:
+    cfg = {
+        "ragflow_base_url": "http://localhost:9380",
+        "ragflow_api_key": "",
+        "target_dataset_id": "",
+        "target_dataset_name": "",
+        "auto_create_dataset": False,
+        "auto_run_after_upload": True,
+    }
+    cfg_path = tmp_path / "pipeline.json"
+    cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+
+    count = run_sync(str(cfg_path))
     assert count == 1
 
 
 def test_run_sync_triggers_run_when_enabled(monkeypatch) -> None:
+    _DummyClient.resolve_called = False
     _DummyClient.upload_called = False
     _DummyClient.run_called = False
 
@@ -39,5 +63,6 @@ def test_run_sync_triggers_run_when_enabled(monkeypatch) -> None:
     count = run_sync()
 
     assert count == 1
+    assert _DummyClient.resolve_called
     assert _DummyClient.upload_called
     assert _DummyClient.run_called

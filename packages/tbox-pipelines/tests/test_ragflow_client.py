@@ -22,6 +22,7 @@ class _DummyResponse:
 
 class _DummyClient:
     calls: list[dict] = []
+    datasets_payload: list[dict[str, str]] = []
 
     def __init__(self, *_args, **_kwargs) -> None:
         pass
@@ -33,9 +34,17 @@ class _DummyClient:
         return None
 
     def post(self, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
-        _DummyClient.calls.append({"url": url, "headers": headers, **kwargs})
+        _DummyClient.calls.append({"method": "POST", "url": url, "headers": headers, **kwargs})
         if url.endswith("/v1/document/upload"):
             return _DummyResponse(payload={"data": [{"id": "doc_1"}]})
+        if url.endswith("/api/v1/datasets"):
+            return _DummyResponse(payload={"data": {"id": "kb_new"}})
+        return _DummyResponse()
+
+    def get(self, url: str, headers: dict, **kwargs: Any) -> _DummyResponse:
+        _DummyClient.calls.append({"method": "GET", "url": url, "headers": headers, **kwargs})
+        if url.endswith("/api/v1/datasets"):
+            return _DummyResponse(payload={"data": _DummyClient.datasets_payload})
         return _DummyResponse()
 
 
@@ -98,3 +107,42 @@ def test_run_documents_skip_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     client.run_documents([])
 
     assert _DummyClient.calls == []
+
+
+def test_resolve_dataset_id_prefers_explicit_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.ragflow.client.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    client = RagflowClient(base_url="http://localhost:9380")
+    dataset_id = client.resolve_dataset_id(dataset_id="kb_fixed", dataset_name="ignored")
+
+    assert dataset_id == "kb_fixed"
+    assert _DummyClient.calls == []
+
+
+def test_resolve_dataset_id_uses_existing_dataset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.ragflow.client.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+    _DummyClient.datasets_payload = [{"id": "kb_existing", "name": "TBOX-KB"}]
+
+    client = RagflowClient(base_url="http://localhost:9380")
+    dataset_id = client.resolve_dataset_id(dataset_id="", dataset_name="TBOX-KB")
+
+    assert dataset_id == "kb_existing"
+    assert len(_DummyClient.calls) == 1
+    assert _DummyClient.calls[0]["method"] == "GET"
+
+
+def test_resolve_dataset_id_creates_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.ragflow.client.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+    _DummyClient.datasets_payload = []
+
+    client = RagflowClient(base_url="http://localhost:9380")
+    dataset_id = client.resolve_dataset_id(dataset_id="", dataset_name="TBOX-KB", auto_create=True)
+
+    assert dataset_id == "kb_new"
+    assert len(_DummyClient.calls) == 2
+    assert _DummyClient.calls[0]["method"] == "GET"
+    assert _DummyClient.calls[1]["method"] == "POST"
+    assert _DummyClient.calls[1]["json"] == {"name": "TBOX-KB"}
