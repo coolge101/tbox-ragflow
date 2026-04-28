@@ -10,6 +10,7 @@ from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import send_webhook_notification, should_notify
 from tbox_pipelines.ragflow.client import RagflowClient
+from tbox_pipelines.rbac import require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,31 @@ def _emit_sync_summary(summary: dict[str, Any], config) -> None:
 def run_sync(config_path: str | None = None) -> int:
     sync_id = uuid.uuid4().hex
     config = load_config(config_path)
+    role = config.actor_role
+    try:
+        require_permission(role, "sync:run")
+        if config.source_provider == "http_json":
+            require_permission(role, "source:http_json")
+        if config.auto_create_dataset:
+            require_permission(role, "dataset:auto_create")
+        if config.auto_run_after_upload:
+            require_permission(role, "ragflow:run_documents")
+    except PermissionError as exc:
+        summary = {
+            "sync_id": sync_id,
+            "documents_fetched": 0,
+            "resolved_dataset_id": "",
+            "uploaded_doc_ids": [],
+            "run_triggered": False,
+            "auto_run_after_upload": config.auto_run_after_upload,
+            "status": "failed",
+            "reason": "permission_denied",
+            "actor_role": role,
+            "error": str(exc),
+        }
+        _emit_sync_summary(summary, config)
+        raise SyncConfigError(str(exc)) from exc
+
     docs = fetch_documents(
         provider=config.source_provider,
         source_api_url=config.source_api_url,
@@ -81,6 +107,7 @@ def run_sync(config_path: str | None = None) -> int:
 
     summary = {
         "sync_id": sync_id,
+        "actor_role": role,
         "documents_fetched": len(docs),
         "resolved_dataset_id": resolved_dataset_id,
         "uploaded_doc_ids": doc_ids,
