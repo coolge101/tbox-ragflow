@@ -113,6 +113,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.65 起 `sample_validate` 日志增加 `sample_hash_alg`（当前 `sha256`）。
 > S3.66 起 `start` 日志增加 `schema_sha256`，用于 schema 内容指纹追踪。
 > S3.67 起 `start` 日志增加 `schema_size_bytes`。
+> S3.68 起 `start` 日志增加 `samples_total_bytes`。
 
 ## 本地开发
 
