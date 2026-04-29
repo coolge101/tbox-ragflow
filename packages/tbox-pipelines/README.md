@@ -142,6 +142,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.94 起 `start` 日志增加 `sample_result_status_field="status"` 字段，显式标识 sample 结果状态字段名。
 > S3.95 起 `start` 日志增加 `sample_elapsed_unit="ms"` 字段，显式标识 sample 级耗时字段单位。
 > S3.96 起 `start` 日志增加 `sample_index_base=1` 字段，显式标识 sample 索引从 1 开始。
+> S3.97 起 `start` 日志增加 `sample_total_field="total"` 字段，显式标识 sample 总量字段名。
 
 ## 本地开发
 
