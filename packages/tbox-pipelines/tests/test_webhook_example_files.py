@@ -47,6 +47,10 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert isinstance(data.get("status"), str)
     assert isinstance(data.get("sync_id"), str)
     if ptype == "tbox_sync_summary":
-        assert isinstance(data.get("summary"), dict)
+        inner = data.get("summary")
+        assert isinstance(inner, dict)
+        assert inner.get("sync_id") == data.get("sync_id")
     else:
-        assert isinstance(data.get("rbac"), dict)
+        inner = data.get("rbac")
+        assert isinstance(inner, dict)
+        assert inner.get("sync_id") == data.get("sync_id")
