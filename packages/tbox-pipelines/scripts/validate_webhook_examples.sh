@@ -4,7 +4,17 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-start_epoch_s="$(date +%s)"
+
+epoch_ms() {
+  if [[ -n "${EPOCHREALTIME:-}" ]]; then
+    local us="${EPOCHREALTIME/./}"
+    echo "$((10#$us / 1000))"
+    return
+  fi
+  echo "$(( $(date +%s) * 1000 ))"
+}
+
+start_epoch_ms="$(epoch_ms)"
 if ! command -v node >/dev/null 2>&1; then
   echo "validate_webhook_examples.sh: node is required (CI uses Node 20; see .node-version)." >&2
   exit 1
@@ -63,5 +73,5 @@ for f in "${samples[@]}"; do
   npx --yes ajv-cli validate -s "$schema" -d "$f"
 done
 
-elapsed_ms="$((($(date +%s) - start_epoch_s) * 1000))"
+elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
 echo "validate_webhook_examples.sh: done validated=${#samples[@]} elapsed_ms=$elapsed_ms"
