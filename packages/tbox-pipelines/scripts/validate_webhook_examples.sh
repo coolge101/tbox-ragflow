@@ -93,11 +93,12 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL="$sort_locale" sort)
 unset IFS
 
 sample_count="${#samples[@]}"
+sample_count_expected="$sample_count"
 samples_total_bytes=0
 for f in "${samples[@]}"; do
   samples_total_bytes=$((samples_total_bytes + $(wc -c < "$f" | tr -d '[:space:]')))
 done
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_hash_alg\":\"sha256\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples_dir\":\"$(json_escape "$samples_dir")\",\"samples_glob\":\"$(json_escape "$samples_glob")\",\"sort_locale\":\"$(json_escape "$sort_locale")\",\"samples\":$sample_count,\"samples_total_bytes\":$samples_total_bytes}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_hash_alg\":\"sha256\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples_dir\":\"$(json_escape "$samples_dir")\",\"samples_glob\":\"$(json_escape "$samples_glob")\",\"sort_locale\":\"$(json_escape "$sort_locale")\",\"samples\":$sample_count,\"sample_count_expected\":$sample_count_expected,\"samples_total_bytes\":$samples_total_bytes}"
 
 idx=0
 for f in "${samples[@]}"; do
