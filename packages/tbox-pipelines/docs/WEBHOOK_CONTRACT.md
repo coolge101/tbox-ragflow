@@ -54,6 +54,8 @@ Checked-in copies you can send or validate as-is:
 | [`examples/tbox_sync_summary.sample.json`](examples/tbox_sync_summary.sample.json) | `tbox_sync_summary` |
 | [`examples/tbox_rbac_alert.sample.json`](examples/tbox_rbac_alert.sample.json) | `tbox_rbac_alert` |
 
+Add new webhook shapes under `docs/examples/` as `*.sample.json` only; other filenames in that directory are not validated by `scripts/validate_webhook_examples.sh`.
+
 ## Example `curl` (from `packages/tbox-pipelines`)
 
 ### `tbox_sync_summary`
