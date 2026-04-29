@@ -45,7 +45,7 @@ bash scripts/validate_webhook_examples.sh
 
 The `tbox-pipelines` GitHub Actions job runs `bash scripts/validate_webhook_examples.sh` (Node 20), which validates **every** `docs/examples/*.sample.json` against the schema. See `.github/workflows/ci.yml` at the repository root. If you change `webhook_payload.schema.json` or add or edit samples under `docs/examples/`, keep them in sync or CI will fail.
 
-`pytest` also checks that [`webhook_payload.schema.json`](webhook_payload.schema.json) parses as JSON, still declares Draft-07 `oneOf` and `definitions` (including `envelope`), derives the expected payload `type` set from `oneOf` `$ref` targets (so it stays aligned with the schema file), and loads the same `*.sample.json` files for a small envelope smoke check (`payload_version`, `type`, `status`, `sync_id`, the nested body object keyed per `definitions.<type>.allOf[].required` (e.g. `summary` / `rbac`), matching inner `sync_id` / `status`, filename stem vs `type`, and one sample file per schema payload type), all without Node. In CI, that job runs **before** the Node/`ajv-cli` step so obvious breaks fail without downloading the validator.
+`pytest` also checks that [`webhook_payload.schema.json`](webhook_payload.schema.json) parses as JSON, still declares Draft-07 `oneOf` and `definitions` (including `envelope`), derives the expected payload `type` set from `oneOf` `$ref` targets (so it stays aligned with the schema file), asserts each payload definition's `properties.type.const` matches that definition's name, and loads the same `*.sample.json` files for a small envelope smoke check (`payload_version`, `type`, `status`, `sync_id`, the nested body object keyed per `definitions.<type>.allOf[].required` (e.g. `summary` / `rbac`), matching inner `sync_id` / `status`, filename stem vs `type`, and one sample file per schema payload type), all without Node. In CI, that job runs **before** the Node/`ajv-cli` step so obvious breaks fail without downloading the validator.
 
 ## Example payload files
 
@@ -83,3 +83,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 - Increment `WEBHOOK_PAYLOAD_VERSION` in `tbox_pipelines/notify.py` when adding required envelope fields or changing meaning of `type` values.
 - Prefer additive changes inside `summary` / `rbac` without bumping envelope version when possible.
 - When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the `docs/examples/*.sample.json` files (CI validates all of them).
+- For each payload definition under `definitions`, keep `properties.type.const` equal to the definition name (and to envelope `type`); `pytest` checks this.
