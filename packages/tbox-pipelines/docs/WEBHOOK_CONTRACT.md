@@ -97,3 +97,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.38 起脚本对示例文件排序使用 `LC_ALL=C sort`，避免不同 locale 下排序漂移。
 > S3.39 起脚本执行前打印 schema 路径与样本数量，便于 CI 日志排障。
 > S3.40 起脚本结束时打印 `done validated=<N>` 收尾日志。
+> S3.41 起脚本收尾日志增加 `elapsed_ms`，便于观察校验阶段耗时。
