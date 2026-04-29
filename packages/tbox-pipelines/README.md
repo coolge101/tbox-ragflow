@@ -121,6 +121,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.73 起 `start` 日志增加 `samples_glob`（当前 `*.sample.json`）。
 > S3.74 起 `start` 日志增加 `sort_locale`（当前 `C`）。
 > S3.75 起 `start` 日志增加 `sample_count_expected` 字段。
+> S3.76 起 `start` 日志增加 `samples_sorted=true` 字段，明确样本已完成确定性排序。
 
 ## 本地开发
 
