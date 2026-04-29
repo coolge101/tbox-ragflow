@@ -42,6 +42,10 @@ npx ajv-cli validate -s docs/webhook_payload.schema.json -d docs/examples/tbox_s
 npx ajv-cli validate -s docs/webhook_payload.schema.json -d docs/examples/tbox_rbac_alert.sample.json
 ```
 
+### CI
+
+The `tbox-pipelines` GitHub Actions job runs the same two `npx ajv-cli validate` invocations (with `npx --yes`, Node 20). See `.github/workflows/ci.yml` at the repository root. If you change `webhook_payload.schema.json` or the files under `docs/examples/`, keep them in sync or CI will fail.
+
 ## Example payload files
 
 Checked-in copies you can send or validate as-is:
