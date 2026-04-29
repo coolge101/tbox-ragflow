@@ -51,5 +51,8 @@ jobs:
         with:
           node-version-file: packages/tbox-pipelines/.node-version
 
+      - name: Validate webhook script syntax (bash -n)
+        run: bash -n scripts/validate_webhook_examples.sh
+
       - name: Validate webhook example JSON (JSON Schema)
         run: bash scripts/validate_webhook_examples.sh
