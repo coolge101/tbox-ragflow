@@ -61,6 +61,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.13 起 `pytest` 断言示例中信封 `sync_id` 与内层 `summary` / `rbac` 的 `sync_id` 一致（与 `notify.py` 行为对齐）。
 > S3.14 起 `pytest` 断言信封 `status` 与内层 `summary.status` / `rbac.status` 一致（缺省按 `unknown`，与 `notify.py` 一致）。
 > S3.15 起 `pytest` 断言示例文件名 `<type>.sample.json` 与信封 `type` 一致，避免示例与文件名错配。
+> S3.16 起 `pytest` 断言 `docs/examples/*.sample.json` 的文件名集合与 schema 中全部 payload `type` 一致（各一条示例）。
 
 ## 本地开发
 
