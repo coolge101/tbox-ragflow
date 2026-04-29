@@ -73,6 +73,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.25 起 `pytest` 断言示例顶层键集合精确为信封键 + 当前 payload 的内层键（不多不少）。
 > S3.26 起 `pytest` 断言内层对象非空且键名为非空白字符串，减少脏样本。
 > S3.27 起 `pytest` 断言示例中 `type`/`status`/`sync_id` 无首尾空白。
+> S3.28 起 `pytest` 对示例改为校验信封 `status` 与内层 `status` 直接相等。
 
 ## 本地开发
 

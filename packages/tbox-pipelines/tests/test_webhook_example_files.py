@@ -163,4 +163,4 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert inner["sync_id"] == data["sync_id"]
     assert inner["sync_id"], "sample inner sync_id should be non-empty"
     assert inner["sync_id"] == inner["sync_id"].strip()
-    assert data.get("status") == inner.get("status", "unknown")
+    assert data["status"] == inner["status"]
