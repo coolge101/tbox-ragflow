@@ -44,12 +44,12 @@ jobs:
       - name: Ruff format (check only)
         run: ruff format --check src tests
 
+      - name: Pytest
+        run: pytest -q
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
       - name: Validate webhook example JSON (JSON Schema)
         run: bash scripts/validate_webhook_examples.sh
-
-      - name: Pytest
-        run: pytest -q
