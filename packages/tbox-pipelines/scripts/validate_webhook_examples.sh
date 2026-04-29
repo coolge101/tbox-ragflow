@@ -67,12 +67,15 @@ fi
 IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
-echo "validate_webhook_examples.sh: schema=$schema samples=${#samples[@]}"
+sample_count="${#samples[@]}"
+echo "validate_webhook_examples.sh: schema=$schema samples=$sample_count"
 
+idx=0
 for f in "${samples[@]}"; do
-  echo "==> ajv validate: $f"
+  idx=$((idx + 1))
+  echo "==> ajv validate [$idx/$sample_count]: $f"
   npx --yes ajv-cli validate -s "$schema" -d "$f"
 done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
-echo "validate_webhook_examples.sh: done validated=${#samples[@]} elapsed_ms=$elapsed_ms"
+echo "validate_webhook_examples.sh: done validated=$sample_count elapsed_ms=$elapsed_ms"
