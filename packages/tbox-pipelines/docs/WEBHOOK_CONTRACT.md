@@ -137,3 +137,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.78 起 `start` 日志增加 `samples_nonempty=true` 字段，显式标识样本存在性检查已通过。
 > S3.79 起 `start` 日志增加 `precheck_passed=true` 字段，聚合标识前置检查已通过。
 > S3.80 起 `start` 日志增加 `validation_mode="schema+samples"` 字段，显式标识当前校验模式。
+> S3.81 起 `start` 日志增加 `sample_count_source="glob"` 字段，显式标识样本计数来源。
