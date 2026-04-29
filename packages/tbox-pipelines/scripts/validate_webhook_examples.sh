@@ -8,6 +8,11 @@ if ! command -v node >/dev/null 2>&1; then
   echo "validate_webhook_examples.sh: node is required (CI uses Node 20; see .node-version)." >&2
   exit 1
 fi
+schema="docs/webhook_payload.schema.json"
+if [[ ! -f "$schema" ]]; then
+  echo "validate_webhook_examples.sh: missing $schema (run from packages/tbox-pipelines)." >&2
+  exit 1
+fi
 shopt -s nullglob
 samples=(docs/examples/*.sample.json)
 if ((${#samples[@]} == 0)); then
@@ -15,5 +20,6 @@ if ((${#samples[@]} == 0)); then
   exit 1
 fi
 for f in "${samples[@]}"; do
-  npx --yes ajv-cli validate -s docs/webhook_payload.schema.json -d "$f"
+  echo "==> ajv validate: $f"
+  npx --yes ajv-cli validate -s "$schema" -d "$f"
 done
