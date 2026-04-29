@@ -159,6 +159,7 @@ def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
     rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
     assert len(rbac_calls) == 1
     assert rbac_calls[0]["reason"] == "permission_denied"
+    assert rbac_calls[0].get("rbac_alert_suppressed_in_window", 0) == 0
 
 
 def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> None:
@@ -169,7 +170,7 @@ def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> No
         calls.append(summary)
         return True
 
-    timeline = iter([1000, 1001])
+    timeline = iter([1000, 1001, 2000])
     monkeypatch.setattr("tbox_pipelines.workflows.sync_job.time.time", lambda: next(timeline))
     monkeypatch.setattr("tbox_pipelines.workflows.sync_job.send_webhook_notification", _fake_notify)
     monkeypatch.setenv("TBOX_ACTOR_ROLE", "viewer")
@@ -189,6 +190,12 @@ def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> No
         run_sync()
     with pytest.raises(SyncConfigError):
         run_sync()
+    with pytest.raises(SyncConfigError):
+        run_sync()
 
     rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
-    assert len(rbac_calls) == 1
+    assert len(rbac_calls) == 2
+    assert rbac_calls[0]["reason"] == "permission_denied"
+    assert rbac_calls[0].get("rbac_alert_suppressed_in_window", 0) == 0
+    assert rbac_calls[1]["reason"] == "permission_denied"
+    assert rbac_calls[1].get("rbac_alert_suppressed_in_window") == 1
