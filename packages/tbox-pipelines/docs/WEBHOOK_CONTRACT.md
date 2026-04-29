@@ -143,3 +143,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.84 起 `start` 日志增加 `validator_command="npx --yes ajv-cli validate"` 字段，显式标识校验命令。
 > S3.85 起 `start` 日志增加 `validator_command_source="inline"` 字段，显式标识校验命令来源。
 > S3.86 起 `start` 日志增加 `validator_invocation="npx"` 字段，显式标识校验调用方式。
+> S3.87 起 `start` 日志增加 `validator_auto_install=true` 字段，显式标识 `npx --yes` 自动安装语义。
