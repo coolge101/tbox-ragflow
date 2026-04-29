@@ -139,6 +139,10 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     for k in ("payload_version", "type", "status", "sync_id", body_key):
         assert k in data
     assert data["sync_id"], "sample envelope sync_id should be non-empty"
+    disallowed = _WEBHOOK_PAYLOAD_TYPES - {ptype}
+    for other in disallowed:
+        other_key = _inner_payload_key_for_type(other)
+        assert other_key not in data
     inner = data[body_key]
     assert isinstance(inner, dict)
     assert "status" in inner
