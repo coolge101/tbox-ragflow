@@ -22,6 +22,12 @@ if [[ -n "$node_major" ]]; then
     echo "validate_webhook_examples.sh: warning: CI uses Node 20; you are running Node v${node_major}.x." >&2
   fi
 fi
+
+if ! command -v npx >/dev/null 2>&1; then
+  echo "validate_webhook_examples.sh: npx is required (missing npm/npx). Install npm (Node.js) and retry." >&2
+  exit 1
+fi
+
 schema="docs/webhook_payload.schema.json"
 if [[ ! -f "$schema" ]]; then
   echo "validate_webhook_examples.sh: missing $schema (run from packages/tbox-pipelines)." >&2
