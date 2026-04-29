@@ -75,6 +75,7 @@ fi
 schema_mtime_utc="$(
   date -u -r "$schema" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "unknown"
 )"
+schema_size_bytes="$(wc -c < "$schema" | tr -d '[:space:]')"
 schema_sha256="$(sha256sum "$schema" | awk '{print $1}')"
 shopt -s nullglob
 samples=(docs/examples/*.sample.json)
@@ -89,7 +90,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples\":$sample_count}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples\":$sample_count}"
 
 idx=0
 for f in "${samples[@]}"; do
