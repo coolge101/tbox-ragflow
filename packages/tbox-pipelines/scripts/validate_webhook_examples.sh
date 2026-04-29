@@ -13,13 +13,23 @@ node_major="$(
   node -p "parseInt(process.versions.node.split('.')[0], 10)" 2>/dev/null || echo ""
 )"
 if [[ -n "$node_major" ]]; then
-  # Parity with CI: require at least Node 20, but allow newer majors locally.
-  if (( node_major < 20 )); then
-    echo "validate_webhook_examples.sh: Node >= 20 is required, got v${node_major}.x (see .node-version)." >&2
+  node_version_file="$ROOT/.node-version"
+  required_major=""
+  if [[ -f "$node_version_file" ]]; then
+    required_major="$(cat "$node_version_file" | awk -F. '{print $1}' | tr -cd '0-9' || echo "")"
+  fi
+  if [[ -z "$required_major" ]]; then
+    required_major="20"
+    echo "validate_webhook_examples.sh: warning: invalid or missing .node-version; defaulting required Node major to 20." >&2
+  fi
+
+  # Parity with CI: require Node >= required_major, but allow newer majors locally.
+  if (( node_major < required_major )); then
+    echo "validate_webhook_examples.sh: Node >= $required_major is required, got v${node_major}.x (see .node-version)." >&2
     exit 1
   fi
-  if (( node_major != 20 )); then
-    echo "validate_webhook_examples.sh: warning: CI uses Node 20; you are running Node v${node_major}.x." >&2
+  if (( node_major != required_major )); then
+    echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
 fi
 
