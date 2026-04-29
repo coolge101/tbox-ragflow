@@ -79,4 +79,5 @@ for f in "${samples[@]}"; do
 done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
-echo "validate_webhook_examples.sh: done validated=$sample_count elapsed_ms=$elapsed_ms"
+finished_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "validate_webhook_examples.sh: done validated=$sample_count elapsed_ms=$elapsed_ms finished_at_utc=$finished_at_utc"
