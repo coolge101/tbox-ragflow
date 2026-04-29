@@ -55,6 +55,8 @@ fi
 IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
+echo "validate_webhook_examples.sh: schema=$schema samples=${#samples[@]}"
+
 for f in "${samples[@]}"; do
   echo "==> ajv validate: $f"
   npx --yes ajv-cli validate -s "$schema" -d "$f"
