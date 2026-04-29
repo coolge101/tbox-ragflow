@@ -141,3 +141,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.82 起 `start` 日志增加 `run_scope="all_samples"` 字段，显式标识本次运行覆盖范围。
 > S3.83 起 `start` 日志增加 `validator_engine="ajv-cli"` 字段，显式标识 schema 校验引擎。
 > S3.84 起 `start` 日志增加 `validator_command="npx --yes ajv-cli validate"` 字段，显式标识校验命令。
+> S3.85 起 `start` 日志增加 `validator_command_source="inline"` 字段，显式标识校验命令来源。
