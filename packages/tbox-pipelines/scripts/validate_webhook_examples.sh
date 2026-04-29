@@ -82,4 +82,4 @@ done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
 finished_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "validate_webhook_examples.sh: done finished_at_utc=$finished_at_utc elapsed_ms=$elapsed_ms validated=$sample_count failed=0"
+echo "validate_webhook_examples.sh: done {\"finished_at_utc\":\"$finished_at_utc\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
