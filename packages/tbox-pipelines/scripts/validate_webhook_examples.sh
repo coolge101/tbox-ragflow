@@ -4,6 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+LOG_VERSION=1
 
 epoch_ms() {
   if [[ -n "${EPOCHREALTIME:-}" ]]; then
@@ -58,7 +59,7 @@ if [[ -n "$node_major" ]]; then
     echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
   npx_version="$(npx --version 2>/dev/null || echo "")"
-  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"node_version\":\"$(json_escape "$node_version")\",\"npx_version\":\"$(json_escape "$npx_version")\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$(json_escape "$required_major_source")\"}"
+  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"node_version\":\"$(json_escape "$node_version")\",\"npx_version\":\"$(json_escape "$npx_version")\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$(json_escape "$required_major_source")\"}"
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -87,7 +88,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"samples\":$sample_count}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"samples\":$sample_count}"
 
 idx=0
 for f in "${samples[@]}"; do
@@ -95,9 +96,9 @@ for f in "${samples[@]}"; do
   sample_start_ms="$(epoch_ms)"
   npx --yes ajv-cli validate -s "$schema" -d "$f"
   sample_elapsed_ms="$(( $(epoch_ms) - sample_start_ms ))"
-  echo "validate_webhook_examples.sh: sample {\"event\":\"sample_validate\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"index\":$idx,\"total\":$sample_count,\"path\":\"$(json_escape "$f")\",\"status\":\"ok\",\"elapsed_ms\":$sample_elapsed_ms}"
+  echo "validate_webhook_examples.sh: sample {\"event\":\"sample_validate\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"index\":$idx,\"total\":$sample_count,\"path\":\"$(json_escape "$f")\",\"status\":\"ok\",\"elapsed_ms\":$sample_elapsed_ms}"
 done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
 finished_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "validate_webhook_examples.sh: done {\"event\":\"done\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"finished_at_utc\":\"$(json_escape "$finished_at_utc")\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
+echo "validate_webhook_examples.sh: done {\"event\":\"done\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"finished_at_utc\":\"$(json_escape "$finished_at_utc")\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
