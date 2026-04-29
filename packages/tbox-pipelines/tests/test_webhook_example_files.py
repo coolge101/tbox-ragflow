@@ -20,8 +20,18 @@ def test_webhook_payload_schema_parses() -> None:
     data = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
     assert isinstance(data, dict)
     assert data.get("$schema") == "http://json-schema.org/draft-07/schema#"
-    assert isinstance(data.get("oneOf"), list)
-    assert isinstance(data.get("definitions"), dict)
+    one_of = data.get("oneOf")
+    assert isinstance(one_of, list) and len(one_of) == 2
+    defs = data.get("definitions")
+    assert isinstance(defs, dict)
+    assert "envelope" in defs
+    assert "tbox_sync_summary" in defs
+    assert "tbox_rbac_alert" in defs
+    refs = {item.get("$ref") for item in one_of if isinstance(item, dict)}
+    assert refs == {
+        "#/definitions/tbox_sync_summary",
+        "#/definitions/tbox_rbac_alert",
+    }
 
 
 def test_webhook_example_samples_exist() -> None:
