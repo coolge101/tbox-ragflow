@@ -51,7 +51,8 @@ if ((${#samples[@]} == 0)); then
 fi
 
 # Make CI output deterministic (array order from glob can vary).
-IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | sort))
+# Force a byte-wise sort independent of locale.
+IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 for f in "${samples[@]}"; do
