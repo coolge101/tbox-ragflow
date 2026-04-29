@@ -61,3 +61,5 @@ for f in "${samples[@]}"; do
   echo "==> ajv validate: $f"
   npx --yes ajv-cli validate -s "$schema" -d "$f"
 done
+
+echo "validate_webhook_examples.sh: done validated=${#samples[@]}"
