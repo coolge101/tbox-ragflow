@@ -49,6 +49,11 @@ if ((${#samples[@]} == 0)); then
   echo "validate_webhook_examples.sh: no docs/examples/*.sample.json found." >&2
   exit 1
 fi
+
+# Make CI output deterministic (array order from glob can vary).
+IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | sort))
+unset IFS
+
 for f in "${samples[@]}"; do
   echo "==> ajv validate: $f"
   npx --yes ajv-cli validate -s "$schema" -d "$f"

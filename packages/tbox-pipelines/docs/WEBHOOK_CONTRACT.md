@@ -89,3 +89,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.31 起 `validate_webhook_examples.sh` 会检查本地 `npx` 是否可用（缺失则提示安装 npm/Node）。
 > S3.32 起 CI 的 `actions/setup-node` 使用 `packages/tbox-pipelines/.node-version` 读取 Node 版本，避免与脚本/文档版本漂移。
 > S3.33 起脚本在缺失/解析失败时默认 required Node major=20，并给出明确提示。
+> S3.34 起 `validate_webhook_examples.sh` 会对 `docs/examples/*.sample.json` 排序，输出/执行顺序更确定。

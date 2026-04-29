@@ -79,6 +79,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.31 起 `validate_webhook_examples.sh` 检查本地 `npx` 是否可用（缺失则提示安装 npm/Node）。
 > S3.32 起 CI 的 `actions/setup-node` 使用 `packages/tbox-pipelines/.node-version` 读取 Node 版本，避免版本漂移。
 > S3.33 起脚本在缺失/解析失败时默认 required Node major=20，并给出明确提示。
+> S3.34 起脚本对示例文件排序，确保执行顺序确定。
 
 ## 本地开发
 
