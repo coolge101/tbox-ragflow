@@ -84,3 +84,6 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 - Prefer additive changes inside `summary` / `rbac` without bumping envelope version when possible.
 - When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the `docs/examples/*.sample.json` files (CI validates all of them).
 - For each payload definition under `definitions`, keep `properties.type.const` equal to the definition name (and to envelope `type`); `pytest` checks this.
+
+> S3.30 起 `scripts/validate_webhook_examples.sh` 检测本地 Node 主版本需 >= 20（CI uses Node 20）。
+> S3.31 起 `validate_webhook_examples.sh` 会检查本地 `npx` 是否可用（缺失则提示安装 npm/Node）。
