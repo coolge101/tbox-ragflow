@@ -85,6 +85,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.37 起 CI 额外校验 `.node-version` 为纯数字 Node major。
 > S3.38 起脚本对示例文件排序使用 `LC_ALL=C sort`，避免不同 locale 下排序漂移。
 > S3.39 起脚本执行前打印 schema 路径与样本数量，便于 CI 日志排障。
+> S3.40 起脚本结束时打印 `done validated=<N>` 收尾日志。
 
 ## 本地开发
 
