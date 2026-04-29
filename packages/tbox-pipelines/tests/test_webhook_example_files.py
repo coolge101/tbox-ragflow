@@ -7,11 +7,21 @@ import pytest
 
 from tbox_pipelines.notify import WEBHOOK_PAYLOAD_VERSION
 
-_DOCS_EXAMPLES = Path(__file__).resolve().parent.parent / "docs" / "examples"
+_DOCS = Path(__file__).resolve().parent.parent / "docs"
+_DOCS_EXAMPLES = _DOCS / "examples"
+_SCHEMA_PATH = _DOCS / "webhook_payload.schema.json"
 
 
 def _sample_json_paths() -> list[Path]:
     return sorted(_DOCS_EXAMPLES.glob("*.sample.json"))
+
+
+def test_webhook_payload_schema_parses() -> None:
+    data = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    assert isinstance(data, dict)
+    assert data.get("$schema") == "http://json-schema.org/draft-07/schema#"
+    assert isinstance(data.get("oneOf"), list)
+    assert isinstance(data.get("definitions"), dict)
 
 
 def test_webhook_example_samples_exist() -> None:
