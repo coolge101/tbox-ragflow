@@ -66,6 +66,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.18 起从各 payload 定义的 `allOf[].required` 解析内层对象键（如 `summary`/`rbac`），信封断言不再硬编码分支。
 > S3.19 起 `pytest` 断言各 payload definition 中 `properties.type.const` 与 definition 名（及信封 `type`）一致。
 > S3.20 起 `pytest` 断言示例内层 `summary`/`rbac` 含字符串 `status`，与审计负载形态一致。
+> S3.21 起 `pytest` 断言内层同样显式含字符串 `sync_id`（与信封一致）。
 
 ## 本地开发
 
