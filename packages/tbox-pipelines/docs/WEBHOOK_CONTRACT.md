@@ -156,3 +156,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.97 起 `start` 日志增加 `sample_total_field="total"` 字段，显式标识 sample 总量字段名。
 > S3.98 起 `start` 日志增加 `sample_path_field="path"` 字段，显式标识 sample 路径字段名。
 > S3.99 起 `start` 日志增加 `sample_type_field="sample_type"` 字段，显式标识 sample 类型字段名。
+> S3.100 起 `start` 日志增加 `sample_elapsed_field="elapsed_ms"` 字段，显式标识 sample 耗时字段名。
