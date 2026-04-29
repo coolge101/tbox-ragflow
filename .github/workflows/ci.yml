@@ -47,6 +47,18 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+      - name: Validate .node-version format
+        run: |
+          if [[ ! -f .node-version ]]; then
+            echo ".node-version is missing (expected a numeric Node major version)." >&2
+            exit 1
+          fi
+          major="$(tr -d '[:space:]' < .node-version)"
+          if [[ ! "$major" =~ ^[0-9]+$ ]]; then
+            echo ".node-version must be a numeric Node major (got: '$major')." >&2
+            exit 1
+          fi
+
       - name: Validate webhook script syntax (bash -n)
         run: bash -n scripts/validate_webhook_examples.sh
 

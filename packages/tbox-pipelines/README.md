@@ -82,6 +82,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.34 起脚本对示例文件排序，确保执行顺序确定。
 > S3.35 起 CI 额外跑 `bash -n` 校验 validate 脚本语法。
 > S3.36 起 CI 将 `bash -n` 提前到 `setup-node` 之前执行。
+> S3.37 起 CI 额外校验 `.node-version` 为纯数字 Node major。
 
 ## 本地开发
 
