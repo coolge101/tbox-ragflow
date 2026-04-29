@@ -35,72 +35,42 @@ Canonical schema (Draft 07 `oneOf` for the two payload shapes):
 
 - [`webhook_payload.schema.json`](webhook_payload.schema.json)
 
-Validate locally (example with [ajv-cli](https://www.npmjs.com/package/ajv-cli)):
+Validate locally (example with [ajv-cli](https://www.npmjs.com/package/ajv-cli); run from `packages/tbox-pipelines`):
 
 ```bash
-npx ajv-cli validate -s docs/webhook_payload.schema.json -d payload.json
+npx ajv-cli validate -s docs/webhook_payload.schema.json -d docs/examples/tbox_sync_summary.sample.json
+npx ajv-cli validate -s docs/webhook_payload.schema.json -d docs/examples/tbox_rbac_alert.sample.json
 ```
 
-## Example payloads and `curl`
+## Example payload files
+
+Checked-in copies you can send or validate as-is:
+
+| File | `type` |
+|------|--------|
+| [`examples/tbox_sync_summary.sample.json`](examples/tbox_sync_summary.sample.json) | `tbox_sync_summary` |
+| [`examples/tbox_rbac_alert.sample.json`](examples/tbox_rbac_alert.sample.json) | `tbox_rbac_alert` |
+
+## Example `curl` (from `packages/tbox-pipelines`)
 
 ### `tbox_sync_summary`
-
-```json
-{
-  "payload_version": 1,
-  "type": "tbox_sync_summary",
-  "status": "failed",
-  "sync_id": "a1b2c3d4e5f6",
-  "summary": {
-    "sync_id": "a1b2c3d4e5f6",
-    "status": "failed",
-    "reason": "dataset_not_resolved",
-    "documents_fetched": 0,
-    "resolved_dataset_id": "",
-    "uploaded_doc_ids": [],
-    "run_triggered": false,
-    "auto_run_after_upload": true
-  }
-}
-```
 
 ```bash
 curl -sS -X POST "$RAGFLOW_NOTIFY_WEBHOOK_URL" \
   -H 'Content-Type: application/json' \
-  -d @payload-sync.json
+  -d @docs/examples/tbox_sync_summary.sample.json
 ```
 
 ### `tbox_rbac_alert`
 
-```json
-{
-  "payload_version": 1,
-  "type": "tbox_rbac_alert",
-  "status": "failed",
-  "sync_id": "a1b2c3d4e5f6",
-  "rbac": {
-    "sync_id": "a1b2c3d4e5f6",
-    "status": "failed",
-    "reason": "permission_denied",
-    "actor_role": "viewer",
-    "error": "RBAC denied action='sync:run' for role='viewer'.",
-    "rbac_policy_source": "builtin:default",
-    "rbac_policy_fingerprint": "0123456789abcdef",
-    "rbac_policy_version": "",
-    "rbac_policy_release_tag": "",
-    "rbac_alert_suppressed_in_window": 0
-  }
-}
-```
-
 ```bash
 curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
   -H 'Content-Type: application/json' \
-  -d @payload-rbac.json
+  -d @docs/examples/tbox_rbac_alert.sample.json
 ```
 
 ## Versioning
 
 - Increment `WEBHOOK_PAYLOAD_VERSION` in `tbox_pipelines/notify.py` when adding required envelope fields or changing meaning of `type` values.
 - Prefer additive changes inside `summary` / `rbac` without bumping envelope version when possible.
-- When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the examples above.
+- When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the files under `docs/examples/`.

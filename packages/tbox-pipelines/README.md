@@ -47,6 +47,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S2.9 起 RBAC 告警 webhook 使用独立负载类型 `tbox_rbac_alert`（`rbac` 字段承载完整事件），与 `tbox_sync_summary` 区分。
 > S3.0 起约定 webhook 信封字段 `payload_version`，并文档化负载契约（见 `docs/WEBHOOK_CONTRACT.md`）。
 > S3.1 起提供 Draft-07 JSON Schema（`docs/webhook_payload.schema.json`）及文档内 `curl` 示例负载。
+> S3.2 起在 `docs/examples/` 提供可校验、可复制的示例 JSON 文件。
 
 ## 本地开发
 
@@ -104,4 +105,4 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 - 若 `notify_on_success=true`，成功也会通知。
 - 通知失败不会中断主流程，会记录 `sync_notify` 日志。
 - RBAC 高风险告警使用 `TBOX_RBAC_ALERT_WEBHOOK_URL`，负载类型为 `tbox_rbac_alert`（与同步的 `tbox_sync_summary` 不同）。
-- 负载契约与字段说明：**[docs/WEBHOOK_CONTRACT.md](docs/WEBHOOK_CONTRACT.md)**（含 Schema 与 `curl` 示例）。
+- 负载契约与字段说明：**[docs/WEBHOOK_CONTRACT.md](docs/WEBHOOK_CONTRACT.md)**（含 Schema、`curl` 与 **[docs/examples/](docs/examples/)** 示例 JSON）。
