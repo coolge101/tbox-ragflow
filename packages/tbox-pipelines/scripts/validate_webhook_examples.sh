@@ -35,6 +35,7 @@ fi
 node_major="$(
   node -p "parseInt(process.versions.node.split('.')[0], 10)" 2>/dev/null || echo ""
 )"
+node_version="$(node -v 2>/dev/null || echo "")"
 if [[ -n "$node_major" ]]; then
   node_version_file="$ROOT/.node-version"
   required_major=""
@@ -56,7 +57,8 @@ if [[ -n "$node_major" ]]; then
   if (( node_major != required_major )); then
     echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
-  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$(json_escape "$required_major_source")\"}"
+  npx_version="$(npx --version 2>/dev/null || echo "")"
+  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"node_version\":\"$(json_escape "$node_version")\",\"npx_version\":\"$(json_escape "$npx_version")\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$(json_escape "$required_major_source")\"}"
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
