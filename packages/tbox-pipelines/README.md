@@ -118,6 +118,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.70 起 `sample_validate` 日志增加 `sample_mtime_utc`。
 > S3.71 起 `start` 日志增加 `schema_hash_alg`（当前 `sha256`）。
 > S3.72 起 `start` 日志增加 `samples_dir`（当前 `docs/examples`）。
+> S3.73 起 `start` 日志增加 `samples_glob`（当前 `*.sample.json`）。
 
 ## 本地开发
 
