@@ -45,7 +45,7 @@ bash scripts/validate_webhook_examples.sh
 
 The `tbox-pipelines` GitHub Actions job runs `bash scripts/validate_webhook_examples.sh` (Node 20), which validates **every** `docs/examples/*.sample.json` against the schema. See `.github/workflows/ci.yml` at the repository root. If you change `webhook_payload.schema.json` or add or edit samples under `docs/examples/`, keep them in sync or CI will fail.
 
-`pytest` also checks that [`webhook_payload.schema.json`](webhook_payload.schema.json) parses as JSON, still declares Draft-07 `oneOf` (two branches to `tbox_sync_summary` / `tbox_rbac_alert`) and `definitions` (including `envelope`), and loads the same `*.sample.json` files for a small envelope smoke check (`payload_version`, `type`, `status`, `sync_id`, and `summary` / `rbac`), all without Node. In CI, that job runs **before** the Node/`ajv-cli` step so obvious breaks fail without downloading the validator.
+`pytest` also checks that [`webhook_payload.schema.json`](webhook_payload.schema.json) parses as JSON, still declares Draft-07 `oneOf` (two branches to `tbox_sync_summary` / `tbox_rbac_alert`) and `definitions` (including `envelope`), and loads the same `*.sample.json` files for a small envelope smoke check (`payload_version`, `type`, `status`, `sync_id`, `summary` / `rbac`, and matching inner `sync_id`), all without Node. In CI, that job runs **before** the Node/`ajv-cli` step so obvious breaks fail without downloading the validator.
 
 ## Example payload files
 
@@ -57,6 +57,8 @@ Checked-in copies you can send or validate as-is:
 | [`examples/tbox_rbac_alert.sample.json`](examples/tbox_rbac_alert.sample.json) | `tbox_rbac_alert` |
 
 Add new webhook shapes under `docs/examples/` as `*.sample.json` only; other filenames in that directory are not validated by `scripts/validate_webhook_examples.sh`.
+
+Keep top-level `sync_id` equal to `summary.sync_id` / `rbac.sync_id` in examples, matching what `tbox_pipelines.notify` sends.
 
 ## Example `curl` (from `packages/tbox-pipelines`)
 
