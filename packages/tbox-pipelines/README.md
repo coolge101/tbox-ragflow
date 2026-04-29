@@ -68,6 +68,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.20 起 `pytest` 断言示例内层 `summary`/`rbac` 含字符串 `status`，与审计负载形态一致。
 > S3.21 起 `pytest` 断言内层同样显式含字符串 `sync_id`（与信封一致）。
 > S3.22 起 `pytest` 断言示例含完整顶层信封键及内层键，且信封/内层 `sync_id` 非空字符串。
+> S3.23 起 `pytest` 额外断言信封/内层 `status` 为非空字符串。
 
 ## 本地开发
 
