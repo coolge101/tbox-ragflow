@@ -139,7 +139,10 @@ def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
         calls.append(summary)
         return True
 
-    monkeypatch.setattr("tbox_pipelines.workflows.sync_job.send_webhook_notification", _fake_notify)
+    monkeypatch.setattr(
+        "tbox_pipelines.workflows.sync_job.send_rbac_webhook_notification",
+        _fake_notify,
+    )
     monkeypatch.setenv("TBOX_ACTOR_ROLE", "viewer")
     monkeypatch.setenv("RAGFLOW_AUTO_CREATE_DATASET", "false")
     monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
@@ -156,7 +159,7 @@ def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
         run_sync()
 
     assert len(calls) >= 1
-    rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
+    rbac_calls = [p for p in calls if p.get("reason") == "permission_denied"]
     assert len(rbac_calls) == 1
     assert rbac_calls[0]["reason"] == "permission_denied"
     assert rbac_calls[0].get("rbac_alert_suppressed_in_window", 0) == 0
@@ -172,7 +175,10 @@ def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> No
 
     timeline = iter([1000, 1001, 2000])
     monkeypatch.setattr("tbox_pipelines.workflows.sync_job.time.time", lambda: next(timeline))
-    monkeypatch.setattr("tbox_pipelines.workflows.sync_job.send_webhook_notification", _fake_notify)
+    monkeypatch.setattr(
+        "tbox_pipelines.workflows.sync_job.send_rbac_webhook_notification",
+        _fake_notify,
+    )
     monkeypatch.setenv("TBOX_ACTOR_ROLE", "viewer")
     monkeypatch.setenv("RAGFLOW_AUTO_CREATE_DATASET", "false")
     monkeypatch.setenv("RAGFLOW_AUTO_RUN", "false")
@@ -193,7 +199,7 @@ def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> No
     with pytest.raises(SyncConfigError):
         run_sync()
 
-    rbac_calls = [payload for payload in calls if "documents_fetched" not in payload]
+    rbac_calls = [p for p in calls if p.get("reason") == "permission_denied"]
     assert len(rbac_calls) == 2
     assert rbac_calls[0]["reason"] == "permission_denied"
     assert rbac_calls[0].get("rbac_alert_suppressed_in_window", 0) == 0
