@@ -71,7 +71,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: started_at_utc=$started_at_utc cwd=$ROOT schema=$schema samples=$sample_count"
+echo "validate_webhook_examples.sh: start {\"started_at_utc\":\"$started_at_utc\",\"cwd\":\"$ROOT\",\"schema\":\"$schema\",\"samples\":$sample_count}"
 
 idx=0
 for f in "${samples[@]}"; do
