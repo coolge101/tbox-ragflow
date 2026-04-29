@@ -56,6 +56,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.8 起脚本检查 schema 文件存在，并在校验每个示例时打印 `==> ajv validate: …` 便于读 CI 日志。
 > S3.9 起 `pytest` 对 `docs/examples/*.sample.json` 做信封与 JSON 可解析性检查（无 Node），与 ajv 互补。
 > S3.10 起 CI 先跑 `pytest` 再装 Node / 跑 `validate_webhook_examples.sh`，失败更快、少拉 npx。
+> S3.11 起 `pytest` 额外校验 `docs/webhook_payload.schema.json` 可解析且含 Draft-07 `oneOf` / `definitions`。
 
 ## 本地开发
 
