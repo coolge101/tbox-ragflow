@@ -59,6 +59,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.11 起 `pytest` 额外校验 `docs/webhook_payload.schema.json` 可解析且含 Draft-07 `oneOf` / `definitions`。
 > S3.12 起 `pytest` 进一步断言 schema 的 `oneOf` 为两条 `$ref`、`definitions` 含 `envelope` 与两种 payload 定义。
 > S3.13 起 `pytest` 断言示例中信封 `sync_id` 与内层 `summary` / `rbac` 的 `sync_id` 一致（与 `notify.py` 行为对齐）。
+> S3.14 起 `pytest` 断言信封 `status` 与内层 `summary.status` / `rbac.status` 一致（缺省按 `unknown`，与 `notify.py` 一致）。
 
 ## 本地开发
 
