@@ -130,3 +130,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.71 起 `start` 日志增加 `schema_hash_alg`（当前 `sha256`）。
 > S3.72 起 `start` 日志增加 `samples_dir`（当前 `docs/examples`）。
 > S3.73 起 `start` 日志增加 `samples_glob`（当前 `*.sample.json`）。
+> S3.74 起 `start` 日志增加 `sort_locale`（当前 `C`）。
