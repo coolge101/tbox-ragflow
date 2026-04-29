@@ -112,3 +112,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.53 起 Node 版本上下文日志也改为单行 JSON（`node_major`/`required_major`/`required_major_source`）。
 > S3.54 起 start/node/done 三类 JSON 日志统一增加 `event` 字段。
 > S3.55 起 start/node/done 三类 JSON 日志统一增加 `component` 字段。
+> S3.56 起 start/node/done 三类 JSON 日志统一增加 `run_id`，用于单次执行内关联。

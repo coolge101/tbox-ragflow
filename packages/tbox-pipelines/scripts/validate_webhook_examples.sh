@@ -14,8 +14,19 @@ epoch_ms() {
   echo "$(( $(date +%s) * 1000 ))"
 }
 
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
+
 start_epoch_ms="$(epoch_ms)"
 started_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+run_id="validate-${start_epoch_ms}-$$"
 if ! command -v node >/dev/null 2>&1; then
   echo "validate_webhook_examples.sh: node is required (CI uses Node 20; see .node-version)." >&2
   exit 1
@@ -45,7 +56,7 @@ if [[ -n "$node_major" ]]; then
   if (( node_major != required_major )); then
     echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
-  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"component\":\"validate_webhook_examples.sh\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$required_major_source\"}"
+  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$(json_escape "$required_major_source")\"}"
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -71,7 +82,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"started_at_utc\":\"$started_at_utc\",\"cwd\":\"$ROOT\",\"schema\":\"$schema\",\"samples\":$sample_count}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"samples\":$sample_count}"
 
 idx=0
 for f in "${samples[@]}"; do
@@ -82,4 +93,4 @@ done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
 finished_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "validate_webhook_examples.sh: done {\"event\":\"done\",\"component\":\"validate_webhook_examples.sh\",\"finished_at_utc\":\"$finished_at_utc\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
+echo "validate_webhook_examples.sh: done {\"event\":\"done\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"finished_at_utc\":\"$(json_escape "$finished_at_utc")\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
