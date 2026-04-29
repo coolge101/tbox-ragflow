@@ -134,3 +134,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.75 起 `start` 日志增加 `sample_count_expected` 字段。
 > S3.76 起 `start` 日志增加 `samples_sorted=true` 字段，明确样本已完成确定性排序。
 > S3.77 起 `start` 日志增加 `schema_exists=true` 字段，显式标识 schema 已通过存在性检查。
+> S3.78 起 `start` 日志增加 `samples_nonempty=true` 字段，显式标识样本存在性检查已通过。
