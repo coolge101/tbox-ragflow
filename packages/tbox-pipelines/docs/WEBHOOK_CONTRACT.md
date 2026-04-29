@@ -43,7 +43,7 @@ bash scripts/validate_webhook_examples.sh
 
 ### CI
 
-The `tbox-pipelines` GitHub Actions job runs `bash scripts/validate_webhook_examples.sh` (Node 20). See `.github/workflows/ci.yml` at the repository root. If you change `webhook_payload.schema.json` or the files under `docs/examples/`, keep them in sync or CI will fail.
+The `tbox-pipelines` GitHub Actions job runs `bash scripts/validate_webhook_examples.sh` (Node 20), which validates **every** `docs/examples/*.sample.json` against the schema. See `.github/workflows/ci.yml` at the repository root. If you change `webhook_payload.schema.json` or add or edit samples under `docs/examples/`, keep them in sync or CI will fail.
 
 ## Example payload files
 
@@ -76,4 +76,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 
 - Increment `WEBHOOK_PAYLOAD_VERSION` in `tbox_pipelines/notify.py` when adding required envelope fields or changing meaning of `type` values.
 - Prefer additive changes inside `summary` / `rbac` without bumping envelope version when possible.
-- When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the files under `docs/examples/`.
+- When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the `docs/examples/*.sample.json` files (CI validates all of them).

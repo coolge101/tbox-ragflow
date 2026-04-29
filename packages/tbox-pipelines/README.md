@@ -52,6 +52,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.4 起在 `docs/WEBHOOK_CONTRACT.md` 写明 CI 与上文 `ajv-cli` 命令一致，便于对照排错。
 > S3.5 起提供 `scripts/validate_webhook_examples.sh`，本地与 CI 共用同一校验入口。
 > S3.6 起脚本在无 `node` 时失败并提示；根目录提供 `.node-version`（20）与 CI 对齐。
+> S3.7 起 `validate_webhook_examples.sh` 遍历 `docs/examples/*.sample.json`，新增示例无需改脚本。
 
 ## 本地开发
 
