@@ -139,5 +139,7 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert isinstance(inner, dict)
     assert "status" in inner
     assert isinstance(inner["status"], str)
-    assert inner.get("sync_id") == data.get("sync_id")
+    assert "sync_id" in inner
+    assert isinstance(inner["sync_id"], str)
+    assert inner["sync_id"] == data.get("sync_id")
     assert data.get("status") == inner.get("status", "unknown")
