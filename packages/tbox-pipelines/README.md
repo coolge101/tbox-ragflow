@@ -134,6 +134,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.86 起 `start` 日志增加 `validator_invocation="npx"` 字段，显式标识校验调用方式。
 > S3.87 起 `start` 日志增加 `validator_auto_install=true` 字段，显式标识 `npx --yes` 自动安装语义。
 > S3.88 起 `start` 日志增加 `validator_schema_draft="draft-07"` 字段，显式标识当前 schema 草案版本。
+> S3.89 起 `start` 日志增加 `schema_hash_verified=true` 字段，显式标识 schema 哈希已计算并写入日志。
 
 ## 本地开发
 
