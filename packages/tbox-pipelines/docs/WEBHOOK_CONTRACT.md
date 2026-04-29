@@ -119,3 +119,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.60 起起始日志增加 `schema_mtime_utc`，便于确认当次 schema 版本。
 > S3.61 起 start/node/sample/done JSON 日志统一增加 `log_version`（当前为 `1`）。
 > S3.62 起 `sample_validate` 日志增加 `sample_type`（由 `<type>.sample.json` 推导）。
+> S3.63 起 `sample_validate` 日志增加 `sample_size_bytes`。
