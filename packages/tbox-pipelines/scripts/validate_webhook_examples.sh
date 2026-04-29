@@ -42,6 +42,7 @@ if [[ -n "$node_major" ]]; then
   if (( node_major != required_major )); then
     echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
+  echo "validate_webhook_examples.sh: node_major=$node_major required_major=$required_major"
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
