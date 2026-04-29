@@ -140,6 +140,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.92 起 `start` 日志增加 `sample_iteration_mode="sequential"` 字段，显式标识样本按顺序逐个校验。
 > S3.93 起 `start` 日志增加 `sample_validation_unit="file"` 字段，显式标识校验粒度为逐文件。
 > S3.94 起 `start` 日志增加 `sample_result_status_field="status"` 字段，显式标识 sample 结果状态字段名。
+> S3.95 起 `start` 日志增加 `sample_elapsed_unit="ms"` 字段，显式标识 sample 级耗时字段单位。
 
 ## 本地开发
 
