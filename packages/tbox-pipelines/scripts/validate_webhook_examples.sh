@@ -89,7 +89,7 @@ echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"v
 idx=0
 for f in "${samples[@]}"; do
   idx=$((idx + 1))
-  echo "==> ajv validate [$idx/$sample_count]: $f"
+  echo "validate_webhook_examples.sh: sample {\"event\":\"sample_validate\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"index\":$idx,\"total\":$sample_count,\"path\":\"$(json_escape "$f")\"}"
   npx --yes ajv-cli validate -s "$schema" -d "$f"
 done
 

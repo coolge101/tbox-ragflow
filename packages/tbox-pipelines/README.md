@@ -103,6 +103,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.55 起 start/node/done 三类 JSON 日志统一增加 `component` 字段。
 > S3.56 起 start/node/done 三类 JSON 日志统一增加 `run_id`，用于单次执行内关联。
 > S3.57 起 `node` 日志增加 `node_version` 与 `npx_version` 字段。
+> S3.58 起每个样本校验日志改为单行 JSON（`sample_validate`，含 index/total/path）。
 
 ## 本地开发
 
