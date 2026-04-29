@@ -35,7 +35,7 @@ Canonical schema (Draft 07 `oneOf` for the two payload shapes):
 
 - [`webhook_payload.schema.json`](webhook_payload.schema.json)
 
-Validate locally (requires Node/npm; uses [ajv-cli](https://www.npmjs.com/package/ajv-cli) via `npx --yes`). From `packages/tbox-pipelines`:
+Validate locally (requires Node/npm; uses [ajv-cli](https://www.npmjs.com/package/ajv-cli) via `npx --yes`). Use Node **20** to match CI (this package ships [`.node-version`](../.node-version) for nvm/fnm/volta). From `packages/tbox-pipelines`:
 
 ```bash
 bash scripts/validate_webhook_examples.sh
