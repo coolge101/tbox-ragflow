@@ -48,6 +48,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.0 起约定 webhook 信封字段 `payload_version`，并文档化负载契约（见 `docs/WEBHOOK_CONTRACT.md`）。
 > S3.1 起提供 Draft-07 JSON Schema（`docs/webhook_payload.schema.json`）及文档内 `curl` 示例负载。
 > S3.2 起在 `docs/examples/` 提供可校验、可复制的示例 JSON 文件。
+> S3.3 起 CI（`.github/workflows/ci.yml`）用 `ajv-cli` 校验示例与 `docs/webhook_payload.schema.json` 一致。
 
 ## 本地开发
 

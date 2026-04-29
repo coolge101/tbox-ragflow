@@ -44,5 +44,14 @@ jobs:
       - name: Ruff format (check only)
         run: ruff format --check src tests
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate webhook example JSON (JSON Schema)
+        run: |
+          npx --yes ajv-cli validate -s docs/webhook_payload.schema.json -d docs/examples/tbox_sync_summary.sample.json
+          npx --yes ajv-cli validate -s docs/webhook_payload.schema.json -d docs/examples/tbox_rbac_alert.sample.json
+
       - name: Pytest
         run: pytest -q
