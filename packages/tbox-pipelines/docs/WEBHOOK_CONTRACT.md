@@ -125,3 +125,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.66 起 `start` 日志增加 `schema_sha256`，用于 schema 内容指纹追踪。
 > S3.67 起 `start` 日志增加 `schema_size_bytes`。
 > S3.68 起 `start` 日志增加 `samples_total_bytes`。
+> S3.69 起 `sample_validate` 日志增加 `schema_sha256`，便于单行关联 schema 指纹。
