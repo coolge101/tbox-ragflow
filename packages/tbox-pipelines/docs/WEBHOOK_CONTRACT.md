@@ -45,6 +45,8 @@ bash scripts/validate_webhook_examples.sh
 
 The `tbox-pipelines` GitHub Actions job runs `bash scripts/validate_webhook_examples.sh` (Node 20), which validates **every** `docs/examples/*.sample.json` against the schema. See `.github/workflows/ci.yml` at the repository root. If you change `webhook_payload.schema.json` or add or edit samples under `docs/examples/`, keep them in sync or CI will fail.
 
+`pytest` also loads the same `*.sample.json` files for a small envelope smoke check (`payload_version`, `type`, `status`, `sync_id`, and `summary` / `rbac`), without Node.
+
 ## Example payload files
 
 Checked-in copies you can send or validate as-is:
