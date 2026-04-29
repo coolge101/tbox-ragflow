@@ -149,3 +149,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.90 起 `start` 日志增加 `samples_bytes_computed=true` 字段，显式标识样本总字节数已完成计算。
 > S3.91 起 `start` 日志增加 `samples_glob_applied=true` 字段，显式标识样本 glob 已应用于本次扫描。
 > S3.92 起 `start` 日志增加 `sample_iteration_mode="sequential"` 字段，显式标识样本按顺序逐个校验。
+> S3.93 起 `start` 日志增加 `sample_validation_unit="file"` 字段，显式标识校验粒度为逐文件。
