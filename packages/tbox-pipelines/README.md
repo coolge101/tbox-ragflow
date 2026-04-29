@@ -109,6 +109,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.61 起 start/node/sample/done JSON 日志统一增加 `log_version`（当前为 `1`）。
 > S3.62 起 `sample_validate` 日志增加 `sample_type`（由 `<type>.sample.json` 推导）。
 > S3.63 起 `sample_validate` 日志增加 `sample_size_bytes`。
+> S3.64 起 `sample_validate` 日志增加 `sample_sha256`。
 
 ## 本地开发
 
