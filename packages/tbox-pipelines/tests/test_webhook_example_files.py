@@ -138,6 +138,8 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     body_key = _inner_payload_key_for_type(ptype)
     for k in ("payload_version", "type", "status", "sync_id", body_key):
         assert k in data
+    expected_top_level = {"payload_version", "type", "status", "sync_id", body_key}
+    assert set(data) == expected_top_level
     assert data["sync_id"], "sample envelope sync_id should be non-empty"
     disallowed = _WEBHOOK_PAYLOAD_TYPES - {ptype}
     for other in disallowed:
