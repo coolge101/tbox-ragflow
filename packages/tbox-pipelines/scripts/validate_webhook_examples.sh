@@ -15,6 +15,7 @@ epoch_ms() {
 }
 
 start_epoch_ms="$(epoch_ms)"
+started_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 if ! command -v node >/dev/null 2>&1; then
   echo "validate_webhook_examples.sh: node is required (CI uses Node 20; see .node-version)." >&2
   exit 1
@@ -68,7 +69,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: schema=$schema samples=$sample_count"
+echo "validate_webhook_examples.sh: started_at_utc=$started_at_utc schema=$schema samples=$sample_count"
 
 idx=0
 for f in "${samples[@]}"; do

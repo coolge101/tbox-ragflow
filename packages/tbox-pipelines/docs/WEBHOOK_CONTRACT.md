@@ -101,3 +101,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.42 起 `elapsed_ms` 采用毫秒级时间源（`EPOCHREALTIME` 优先），短任务耗时更准确。
 > S3.43 起脚本会输出 `node_major` 与 `required_major`，便于 CI 排障。
 > S3.44 起脚本在每个样本校验日志中输出进度 `[i/N]`。
+> S3.45 起脚本起始日志增加 `started_at_utc`。
