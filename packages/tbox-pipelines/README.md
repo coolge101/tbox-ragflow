@@ -77,6 +77,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.29 起 `pytest` 断言示例中的 `payload_version` 为严格整数（不允许 bool）。
 > S3.30 起 `scripts/validate_webhook_examples.sh` 检测本地 Node 主版本需 >= 20（CI uses Node 20）。
 > S3.31 起 `validate_webhook_examples.sh` 检查本地 `npx` 是否可用（缺失则提示安装 npm/Node）。
+> S3.32 起 CI 的 `actions/setup-node` 使用 `packages/tbox-pipelines/.node-version` 读取 Node 版本，避免版本漂移。
 
 ## 本地开发
 
