@@ -94,3 +94,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.35 起 CI 额外跑 `bash -n` 校验 validate 脚本语法。
 > S3.36 起 CI 将 `bash -n` 提前到 `setup-node` 之前执行。
 > S3.37 起 CI 额外校验 `.node-version` 为纯数字 Node major。
+> S3.38 起脚本对示例文件排序使用 `LC_ALL=C sort`，避免不同 locale 下排序漂移。
