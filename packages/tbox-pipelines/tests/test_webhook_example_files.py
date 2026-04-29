@@ -133,6 +133,7 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert ptype == expected_type
     assert ptype in _WEBHOOK_PAYLOAD_TYPES
     assert isinstance(data.get("status"), str)
+    assert data["status"], "sample envelope status should be non-empty"
     assert isinstance(data.get("sync_id"), str)
     body_key = _inner_payload_key_for_type(ptype)
     for k in ("payload_version", "type", "status", "sync_id", body_key):
@@ -142,6 +143,7 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert isinstance(inner, dict)
     assert "status" in inner
     assert isinstance(inner["status"], str)
+    assert inner["status"], "sample inner status should be non-empty"
     assert "sync_id" in inner
     assert isinstance(inner["sync_id"], str)
     assert inner["sync_id"] == data["sync_id"]
