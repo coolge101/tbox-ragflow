@@ -7,12 +7,29 @@ import pytest
 
 from tbox_pipelines.notify import WEBHOOK_PAYLOAD_VERSION
 
-# Must match schema oneOf / definitions for payload shapes (not envelope).
-_WEBHOOK_PAYLOAD_TYPES = frozenset({"tbox_sync_summary", "tbox_rbac_alert"})
-
 _DOCS = Path(__file__).resolve().parent.parent / "docs"
 _DOCS_EXAMPLES = _DOCS / "examples"
 _SCHEMA_PATH = _DOCS / "webhook_payload.schema.json"
+
+
+def _webhook_payload_types_from_schema() -> frozenset[str]:
+    """Payload `type` values from schema root `oneOf` (`#/definitions/<name>` refs)."""
+    data = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    one_of = data.get("oneOf")
+    if not isinstance(one_of, list):
+        return frozenset()
+    names: set[str] = set()
+    for item in one_of:
+        if not isinstance(item, dict):
+            continue
+        ref = item.get("$ref")
+        if not isinstance(ref, str) or not ref.startswith("#/definitions/"):
+            continue
+        names.add(ref.removeprefix("#/definitions/"))
+    return frozenset(names)
+
+
+_WEBHOOK_PAYLOAD_TYPES = _webhook_payload_types_from_schema()
 
 
 def _sample_json_paths() -> list[Path]:
@@ -20,16 +37,17 @@ def _sample_json_paths() -> list[Path]:
 
 
 def test_webhook_payload_schema_parses() -> None:
+    assert len(_WEBHOOK_PAYLOAD_TYPES) >= 2
     data = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
     assert isinstance(data, dict)
     assert data.get("$schema") == "http://json-schema.org/draft-07/schema#"
     one_of = data.get("oneOf")
-    assert isinstance(one_of, list) and len(one_of) == 2
+    assert isinstance(one_of, list) and len(one_of) == len(_WEBHOOK_PAYLOAD_TYPES)
     defs = data.get("definitions")
     assert isinstance(defs, dict)
     assert "envelope" in defs
-    assert "tbox_sync_summary" in defs
-    assert "tbox_rbac_alert" in defs
+    for t in _WEBHOOK_PAYLOAD_TYPES:
+        assert t in defs
     refs = {item.get("$ref") for item in one_of if isinstance(item, dict)}
     assert refs == {f"#/definitions/{t}" for t in _WEBHOOK_PAYLOAD_TYPES}
 
@@ -60,8 +78,10 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
         assert isinstance(inner, dict)
         assert inner.get("sync_id") == data.get("sync_id")
         assert data.get("status") == inner.get("status", "unknown")
-    else:
+    elif ptype == "tbox_rbac_alert":
         inner = data.get("rbac")
         assert isinstance(inner, dict)
         assert inner.get("sync_id") == data.get("sync_id")
         assert data.get("status") == inner.get("status", "unknown")
+    else:
+        pytest.fail(f"add envelope assertions for payload type {ptype!r}")
