@@ -64,45 +64,90 @@ def _emit_rbac_event(
         event["error"] = error
     append_rbac_audit_record(config.rbac_audit_log_path, event)
     should_alert = should_notify_rbac_event(event, config.rbac_alert_high_risk_reasons)
-    if should_alert and _should_emit_rbac_alert(event, config):
-        notified = send_webhook_notification(config.rbac_alert_webhook_url, event)
+    if not should_alert:
+        return
+    emit, suppressed_in_window = _apply_rbac_alert_dedupe(event, config)
+    if not emit:
+        return
+    webhook_payload = {**event, "rbac_alert_suppressed_in_window": suppressed_in_window}
+    notified = send_webhook_notification(config.rbac_alert_webhook_url, webhook_payload)
+    if suppressed_in_window > 0:
         logger.info(
-            "rbac_notify reason=%s sync_id=%s notified=%s",
+            "rbac_notify_aggregate suppressed_in_window=%s reason=%s sync_id=%s",
+            suppressed_in_window,
             event.get("reason"),
             event.get("sync_id"),
-            notified,
         )
+    logger.info(
+        "rbac_notify reason=%s sync_id=%s notified=%s",
+        event.get("reason"),
+        event.get("sync_id"),
+        notified,
+    )
 
 
-def _should_emit_rbac_alert(event: dict[str, Any], config) -> bool:
-    dedupe_window = int(config.rbac_alert_dedupe_window_seconds)
-    if dedupe_window <= 0:
-        return True
-    key = "|".join(
+def _rbac_dedupe_key(event: dict[str, Any]) -> str:
+    return "|".join(
         [
             str(event.get("reason", "")),
             str(event.get("rbac_policy_fingerprint", "")),
             str(event.get("actor_role", "")),
         ]
     )
+
+
+def _load_rbac_dedupe_state(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        return raw if isinstance(raw, dict) else {}
+    except Exception:
+        return {}
+
+
+def _normalize_dedupe_entry(raw: Any) -> dict[str, int]:
+    if isinstance(raw, dict):
+        return {
+            "last_sent_ts": int(raw.get("last_sent_ts", 0)),
+            "suppressed_count": int(raw.get("suppressed_count", 0)),
+        }
+    if isinstance(raw, int):
+        return {"last_sent_ts": raw, "suppressed_count": 0}
+    return {"last_sent_ts": 0, "suppressed_count": 0}
+
+
+def _apply_rbac_alert_dedupe(event: dict[str, Any], config) -> tuple[bool, int]:
+    """Return (emit_webhook, suppressed_count_since_last_emit)."""
+    dedupe_window = int(config.rbac_alert_dedupe_window_seconds)
+    if dedupe_window <= 0:
+        return True, 0
+    key = _rbac_dedupe_key(event)
     now = int(time.time())
     state_path = Path(config.rbac_alert_dedupe_state_path)
     state_path.parent.mkdir(parents=True, exist_ok=True)
-    state: dict[str, int] = {}
-    if state_path.exists():
-        try:
-            raw = json.loads(state_path.read_text(encoding="utf-8"))
-            if isinstance(raw, dict):
-                state = {str(k): int(v) for k, v in raw.items()}
-        except Exception:
-            state = {}
-    last_ts = state.get(key, 0)
-    if now - last_ts < dedupe_window:
-        logger.info("rbac_notify_suppressed key=%s dedupe_window=%s", key, dedupe_window)
-        return False
-    state[key] = now
+    state = _load_rbac_dedupe_state(state_path)
+
+    entry = _normalize_dedupe_entry(state.get(key))
+    last_ts = entry["last_sent_ts"]
+    suppressed = entry["suppressed_count"]
+
+    if last_ts > 0 and now - last_ts < dedupe_window:
+        entry["suppressed_count"] = suppressed + 1
+        state[key] = entry
+        state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+        logger.info(
+            "rbac_notify_suppressed key=%s dedupe_window=%s suppressed_count=%s",
+            key,
+            dedupe_window,
+            entry["suppressed_count"],
+        )
+        return False, 0
+
+    suppressed_for_payload = suppressed
+    state[key] = {"last_sent_ts": now, "suppressed_count": 0}
     state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
-    return True
+    return True, suppressed_for_payload
 
 
 def run_sync(config_path: str | None = None) -> int:

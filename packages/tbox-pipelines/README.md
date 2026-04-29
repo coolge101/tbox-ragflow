@@ -43,6 +43,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S2.5 起将 RBAC 事件单独写入 `rbac_audit_log_path`，与业务同步审计解耦。
 > S2.6 起支持 RBAC 高风险失败事件独立告警（默认仅 `permission_denied`）。
 > S2.7 起对 RBAC 告警做时间窗去重（`reason+fingerprint+role`）。
+> S2.8 起在去重窗口内累计抑制次数，下次允许发送时在 webhook 负载中带 `rbac_alert_suppressed_in_window` 汇总。
 
 ## 本地开发
 
