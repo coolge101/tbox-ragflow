@@ -7,6 +7,9 @@ import pytest
 
 from tbox_pipelines.notify import WEBHOOK_PAYLOAD_VERSION
 
+# Must match schema oneOf / definitions for payload shapes (not envelope).
+_WEBHOOK_PAYLOAD_TYPES = frozenset({"tbox_sync_summary", "tbox_rbac_alert"})
+
 _DOCS = Path(__file__).resolve().parent.parent / "docs"
 _DOCS_EXAMPLES = _DOCS / "examples"
 _SCHEMA_PATH = _DOCS / "webhook_payload.schema.json"
@@ -28,14 +31,16 @@ def test_webhook_payload_schema_parses() -> None:
     assert "tbox_sync_summary" in defs
     assert "tbox_rbac_alert" in defs
     refs = {item.get("$ref") for item in one_of if isinstance(item, dict)}
-    assert refs == {
-        "#/definitions/tbox_sync_summary",
-        "#/definitions/tbox_rbac_alert",
-    }
+    assert refs == {f"#/definitions/{t}" for t in _WEBHOOK_PAYLOAD_TYPES}
 
 
 def test_webhook_example_samples_exist() -> None:
     assert _sample_json_paths(), "expected docs/examples/*.sample.json for webhook contract smoke"
+
+
+def test_webhook_example_samples_cover_all_payload_types() -> None:
+    types_from_names = {p.name.removesuffix(".sample.json") for p in _sample_json_paths()}
+    assert types_from_names == _WEBHOOK_PAYLOAD_TYPES
 
 
 @pytest.mark.parametrize("path", _sample_json_paths(), ids=lambda p: p.name)
@@ -47,7 +52,7 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert data.get("payload_version") == WEBHOOK_PAYLOAD_VERSION
     ptype = data.get("type")
     assert ptype == expected_type
-    assert ptype in ("tbox_sync_summary", "tbox_rbac_alert")
+    assert ptype in _WEBHOOK_PAYLOAD_TYPES
     assert isinstance(data.get("status"), str)
     assert isinstance(data.get("sync_id"), str)
     if ptype == "tbox_sync_summary":
