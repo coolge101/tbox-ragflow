@@ -75,9 +75,10 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.27 起 `pytest` 断言示例中 `type`/`status`/`sync_id` 无首尾空白。
 > S3.28 起 `pytest` 对示例改为校验信封 `status` 与内层 `status` 直接相等。
 > S3.29 起 `pytest` 断言示例中的 `payload_version` 为严格整数（不允许 bool）。
-> S3.30 起 `scripts/validate_webhook_examples.sh` 检测本地 Node 主版本需 >= 20（CI uses Node 20）。
+> S3.30 起 `scripts/validate_webhook_examples.sh` 从 `packages/tbox-pipelines/.node-version` 读取目标 Node 主版本，并要求本地 Node >= 该主版本（CI uses Node 20）。
 > S3.31 起 `validate_webhook_examples.sh` 检查本地 `npx` 是否可用（缺失则提示安装 npm/Node）。
 > S3.32 起 CI 的 `actions/setup-node` 使用 `packages/tbox-pipelines/.node-version` 读取 Node 版本，避免版本漂移。
+> S3.33 起脚本在缺失/解析失败时默认 required Node major=20，并给出明确提示。
 
 ## 本地开发
 
