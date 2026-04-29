@@ -65,6 +65,28 @@ def _inner_payload_key_for_type(typename: str) -> str:
     return uniq[0]
 
 
+def _type_const_from_definition(typename: str) -> str | None:
+    """`properties.type.const` from definitions.<typename> allOf (if present)."""
+    defs = _SCHEMA_DATA.get("definitions")
+    if not isinstance(defs, dict):
+        return None
+    d = defs.get(typename)
+    if not isinstance(d, dict):
+        return None
+    for part in d.get("allOf", []):
+        if not isinstance(part, dict):
+            continue
+        props = part.get("properties")
+        if not isinstance(props, dict):
+            continue
+        tspec = props.get("type")
+        if isinstance(tspec, dict) and "const" in tspec:
+            c = tspec.get("const")
+            if isinstance(c, str):
+                return c
+    return None
+
+
 def _sample_json_paths() -> list[Path]:
     return sorted(_DOCS_EXAMPLES.glob("*.sample.json"))
 
@@ -83,6 +105,12 @@ def test_webhook_payload_schema_parses() -> None:
         assert t in defs
     refs = {item.get("$ref") for item in one_of if isinstance(item, dict)}
     assert refs == {f"#/definitions/{t}" for t in _WEBHOOK_PAYLOAD_TYPES}
+
+
+def test_webhook_payload_schema_type_const_matches_definition() -> None:
+    for t in _WEBHOOK_PAYLOAD_TYPES:
+        const = _type_const_from_definition(t)
+        assert const == t, f"definitions.{t} properties.type.const should be {t!r}, got {const!r}"
 
 
 def test_webhook_example_samples_exist() -> None:

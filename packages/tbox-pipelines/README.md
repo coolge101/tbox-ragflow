@@ -64,6 +64,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.16 起 `pytest` 断言 `docs/examples/*.sample.json` 的文件名集合与 schema 中全部 payload `type` 一致（各一条示例）。
 > S3.17 起从 `webhook_payload.schema.json` 的 `oneOf` 解析 payload `type` 集合，避免与 schema 手工双写常量。
 > S3.18 起从各 payload 定义的 `allOf[].required` 解析内层对象键（如 `summary`/`rbac`），信封断言不再硬编码分支。
+> S3.19 起 `pytest` 断言各 payload definition 中 `properties.type.const` 与 definition 名（及信封 `type`）一致。
 
 ## 本地开发
 
