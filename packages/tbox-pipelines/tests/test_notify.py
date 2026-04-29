@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from tbox_pipelines.notify import (
+    WEBHOOK_PAYLOAD_VERSION,
     send_rbac_webhook_notification,
     send_webhook_notification,
     should_notify,
@@ -50,6 +51,7 @@ def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> N
     assert ok
     assert len(_DummyClient.calls) == 1
     call = _DummyClient.calls[0]
+    assert call["json"]["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert call["json"]["type"] == "tbox_sync_summary"
 
 
@@ -70,6 +72,7 @@ def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch)
     assert ok
     assert len(_DummyClient.calls) == 1
     body = _DummyClient.calls[0]["json"]
+    assert body["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert body["type"] == "tbox_rbac_alert"
     assert body["sync_id"] == "s1"
     assert body["status"] == "failed"

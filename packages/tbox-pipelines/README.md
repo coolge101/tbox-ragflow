@@ -45,6 +45,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S2.7 起对 RBAC 告警做时间窗去重（`reason+fingerprint+role`）。
 > S2.8 起在去重窗口内累计抑制次数，下次允许发送时在 webhook 负载中带 `rbac_alert_suppressed_in_window` 汇总。
 > S2.9 起 RBAC 告警 webhook 使用独立负载类型 `tbox_rbac_alert`（`rbac` 字段承载完整事件），与 `tbox_sync_summary` 区分。
+> S3.0 起约定 webhook 信封字段 `payload_version`，并文档化负载契约（见 `docs/WEBHOOK_CONTRACT.md`）。
 
 ## 本地开发
 
@@ -101,3 +102,5 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 - 配置 `notify_webhook_url` 后，`run_sync` 会在失败时发送 JSON 告警。
 - 若 `notify_on_success=true`，成功也会通知。
 - 通知失败不会中断主流程，会记录 `sync_notify` 日志。
+- RBAC 高风险告警使用 `TBOX_RBAC_ALERT_WEBHOOK_URL`，负载类型为 `tbox_rbac_alert`（与同步的 `tbox_sync_summary` 不同）。
+- 负载契约与字段说明：**[docs/WEBHOOK_CONTRACT.md](docs/WEBHOOK_CONTRACT.md)**。
