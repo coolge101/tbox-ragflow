@@ -106,3 +106,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.47 起脚本会输出 `required_major_source`（`file`/`default`）。
 > S3.48 起脚本起始日志增加 `cwd`。
 > S3.49 起脚本收尾日志显式输出 `failed=0`（成功路径）。
+> S3.50 起脚本收尾日志字段顺序固定为 `finished_at_utc elapsed_ms validated failed`，便于稳定解析。
