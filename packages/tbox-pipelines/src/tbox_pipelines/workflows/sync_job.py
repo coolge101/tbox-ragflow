@@ -11,6 +11,7 @@ from tbox_pipelines.audit import append_audit_record, append_rbac_audit_record
 from tbox_pipelines.config import load_config
 from tbox_pipelines.ingest.sources import fetch_documents
 from tbox_pipelines.notify import (
+    send_rbac_webhook_notification,
     send_webhook_notification,
     should_notify,
     should_notify_rbac_event,
@@ -70,7 +71,7 @@ def _emit_rbac_event(
     if not emit:
         return
     webhook_payload = {**event, "rbac_alert_suppressed_in_window": suppressed_in_window}
-    notified = send_webhook_notification(config.rbac_alert_webhook_url, webhook_payload)
+    notified = send_rbac_webhook_notification(config.rbac_alert_webhook_url, webhook_payload)
     if suppressed_in_window > 0:
         logger.info(
             "rbac_notify_aggregate suppressed_in_window=%s reason=%s sync_id=%s",
