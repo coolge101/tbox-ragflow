@@ -27,11 +27,13 @@ node_major="$(
 if [[ -n "$node_major" ]]; then
   node_version_file="$ROOT/.node-version"
   required_major=""
+  required_major_source="file"
   if [[ -f "$node_version_file" ]]; then
     required_major="$(cat "$node_version_file" | awk -F. '{print $1}' | tr -cd '0-9' || echo "")"
   fi
   if [[ -z "$required_major" ]]; then
     required_major="20"
+    required_major_source="default"
     echo "validate_webhook_examples.sh: warning: invalid or missing .node-version; defaulting required Node major to 20." >&2
   fi
 
@@ -43,7 +45,7 @@ if [[ -n "$node_major" ]]; then
   if (( node_major != required_major )); then
     echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
-  echo "validate_webhook_examples.sh: node_major=$node_major required_major=$required_major"
+  echo "validate_webhook_examples.sh: node_major=$node_major required_major=$required_major required_major_source=$required_major_source"
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
