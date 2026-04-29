@@ -92,3 +92,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.34 起 `validate_webhook_examples.sh` 会对 `docs/examples/*.sample.json` 排序，输出/执行顺序更确定。
 
 > S3.35 起 CI 额外跑 `bash -n` 校验 validate 脚本语法。
+> S3.36 起 CI 将 `bash -n` 提前到 `setup-node` 之前执行。
