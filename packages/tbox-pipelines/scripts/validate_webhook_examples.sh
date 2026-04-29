@@ -45,7 +45,7 @@ if [[ -n "$node_major" ]]; then
   if (( node_major != required_major )); then
     echo "validate_webhook_examples.sh: warning: CI uses Node major v$required_major; you are running Node v${node_major}.x." >&2
   fi
-  echo "validate_webhook_examples.sh: node {\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$required_major_source\"}"
+  echo "validate_webhook_examples.sh: node {\"event\":\"node\",\"node_major\":$node_major,\"required_major\":$required_major,\"required_major_source\":\"$required_major_source\"}"
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -71,7 +71,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: start {\"started_at_utc\":\"$started_at_utc\",\"cwd\":\"$ROOT\",\"schema\":\"$schema\",\"samples\":$sample_count}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"started_at_utc\":\"$started_at_utc\",\"cwd\":\"$ROOT\",\"schema\":\"$schema\",\"samples\":$sample_count}"
 
 idx=0
 for f in "${samples[@]}"; do
@@ -82,4 +82,4 @@ done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
 finished_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "validate_webhook_examples.sh: done {\"finished_at_utc\":\"$finished_at_utc\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
+echo "validate_webhook_examples.sh: done {\"event\":\"done\",\"finished_at_utc\":\"$finished_at_utc\",\"elapsed_ms\":$elapsed_ms,\"validated\":$sample_count,\"failed\":0}"
