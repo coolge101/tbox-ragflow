@@ -129,6 +129,8 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     expected_type = path.name.removesuffix(".sample.json")
     assert expected_type
     assert data.get("payload_version") == WEBHOOK_PAYLOAD_VERSION
+    pv = data["payload_version"]
+    assert isinstance(pv, int) and not isinstance(pv, bool)
     ptype = data.get("type")
     assert ptype == expected_type
     assert ptype == ptype.strip()

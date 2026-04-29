@@ -74,6 +74,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.26 起 `pytest` 断言内层对象非空且键名为非空白字符串，减少脏样本。
 > S3.27 起 `pytest` 断言示例中 `type`/`status`/`sync_id` 无首尾空白。
 > S3.28 起 `pytest` 对示例改为校验信封 `status` 与内层 `status` 直接相等。
+> S3.29 起 `pytest` 断言示例中的 `payload_version` 为严格整数（不允许 bool）。
 
 ## 本地开发
 
