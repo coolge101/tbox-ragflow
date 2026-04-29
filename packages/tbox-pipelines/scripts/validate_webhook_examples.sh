@@ -71,6 +71,9 @@ if [[ ! -f "$schema" ]]; then
   echo "validate_webhook_examples.sh: missing $schema (run from packages/tbox-pipelines)." >&2
   exit 1
 fi
+schema_mtime_utc="$(
+  date -u -r "$schema" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "unknown"
+)"
 shopt -s nullglob
 samples=(docs/examples/*.sample.json)
 if ((${#samples[@]} == 0)); then
@@ -84,7 +87,7 @@ IFS=$'\n' samples=($(printf '%s\n' "${samples[@]}" | LC_ALL=C sort))
 unset IFS
 
 sample_count="${#samples[@]}"
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"samples\":$sample_count}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"samples\":$sample_count}"
 
 idx=0
 for f in "${samples[@]}"; do

@@ -116,3 +116,4 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.57 起 `node` 日志增加 `node_version` 与 `npx_version` 字段。
 > S3.58 起每个样本校验日志改为单行 JSON（`sample_validate`，含 index/total/path）。
 > S3.59 起 `sample_validate` 日志增加 `status` 与单样本 `elapsed_ms`。
+> S3.60 起起始日志增加 `schema_mtime_utc`，便于确认当次 schema 版本。
