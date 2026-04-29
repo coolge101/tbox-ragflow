@@ -92,6 +92,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.44 起脚本在每个样本校验日志中输出进度 `[i/N]`。
 > S3.45 起脚本起始日志增加 `started_at_utc`。
 > S3.46 起脚本收尾日志增加 `finished_at_utc`。
+> S3.47 起脚本会输出 `required_major_source`（`file`/`default`）。
 
 ## 本地开发
 
