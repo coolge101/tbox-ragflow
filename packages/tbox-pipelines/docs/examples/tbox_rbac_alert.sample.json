@@ -1,0 +1,18 @@
+{
+  "payload_version": 1,
+  "type": "tbox_rbac_alert",
+  "status": "failed",
+  "sync_id": "a1b2c3d4e5f6",
+  "rbac": {
+    "sync_id": "a1b2c3d4e5f6",
+    "status": "failed",
+    "reason": "permission_denied",
+    "actor_role": "viewer",
+    "error": "RBAC denied action='sync:run' for role='viewer'.",
+    "rbac_policy_source": "builtin:default",
+    "rbac_policy_fingerprint": "0123456789abcdef",
+    "rbac_policy_version": "",
+    "rbac_policy_release_tag": "",
+    "rbac_alert_suppressed_in_window": 0
+  }
+}

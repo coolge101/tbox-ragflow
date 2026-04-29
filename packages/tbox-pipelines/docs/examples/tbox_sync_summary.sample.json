@@ -1,0 +1,16 @@
+{
+  "payload_version": 1,
+  "type": "tbox_sync_summary",
+  "status": "failed",
+  "sync_id": "a1b2c3d4e5f6",
+  "summary": {
+    "sync_id": "a1b2c3d4e5f6",
+    "status": "failed",
+    "reason": "dataset_not_resolved",
+    "documents_fetched": 0,
+    "resolved_dataset_id": "",
+    "uploaded_doc_ids": [],
+    "run_triggered": false,
+    "auto_run_after_upload": true
+  }
+}
