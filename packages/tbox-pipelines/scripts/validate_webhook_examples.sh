@@ -68,6 +68,7 @@ if ! command -v npx >/dev/null 2>&1; then
 fi
 
 schema="docs/webhook_payload.schema.json"
+samples_dir="docs/examples"
 if [[ ! -f "$schema" ]]; then
   echo "validate_webhook_examples.sh: missing $schema (run from packages/tbox-pipelines)." >&2
   exit 1
@@ -78,7 +79,7 @@ schema_mtime_utc="$(
 schema_size_bytes="$(wc -c < "$schema" | tr -d '[:space:]')"
 schema_sha256="$(sha256sum "$schema" | awk '{print $1}')"
 shopt -s nullglob
-samples=(docs/examples/*.sample.json)
+samples=("$samples_dir"/*.sample.json)
 if ((${#samples[@]} == 0)); then
   echo "validate_webhook_examples.sh: no docs/examples/*.sample.json found." >&2
   exit 1
@@ -94,7 +95,7 @@ samples_total_bytes=0
 for f in "${samples[@]}"; do
   samples_total_bytes=$((samples_total_bytes + $(wc -c < "$f" | tr -d '[:space:]')))
 done
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_hash_alg\":\"sha256\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples\":$sample_count,\"samples_total_bytes\":$samples_total_bytes}"
+echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_hash_alg\":\"sha256\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples_dir\":\"$(json_escape "$samples_dir")\",\"samples\":$sample_count,\"samples_total_bytes\":$samples_total_bytes}"
 
 idx=0
 for f in "${samples[@]}"; do
