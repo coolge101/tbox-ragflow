@@ -88,6 +88,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.40 起脚本结束时打印 `done validated=<N>` 收尾日志。
 > S3.41 起脚本收尾日志增加 `elapsed_ms`，便于观察校验阶段耗时。
 > S3.42 起 `elapsed_ms` 采用毫秒级时间源（`EPOCHREALTIME` 优先），短任务耗时更准确。
+> S3.43 起脚本会输出 `node_major` 与 `required_major`，便于 CI 排障。
 
 ## 本地开发
 
