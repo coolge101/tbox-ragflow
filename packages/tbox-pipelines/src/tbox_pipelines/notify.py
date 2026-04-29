@@ -7,6 +7,9 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Bump when envelope or semantics change for receivers that branch on version.
+WEBHOOK_PAYLOAD_VERSION = 1
+
 
 def send_webhook_notification(
     webhook_url: str,
@@ -17,6 +20,7 @@ def send_webhook_notification(
         return False
 
     payload = {
+        "payload_version": WEBHOOK_PAYLOAD_VERSION,
         "type": "tbox_sync_summary",
         "status": summary.get("status", "unknown"),
         "sync_id": summary.get("sync_id", ""),
@@ -46,6 +50,7 @@ def send_rbac_webhook_notification(
         return False
 
     payload = {
+        "payload_version": WEBHOOK_PAYLOAD_VERSION,
         "type": "tbox_rbac_alert",
         "status": rbac_event.get("status", "unknown"),
         "sync_id": rbac_event.get("sync_id", ""),
