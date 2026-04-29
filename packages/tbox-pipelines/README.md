@@ -51,6 +51,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.3 起 CI（`.github/workflows/ci.yml`）用 `ajv-cli` 校验示例与 `docs/webhook_payload.schema.json` 一致。
 > S3.4 起在 `docs/WEBHOOK_CONTRACT.md` 写明 CI 与上文 `ajv-cli` 命令一致，便于对照排错。
 > S3.5 起提供 `scripts/validate_webhook_examples.sh`，本地与 CI 共用同一校验入口。
+> S3.6 起脚本在无 `node` 时失败并提示；根目录提供 `.node-version`（20）与 CI 对齐。
 
 ## 本地开发
 
@@ -62,7 +63,7 @@ python -m tbox_pipelines.cli sync --config config/pipeline.sample.json
 # optional: export RAGFLOW_AUTO_RUN=false to upload without triggering parse run
 ```
 
-可选：校验 webhook 示例与 Schema（需 Node/npm，与 CI 相同）：
+可选：校验 webhook 示例与 Schema（需 Node 20 与 npm，与 CI 相同；可用 `.node-version` + nvm/fnm/volta 切换）：
 
 ```bash
 bash scripts/validate_webhook_examples.sh
