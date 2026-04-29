@@ -93,10 +93,11 @@ echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"v
 idx=0
 for f in "${samples[@]}"; do
   idx=$((idx + 1))
+  sample_type="$(basename "$f" .sample.json)"
   sample_start_ms="$(epoch_ms)"
   npx --yes ajv-cli validate -s "$schema" -d "$f"
   sample_elapsed_ms="$(( $(epoch_ms) - sample_start_ms ))"
-  echo "validate_webhook_examples.sh: sample {\"event\":\"sample_validate\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"index\":$idx,\"total\":$sample_count,\"path\":\"$(json_escape "$f")\",\"status\":\"ok\",\"elapsed_ms\":$sample_elapsed_ms}"
+  echo "validate_webhook_examples.sh: sample {\"event\":\"sample_validate\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"index\":$idx,\"total\":$sample_count,\"path\":\"$(json_escape "$f")\",\"sample_type\":\"$(json_escape "$sample_type")\",\"status\":\"ok\",\"elapsed_ms\":$sample_elapsed_ms}"
 done
 
 elapsed_ms="$(( $(epoch_ms) - start_epoch_ms ))"
