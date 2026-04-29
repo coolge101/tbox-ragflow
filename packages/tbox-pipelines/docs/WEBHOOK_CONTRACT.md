@@ -90,3 +90,5 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.32 起 CI 的 `actions/setup-node` 使用 `packages/tbox-pipelines/.node-version` 读取 Node 版本，避免与脚本/文档版本漂移。
 > S3.33 起脚本在缺失/解析失败时默认 required Node major=20，并给出明确提示。
 > S3.34 起 `validate_webhook_examples.sh` 会对 `docs/examples/*.sample.json` 排序，输出/执行顺序更确定。
+
+> S3.35 起 CI 额外跑 `bash -n` 校验 validate 脚本语法。
