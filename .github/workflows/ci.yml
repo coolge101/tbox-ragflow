@@ -51,8 +51,12 @@ jobs:
         run: |
           echo "::group::alert-docs-link-gate"
           python scripts/validate_alert_docs_links.py --verbose | tee /tmp/alert_docs_gate.log
-          summary_line="$(python -c "import pathlib; p='validate_alert_docs_links.py: summary '; lines=pathlib.Path('/tmp/alert_docs_gate.log').read_text(encoding='utf-8').splitlines(); m=[ln[len(p):] for ln in lines if ln.startswith(p)]; import sys; sys.exit('missing alert docs gate summary line') if not m else print(m[0])")"
-          python -c "import json,sys; s=json.loads(sys.argv[1]); print('alert_docs_gate_metrics ' + f\"summary_version={s.get('summary_version')} required_example_files={s.get('required_example_files')} required_stage_rules={s.get('required_stage_rules')} examples_readme_required_tokens={s.get('examples_readme_required_tokens')}\")" "$summary_line"
+          summary_line="$(sed -n 's/^validate_alert_docs_links.py: summary //p' /tmp/alert_docs_gate.log | head -n 1)"
+          if [[ -z "$summary_line" ]]; then
+            echo "missing alert docs gate summary line" >&2
+            exit 1
+          fi
+          python -c 'import json,sys; s=json.loads(sys.argv[1]); print("alert_docs_gate_metrics " + f"summary_version={s.get(\"summary_version\")} required_example_files={s.get(\"required_example_files\")} required_stage_rules={s.get(\"required_stage_rules\")} examples_readme_required_tokens={s.get(\"examples_readme_required_tokens\")}")' "$summary_line"
           echo "::endgroup::"
 
       - name: Validate .node-version format
