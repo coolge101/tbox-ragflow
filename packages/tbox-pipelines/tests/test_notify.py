@@ -86,6 +86,7 @@ def test_webhook_notify_failed_log_uses_redacted_url(
     assert not ok
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
     assert "delivery_state=failed" in joined
     assert "payload_type=tbox_sync_summary" in joined
     assert "sync_id=s1" in joined
@@ -120,6 +121,7 @@ def test_send_webhook_skips_invalid_url_scheme(
     assert _DummyClient.calls == []
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "webhook_notify_skipped_invalid_url" in joined
+    assert "log_schema_version=1" in joined
     assert "payload_type=tbox_sync_summary" in joined
     assert "sync_id=a" in joined
     assert "skip_reason=invalid_url" in joined
@@ -141,6 +143,7 @@ def test_send_rbac_webhook_skips_invalid_url_with_context(
     assert _DummyClient.calls == []
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "webhook_notify_skipped_invalid_url" in joined
+    assert "log_schema_version=1" in joined
     assert "payload_type=tbox_rbac_alert" in joined
     assert "sync_id=rb1" in joined
     assert "skip_reason=invalid_url" in joined
@@ -270,6 +273,7 @@ def test_send_webhook_no_retry_on_non_transient_http(
     assert _Client403.n == 1
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
     assert "delivery_state=failed" in joined
     assert "final=True" in joined
     assert "retry=False" in joined
@@ -315,6 +319,7 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert slept == [3.0]
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
     assert "delivery_state=retrying" in joined
     assert "final=False" in joined
     assert "retry_policy=retry_after" in joined
@@ -366,6 +371,7 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert slept == [0.2]
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
     assert "delivery_state=retrying" in joined
     assert "final=False" in joined
     assert "retry_policy=backoff" in joined
@@ -441,6 +447,7 @@ def test_send_webhook_notification_logs_ok_at_debug(
     assert ok
     msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG]
     assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
+    assert any("log_schema_version=1" in m for m in msgs)
     assert any("outcome=success" in m for m in msgs)
     assert any("delivery_state=delivered" in m for m in msgs)
     assert any("payload_type=tbox_sync_summary" in m for m in msgs)
@@ -467,6 +474,7 @@ def test_webhook_log_context_fields_consistent_across_paths(
     _assert_log_contains_fields(
         success_msg,
         (
+            "log_schema_version",
             "outcome",
             "payload_type",
             "sync_id",
@@ -511,6 +519,7 @@ def test_webhook_log_context_fields_consistent_across_paths(
     _assert_log_contains_fields(
         failed_msg,
         (
+            "log_schema_version",
             "outcome",
             "payload_type",
             "sync_id",
@@ -543,7 +552,7 @@ def test_webhook_log_context_fields_consistent_across_paths(
     )
     _assert_log_contains_fields(
         skipped_msg,
-        ("payload_type", "sync_id", "skip_reason", "url"),
+        ("log_schema_version", "payload_type", "sync_id", "skip_reason", "url"),
     )
 
 

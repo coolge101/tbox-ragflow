@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Bump when envelope or semantics change for receivers that branch on version.
 WEBHOOK_PAYLOAD_VERSION = 1
+WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION = 1
 
 WEBHOOK_TYPE_TBOX_SYNC_SUMMARY = "tbox_sync_summary"
 WEBHOOK_TYPE_TBOX_RBAC_ALERT = "tbox_rbac_alert"
@@ -170,9 +171,11 @@ def _post_webhook_json(
             attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.debug(
-                "webhook_notify_ok outcome=%s payload_type=%s sync_id=%s url=%s http_status=%s "
+                "webhook_notify_ok log_schema_version=%s outcome=%s payload_type=%s sync_id=%s "
+                "url=%s http_status=%s "
                 "delivery_state=%s attempt=%s/%s attempt_index=%s attempt_total=%s "
                 "attempt_elapsed_ms=%s total_elapsed_ms=%s",
+                WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "success",
                 payload_type,
                 sync_id,
@@ -210,12 +213,14 @@ def _post_webhook_json(
                     if sleep_seconds > base_sleep_seconds:
                         retry_policy = "retry_after"
             logger.warning(
-                "webhook_notify_failed outcome=%s payload_type=%s sync_id=%s url=%s attempt=%s/%s "
+                "webhook_notify_failed log_schema_version=%s outcome=%s payload_type=%s sync_id=%s "
+                "url=%s attempt=%s/%s "
                 "delivery_state=%s attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
                 "retry_reason=%s attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
+                WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "failure",
                 payload_type,
                 sync_id,
@@ -246,12 +251,14 @@ def _post_webhook_json(
             attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.warning(
-                "webhook_notify_failed outcome=%s payload_type=%s sync_id=%s url=%s attempt=%s/%s "
+                "webhook_notify_failed log_schema_version=%s outcome=%s payload_type=%s sync_id=%s "
+                "url=%s attempt=%s/%s "
                 "delivery_state=%s attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
                 "retry_reason=%s attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
+                WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "failure",
                 payload_type,
                 sync_id,
@@ -314,7 +321,9 @@ def send_webhook_notification(
     sync_id = str(summary.get("sync_id", "") or "")
     if not _webhook_http_url_allowed(webhook_url):
         logger.warning(
-            "webhook_notify_skipped_invalid_url payload_type=%s sync_id=%s skip_reason=%s url=%s",
+            "webhook_notify_skipped_invalid_url log_schema_version=%s payload_type=%s "
+            "sync_id=%s skip_reason=%s url=%s",
+            WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
             WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
             sync_id,
             "invalid_url",
@@ -354,7 +363,9 @@ def send_rbac_webhook_notification(
     sync_id = str(rbac_event.get("sync_id", "") or "")
     if not _webhook_http_url_allowed(webhook_url):
         logger.warning(
-            "webhook_notify_skipped_invalid_url payload_type=%s sync_id=%s skip_reason=%s url=%s",
+            "webhook_notify_skipped_invalid_url log_schema_version=%s payload_type=%s "
+            "sync_id=%s skip_reason=%s url=%s",
+            WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
             WEBHOOK_TYPE_TBOX_RBAC_ALERT,
             sync_id,
             "invalid_url",
