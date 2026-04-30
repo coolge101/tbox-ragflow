@@ -77,6 +77,7 @@ Before merging docs changes in this directory:
   - Summary metric keys are controlled by `summary_contract.metric_keys` in rules.
   - CI metric replay uses `python scripts/emit_alert_docs_gate_metrics.py --log-path ...`.
   - Metrics emitter enforces `summary_contract` strictly (event/version/metric_keys).
+  - Use `--emit-json` to output `alert_docs_gate_metrics_json` mirror for machine parsing.
   - This gate now also checks selected S3 changelog consistency in both
     `README.md` and `WEBHOOK_CONTRACT.md`.
   - Rules are configured in `alert_docs_gate_rules.json` with

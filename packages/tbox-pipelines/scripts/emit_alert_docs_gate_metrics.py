@@ -82,6 +82,24 @@ def _to_metrics_line(
     return " ".join(parts)
 
 
+def _to_metrics_json(
+    payload: dict[str, object],
+    *,
+    metric_keys: tuple[str, ...],
+) -> str:
+    metrics_payload: dict[str, object] = {
+        "event": payload["event"],
+        "summary_version": payload["summary_version"],
+    }
+    for key in metric_keys:
+        metrics_payload[key] = payload[key]
+    return "alert_docs_gate_metrics_json " + json.dumps(
+        metrics_payload,
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Parse docs gate summary log and emit metrics line",
@@ -106,6 +124,11 @@ def main() -> int:
         ),
         help="Path to docs gate rules json with summary_contract",
     )
+    parser.add_argument(
+        "--emit-json",
+        action="store_true",
+        help="Also emit JSON mirror line for machine ingestion",
+    )
     args = parser.parse_args()
 
     try:
@@ -125,6 +148,8 @@ def main() -> int:
         return 1
 
     print(metrics_line)
+    if args.emit_json:
+        print(_to_metrics_json(summary_payload, metric_keys=metric_keys))
     return 0
 
 
