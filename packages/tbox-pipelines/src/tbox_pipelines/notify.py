@@ -300,15 +300,18 @@ def send_webhook_notification(
 ) -> bool:
     if not webhook_url:
         return False
+    sync_id = str(summary.get("sync_id", "") or "")
     if not _webhook_http_url_allowed(webhook_url):
         logger.warning(
-            "webhook_notify_skipped_invalid_url url=%s",
+            "webhook_notify_skipped_invalid_url payload_type=%s sync_id=%s skip_reason=%s url=%s",
+            WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+            sync_id,
+            "invalid_url",
             _webhook_url_for_logs(webhook_url),
         )
         return False
 
     payload = build_tbox_sync_summary_payload(summary)
-    sync_id = str(summary.get("sync_id", "") or "")
     idem = _webhook_idempotency_key(WEBHOOK_TYPE_TBOX_SYNC_SUMMARY, summary)
     headers = _webhook_post_headers(
         sync_id=sync_id,
@@ -337,15 +340,18 @@ def send_rbac_webhook_notification(
 ) -> bool:
     if not webhook_url:
         return False
+    sync_id = str(rbac_event.get("sync_id", "") or "")
     if not _webhook_http_url_allowed(webhook_url):
         logger.warning(
-            "webhook_notify_skipped_invalid_url url=%s",
+            "webhook_notify_skipped_invalid_url payload_type=%s sync_id=%s skip_reason=%s url=%s",
+            WEBHOOK_TYPE_TBOX_RBAC_ALERT,
+            sync_id,
+            "invalid_url",
             _webhook_url_for_logs(webhook_url),
         )
         return False
 
     payload = build_tbox_rbac_alert_payload(rbac_event)
-    sync_id = str(rbac_event.get("sync_id", "") or "")
     idem = _webhook_idempotency_key(WEBHOOK_TYPE_TBOX_RBAC_ALERT, rbac_event)
     headers = _webhook_post_headers(
         sync_id=sync_id,
