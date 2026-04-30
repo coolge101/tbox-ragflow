@@ -107,12 +107,12 @@ def _webhook_failure_is_transient(exc: BaseException) -> bool:
 
 def _webhook_retry_reason(exc: BaseException, will_retry: bool) -> str:
     if isinstance(exc, httpx.RequestError):
-        return "request_error" if will_retry else "request_error_no_retry"
+        return "transport_retryable" if will_retry else "transport_non_retryable"
     if isinstance(exc, httpx.HTTPStatusError):
         code = exc.response.status_code
         if will_retry:
-            return f"http_status_{code}"
-        return "http_status_non_retryable"
+            return f"http_{code}"
+        return f"http_non_retryable_{code}"
     return "unexpected_error"
 
 
