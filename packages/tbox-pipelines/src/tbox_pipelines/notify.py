@@ -13,6 +13,8 @@ import importlib.metadata
 import json
 import logging
 import time
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
@@ -102,7 +104,7 @@ def _webhook_failure_is_transient(exc: BaseException) -> bool:
 
 
 def _webhook_retry_after_seconds(exc: BaseException) -> float | None:
-    """Best-effort parse ``Retry-After`` seconds from transient HTTP failures."""
+    """Best-effort parse ``Retry-After`` seconds or HTTP-date from failures."""
     if not isinstance(exc, httpx.HTTPStatusError):
         return None
     raw = exc.response.headers.get("Retry-After")
@@ -111,10 +113,20 @@ def _webhook_retry_after_seconds(exc: BaseException) -> float | None:
     try:
         seconds = float(raw)
     except ValueError:
+        pass
+    else:
+        if seconds > 0:
+            return seconds
+    try:
+        when = parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
         return None
-    if seconds <= 0:
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    delta = when.timestamp() - time.time()
+    if delta <= 0:
         return None
-    return seconds
+    return delta
 
 
 def _post_webhook_json(
@@ -144,29 +156,33 @@ def _post_webhook_json(
             return True
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             will_retry = _webhook_failure_is_transient(exc) and attempt < attempts
+            sleep_seconds: float | None = None
+            if will_retry:
+                sleep_seconds = backoff * attempt
+                retry_after = _webhook_retry_after_seconds(exc)
+                if retry_after is not None:
+                    sleep_seconds = max(sleep_seconds, retry_after)
             logger.warning(
-                "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
+                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_in_seconds=%s error=%s",
                 log_url,
                 attempt,
                 attempts,
                 will_retry,
+                sleep_seconds,
                 exc,
             )
             if not will_retry:
                 return False
-            sleep_seconds = backoff * attempt
-            retry_after = _webhook_retry_after_seconds(exc)
-            if retry_after is not None:
-                sleep_seconds = max(sleep_seconds, retry_after)
-            if sleep_seconds > 0:
+            if sleep_seconds and sleep_seconds > 0:
                 time.sleep(sleep_seconds)
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
+                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_in_seconds=%s error=%s",
                 log_url,
                 attempt,
                 attempts,
                 False,
+                None,
                 exc,
             )
             return False
