@@ -5,7 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from tbox_pipelines.notify import WEBHOOK_PAYLOAD_VERSION
+from tbox_pipelines.notify import (
+    WEBHOOK_PAYLOAD_VERSION,
+    WEBHOOK_TYPE_TBOX_RBAC_ALERT,
+    WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+    build_tbox_rbac_alert_payload,
+    build_tbox_sync_summary_payload,
+)
 
 _DOCS = Path(__file__).resolve().parent.parent / "docs"
 _DOCS_EXAMPLES = _DOCS / "examples"
@@ -166,3 +172,27 @@ def test_webhook_example_envelope_smoke(path: Path) -> None:
     assert inner["sync_id"], "sample inner sync_id should be non-empty"
     assert inner["sync_id"] == inner["sync_id"].strip()
     assert data["status"] == inner["status"]
+
+
+def test_notify_payload_builders_match_schema_top_level_shape() -> None:
+    """Runtime POST bodies use the same top-level keys as schema-derived samples."""
+
+    summary_inner = {"status": "ok", "sync_id": "sid-1", "documents_fetched": 0}
+    sync_payload = build_tbox_sync_summary_payload(summary_inner)
+    sk = _inner_payload_key_for_type("tbox_sync_summary")
+    assert set(sync_payload) == {"payload_version", "type", "status", "sync_id", sk}
+    assert sync_payload["payload_version"] == WEBHOOK_PAYLOAD_VERSION
+    assert sync_payload["type"] == WEBHOOK_TYPE_TBOX_SYNC_SUMMARY
+    assert sync_payload["status"] == summary_inner["status"]
+    assert sync_payload["sync_id"] == summary_inner["sync_id"]
+    assert sync_payload["summary"] is summary_inner
+
+    rbac_inner = {"sync_id": "r1", "status": "failed", "reason": "permission_denied"}
+    rbac_payload = build_tbox_rbac_alert_payload(rbac_inner)
+    rk = _inner_payload_key_for_type("tbox_rbac_alert")
+    assert set(rbac_payload) == {"payload_version", "type", "status", "sync_id", rk}
+    assert rbac_payload["payload_version"] == WEBHOOK_PAYLOAD_VERSION
+    assert rbac_payload["type"] == WEBHOOK_TYPE_TBOX_RBAC_ALERT
+    assert rbac_payload["status"] == rbac_inner["status"]
+    assert rbac_payload["sync_id"] == rbac_inner["sync_id"]
+    assert rbac_payload["rbac"] is rbac_inner
