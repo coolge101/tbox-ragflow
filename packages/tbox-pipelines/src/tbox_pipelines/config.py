@@ -20,6 +20,8 @@ class PipelineConfig:
     rbac_audit_log_path: str
     notify_webhook_url: str
     notify_on_success: bool
+    notify_webhook_timeout_seconds: float
+    rbac_alert_webhook_timeout_seconds: float
     source_provider: str
     source_api_url: str
     source_api_key: str
@@ -94,6 +96,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_rbac_audit_log_path = os.getenv("RAGFLOW_RBAC_AUDIT_LOG_PATH")
     env_notify_webhook_url = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_URL", "")
     env_notify_on_success = os.getenv("RAGFLOW_NOTIFY_ON_SUCCESS")
+    env_notify_webhook_timeout = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS")
+    env_rbac_alert_webhook_timeout = os.getenv("TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS")
     env_source_provider = os.getenv("TBOX_SOURCE_PROVIDER")
     env_source_api_url = os.getenv("TBOX_SOURCE_API_URL", "")
     env_source_api_key = os.getenv("TBOX_SOURCE_API_KEY", "")
@@ -135,6 +139,14 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     notify_on_success = _to_bool(
         env_notify_on_success,
         _to_bool(payload.get("notify_on_success"), False),
+    )
+    notify_webhook_timeout_seconds = _to_float(
+        env_notify_webhook_timeout,
+        _to_float(payload.get("notify_webhook_timeout_seconds"), 10.0),
+    )
+    rbac_alert_webhook_timeout_seconds = _to_float(
+        env_rbac_alert_webhook_timeout,
+        _to_float(payload.get("rbac_alert_webhook_timeout_seconds"), 10.0),
     )
     source_provider = (
         str(env_source_provider or payload.get("source_provider", "stub")).strip().lower()
@@ -181,6 +193,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         rbac_audit_log_path=str(rbac_audit_log_path),
         notify_webhook_url=str(notify_webhook_url),
         notify_on_success=notify_on_success,
+        notify_webhook_timeout_seconds=max(1.0, notify_webhook_timeout_seconds),
+        rbac_alert_webhook_timeout_seconds=max(1.0, rbac_alert_webhook_timeout_seconds),
         source_provider=source_provider,
         source_api_url=source_api_url,
         source_api_key=source_api_key,
