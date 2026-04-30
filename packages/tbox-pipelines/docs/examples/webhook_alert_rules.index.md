@@ -13,6 +13,7 @@ reference across different log/monitoring platforms.
 - Migration checklist: [`webhook_alert_rules.migration_checklist.md`](webhook_alert_rules.migration_checklist.md)
 - Troubleshooting guide: [`webhook_alert_rules.troubleshooting.md`](webhook_alert_rules.troubleshooting.md)
 - Operations runbook: [`webhook_alerting_runbook.md`](webhook_alerting_runbook.md)
+- Governance baseline pack: [`webhook_alerting_baseline.md`](webhook_alerting_baseline.md)
 
 ## Core rule categories
 
@@ -54,3 +55,4 @@ Use these logical fields as the stable contract, then adapt to each platform's q
 3. Execute [`webhook_alert_rules.migration_checklist.md`](webhook_alert_rules.migration_checklist.md)
 4. During pilot, use [`webhook_alert_rules.troubleshooting.md`](webhook_alert_rules.troubleshooting.md)
 5. Run production operations with [`webhook_alerting_runbook.md`](webhook_alerting_runbook.md)
+6. Standardize long-term policy with [`webhook_alerting_baseline.md`](webhook_alerting_baseline.md)
