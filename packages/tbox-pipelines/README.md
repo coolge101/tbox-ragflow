@@ -167,6 +167,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.111 起 webhook 重试与退避可独立配置（`notify_webhook_max_retries` 等 JSON 与 `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES` 等 env）；未配置时继承合并后的 `http_max_retries` / `http_retry_backoff_seconds`（见 `docs/WEBHOOK_CONTRACT.md`）。
 > S3.112 起 webhook `POST` 带 `Idempotency-Key`（SHA-256，见 `docs/WEBHOOK_CONTRACT.md`），便于接收端去重。
 > S3.113 起可选 Bearer：`RAGFLOW_NOTIFY_WEBHOOK_BEARER_TOKEN` / `TBOX_RBAC_ALERT_WEBHOOK_BEARER_TOKEN`（或 JSON 字段，不推荐入库）；幂等键序列化对非 JSON 原生值使用 `default=str`。
+> S3.114 起 webhook 失败日志中的 URL 脱敏（无 query/fragment，掩码 `user:pass@`），见 `docs/WEBHOOK_CONTRACT.md`。
 
 ## 本地开发
 

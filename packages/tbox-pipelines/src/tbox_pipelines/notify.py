@@ -14,6 +14,7 @@ import json
 import logging
 import time
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 
@@ -68,6 +69,19 @@ def _webhook_post_headers(
     return headers
 
 
+def _webhook_url_for_logs(url: str) -> str:
+    """Strip query and fragment; mask ``user:pass@`` in ``netloc`` for log lines."""
+    try:
+        p = urlparse(url)
+    except ValueError:
+        return "<invalid_url>"
+    netloc = p.netloc
+    if "@" in netloc:
+        hostpart = netloc.rsplit("@", 1)[1]
+        netloc = f"***@{hostpart}"
+    return urlunparse((p.scheme, netloc, p.path or "", "", "", ""))
+
+
 def _webhook_failure_is_transient(exc: BaseException) -> bool:
     if isinstance(exc, httpx.RequestError):
         return True
@@ -87,6 +101,7 @@ def _post_webhook_json(
 ) -> bool:
     attempts = max(1, max(0, max_retries) + 1)
     backoff = max(0.0, retry_backoff_seconds)
+    log_url = _webhook_url_for_logs(webhook_url)
     for attempt in range(1, attempts + 1):
         try:
             with httpx.Client(timeout=timeout_seconds) as client:
@@ -97,7 +112,7 @@ def _post_webhook_json(
             will_retry = _webhook_failure_is_transient(exc) and attempt < attempts
             logger.warning(
                 "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
-                webhook_url,
+                log_url,
                 attempt,
                 attempts,
                 will_retry,
@@ -110,7 +125,7 @@ def _post_webhook_json(
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
-                webhook_url,
+                log_url,
                 attempt,
                 attempts,
                 False,
