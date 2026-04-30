@@ -157,17 +157,23 @@ def _post_webhook_json(
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             will_retry = _webhook_failure_is_transient(exc) and attempt < attempts
             sleep_seconds: float | None = None
+            retry_policy = "none"
             if will_retry:
-                sleep_seconds = backoff * attempt
+                base_sleep_seconds = backoff * attempt
+                sleep_seconds = base_sleep_seconds
+                retry_policy = "backoff"
                 retry_after = _webhook_retry_after_seconds(exc)
                 if retry_after is not None:
                     sleep_seconds = max(sleep_seconds, retry_after)
+                    if sleep_seconds > base_sleep_seconds:
+                        retry_policy = "retry_after"
             logger.warning(
-                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_in_seconds=%s error=%s",
+                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_policy=%s retry_in_seconds=%s error=%s",
                 log_url,
                 attempt,
                 attempts,
                 will_retry,
+                retry_policy,
                 sleep_seconds,
                 exc,
             )
@@ -177,11 +183,12 @@ def _post_webhook_json(
                 time.sleep(sleep_seconds)
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_in_seconds=%s error=%s",
+                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_policy=%s retry_in_seconds=%s error=%s",
                 log_url,
                 attempt,
                 attempts,
                 False,
+                "none",
                 None,
                 exc,
             )
