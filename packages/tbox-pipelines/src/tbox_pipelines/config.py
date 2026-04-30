@@ -22,6 +22,10 @@ class PipelineConfig:
     notify_on_success: bool
     notify_webhook_timeout_seconds: float
     rbac_alert_webhook_timeout_seconds: float
+    notify_webhook_max_retries: int
+    notify_webhook_retry_backoff_seconds: float
+    rbac_alert_webhook_max_retries: int
+    rbac_alert_webhook_retry_backoff_seconds: float
     source_provider: str
     source_api_url: str
     source_api_key: str
@@ -98,6 +102,12 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_notify_on_success = os.getenv("RAGFLOW_NOTIFY_ON_SUCCESS")
     env_notify_webhook_timeout = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS")
     env_rbac_alert_webhook_timeout = os.getenv("TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS")
+    env_notify_webhook_max_retries = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES")
+    env_notify_webhook_retry_backoff = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS")
+    env_rbac_alert_webhook_max_retries = os.getenv("TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES")
+    env_rbac_alert_webhook_retry_backoff = os.getenv(
+        "TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS",
+    )
     env_source_provider = os.getenv("TBOX_SOURCE_PROVIDER")
     env_source_api_url = os.getenv("TBOX_SOURCE_API_URL", "")
     env_source_api_key = os.getenv("TBOX_SOURCE_API_KEY", "")
@@ -148,6 +158,24 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_rbac_alert_webhook_timeout,
         _to_float(payload.get("rbac_alert_webhook_timeout_seconds"), 10.0),
     )
+    http_max_retries_eff = max(0, max_retries)
+    http_backoff_eff = max(0.0, backoff)
+    notify_webhook_max_retries = _to_int(
+        env_notify_webhook_max_retries,
+        _to_int(payload.get("notify_webhook_max_retries"), http_max_retries_eff),
+    )
+    notify_webhook_retry_backoff_seconds = _to_float(
+        env_notify_webhook_retry_backoff,
+        _to_float(payload.get("notify_webhook_retry_backoff_seconds"), http_backoff_eff),
+    )
+    rbac_alert_webhook_max_retries = _to_int(
+        env_rbac_alert_webhook_max_retries,
+        _to_int(payload.get("rbac_alert_webhook_max_retries"), http_max_retries_eff),
+    )
+    rbac_alert_webhook_retry_backoff_seconds = _to_float(
+        env_rbac_alert_webhook_retry_backoff,
+        _to_float(payload.get("rbac_alert_webhook_retry_backoff_seconds"), http_backoff_eff),
+    )
     source_provider = (
         str(env_source_provider or payload.get("source_provider", "stub")).strip().lower()
     )
@@ -187,14 +215,18 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         target_dataset_name=str(dataset_name),
         auto_create_dataset=auto_create_dataset,
         auto_run_after_upload=auto_run,
-        http_max_retries=max(0, max_retries),
-        http_retry_backoff_seconds=max(0.0, backoff),
+        http_max_retries=http_max_retries_eff,
+        http_retry_backoff_seconds=http_backoff_eff,
         audit_log_path=str(audit_log_path),
         rbac_audit_log_path=str(rbac_audit_log_path),
         notify_webhook_url=str(notify_webhook_url),
         notify_on_success=notify_on_success,
         notify_webhook_timeout_seconds=max(1.0, notify_webhook_timeout_seconds),
         rbac_alert_webhook_timeout_seconds=max(1.0, rbac_alert_webhook_timeout_seconds),
+        notify_webhook_max_retries=max(0, notify_webhook_max_retries),
+        notify_webhook_retry_backoff_seconds=max(0.0, notify_webhook_retry_backoff_seconds),
+        rbac_alert_webhook_max_retries=max(0, rbac_alert_webhook_max_retries),
+        rbac_alert_webhook_retry_backoff_seconds=max(0.0, rbac_alert_webhook_retry_backoff_seconds),
         source_provider=source_provider,
         source_api_url=source_api_url,
         source_api_key=source_api_key,

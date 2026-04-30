@@ -39,8 +39,8 @@ def _emit_sync_summary(summary: dict[str, Any], config) -> None:
             config.notify_webhook_url,
             summary,
             timeout_seconds=config.notify_webhook_timeout_seconds,
-            max_retries=config.http_max_retries,
-            retry_backoff_seconds=config.http_retry_backoff_seconds,
+            max_retries=config.notify_webhook_max_retries,
+            retry_backoff_seconds=config.notify_webhook_retry_backoff_seconds,
         )
         logger.info(
             "sync_notify status=%s sync_id=%s notified=%s",
@@ -81,8 +81,8 @@ def _emit_rbac_event(
         config.rbac_alert_webhook_url,
         webhook_payload,
         timeout_seconds=config.rbac_alert_webhook_timeout_seconds,
-        max_retries=config.http_max_retries,
-        retry_backoff_seconds=config.http_retry_backoff_seconds,
+        max_retries=config.rbac_alert_webhook_max_retries,
+        retry_backoff_seconds=config.rbac_alert_webhook_retry_backoff_seconds,
     )
     if suppressed_in_window > 0:
         logger.info(
