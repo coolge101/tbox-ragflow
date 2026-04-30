@@ -280,6 +280,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.154 起新增 render 规范与验收清单（`render_spec` + `render_acceptance_checklist`），约束模板与渲染结果的一致性。
 > S3.155 起新增 render 变更记录模板与样例（`render_change_log.*`），统一沉淀渲染变更审计与回滚信息。
 > S3.156 起新增 `docs/examples/README.md`，统一说明 examples 目录职责分层、维护约定与合并门禁。
+> S3.157 起新增 `scripts/validate_alert_docs_links.py` 与对应测试，提供 examples 关键互链完整性的轻量门禁。
 
 ## Field Consolidation (Phase A)
 

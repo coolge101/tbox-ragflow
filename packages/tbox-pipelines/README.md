@@ -210,6 +210,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.154 起新增 `webhook_alerting_render_spec.md` 与 `webhook_alerting_render_acceptance_checklist.md`，固化渲染一致性规范与合并门禁。
 > S3.155 起新增 `webhook_alerting_render_change_log.template.md` 与 `webhook_alerting_render_change_log.sample.md`，规范渲染变更审计记录。
 > S3.156 起新增 `docs/examples/README.md`（examples 总览与维护约定），提升多人协作下的文档可维护性。
+> S3.157 起新增 `scripts/validate_alert_docs_links.py`（含测试），为 examples 文档关键互链提供自动自检门禁。
 
 ## 本地开发
 
