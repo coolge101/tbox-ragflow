@@ -13,6 +13,7 @@ import importlib.metadata
 import json
 import logging
 import time
+from dataclasses import dataclass
 from datetime import timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -106,12 +107,12 @@ def _webhook_failure_is_transient(exc: BaseException) -> bool:
 
 def _webhook_retry_reason(exc: BaseException, will_retry: bool) -> str:
     if isinstance(exc, httpx.RequestError):
-        return "request_error" if will_retry else "request_error_no_retry"
+        return "transport_retryable" if will_retry else "transport_non_retryable"
     if isinstance(exc, httpx.HTTPStatusError):
         code = exc.response.status_code
         if will_retry:
-            return f"http_status_{code}"
-        return "http_status_non_retryable"
+            return f"http_{code}"
+        return f"http_non_retryable_{code}"
     return "unexpected_error"
 
 
@@ -131,6 +132,74 @@ def _webhook_error_family(exc: BaseException) -> str:
     if isinstance(exc, httpx.RequestError):
         return "transport"
     return "unexpected"
+
+
+@dataclass(frozen=True)
+class _RetryDecision:
+    will_retry: bool
+    is_final: bool
+    delivery_state: str
+    retry_policy: str
+    retry_eligible: bool
+    retries_remaining: int
+    retry_after_seconds: float | None
+    retry_after_source: str | None
+    backoff_seconds: float | None
+    retry_in_seconds: float | None
+    retry_window_ms: int | None
+
+
+def _webhook_retry_decision(
+    *,
+    exc: BaseException,
+    attempt: int,
+    attempts: int,
+    backoff: float,
+) -> _RetryDecision:
+    retry_eligible = _webhook_failure_is_transient(exc)
+    will_retry = retry_eligible and attempt < attempts
+    is_final = not will_retry
+    delivery_state = "retrying" if will_retry else "failed"
+    retries_remaining = max(0, attempts - attempt)
+
+    if not will_retry:
+        return _RetryDecision(
+            will_retry=False,
+            is_final=True,
+            delivery_state="failed",
+            retry_policy="none",
+            retry_eligible=retry_eligible,
+            retries_remaining=retries_remaining,
+            retry_after_seconds=None,
+            retry_after_source=None,
+            backoff_seconds=None,
+            retry_in_seconds=None,
+            retry_window_ms=None,
+        )
+
+    backoff_seconds = backoff * attempt
+    retry_after_seconds = _webhook_retry_after_seconds(exc)
+    retry_after_source = "header" if retry_after_seconds is not None else None
+    retry_in_seconds = backoff_seconds
+    retry_policy = "backoff"
+    if retry_after_seconds is not None:
+        retry_in_seconds = max(retry_in_seconds, retry_after_seconds)
+        if retry_in_seconds > backoff_seconds:
+            retry_policy = "retry_after"
+    retry_window_ms = int(retry_in_seconds * 1000) if retry_in_seconds > 0 else 0
+    return _RetryDecision(
+        will_retry=will_retry,
+        is_final=is_final,
+        delivery_state=delivery_state,
+        retry_policy=retry_policy,
+        retry_eligible=retry_eligible,
+        retries_remaining=retries_remaining,
+        retry_after_seconds=retry_after_seconds,
+        retry_after_source=retry_after_source,
+        backoff_seconds=backoff_seconds,
+        retry_in_seconds=retry_in_seconds,
+        retry_window_ms=retry_window_ms,
+    )
 
 
 def _webhook_retry_after_seconds(exc: BaseException) -> float | None:
@@ -205,33 +274,16 @@ def _post_webhook_json(
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
-            retry_eligible = _webhook_failure_is_transient(exc)
-            will_retry = retry_eligible and attempt < attempts
-            is_final = not will_retry
-            delivery_state = "retrying" if will_retry else "failed"
-            retry_reason = _webhook_retry_reason(exc, will_retry)
+            decision = _webhook_retry_decision(
+                exc=exc,
+                attempt=attempt,
+                attempts=attempts,
+                backoff=backoff,
+            )
+            retry_reason = _webhook_retry_reason(exc, decision.will_retry)
             error_class = _webhook_error_class(exc)
             error_family = _webhook_error_family(exc)
             http_status = _webhook_failure_status_code(exc)
-            retries_remaining = max(0, attempts - attempt)
-            sleep_seconds: float | None = None
-            backoff_seconds: float | None = None
-            retry_after_seconds: float | None = None
-            retry_after_source: str | None = None
-            retry_window_ms: int | None = None
-            retry_policy = "none"
-            if will_retry:
-                base_sleep_seconds = backoff * attempt
-                backoff_seconds = base_sleep_seconds
-                sleep_seconds = base_sleep_seconds
-                retry_policy = "backoff"
-                retry_after_seconds = _webhook_retry_after_seconds(exc)
-                if retry_after_seconds is not None:
-                    retry_after_source = "header"
-                    sleep_seconds = max(sleep_seconds, retry_after_seconds)
-                    if sleep_seconds > base_sleep_seconds:
-                        retry_policy = "retry_after"
-                retry_window_ms = int(sleep_seconds * 1000) if sleep_seconds > 0 else 0
             logger.warning(
                 "webhook_notify_failed log_schema_version=%s outcome=%s payload_type=%s sync_id=%s "
                 "url=%s attempt=%s/%s "
@@ -249,20 +301,20 @@ def _post_webhook_json(
                 log_url,
                 attempt,
                 attempts,
-                delivery_state,
+                decision.delivery_state,
                 attempt,
                 attempts,
-                will_retry,
-                is_final,
-                retry_policy,
-                retry_eligible,
-                retries_remaining,
+                decision.will_retry,
+                decision.is_final,
+                decision.retry_policy,
+                decision.retry_eligible,
+                decision.retries_remaining,
                 http_status,
-                retry_after_seconds,
-                retry_after_source,
-                backoff_seconds,
-                sleep_seconds,
-                retry_window_ms,
+                decision.retry_after_seconds,
+                decision.retry_after_source,
+                decision.backoff_seconds,
+                decision.retry_in_seconds,
+                decision.retry_window_ms,
                 retry_reason,
                 error_class,
                 error_family,
@@ -270,10 +322,10 @@ def _post_webhook_json(
                 total_elapsed_ms,
                 exc,
             )
-            if not will_retry:
+            if not decision.will_retry:
                 return False
-            if sleep_seconds and sleep_seconds > 0:
-                time.sleep(sleep_seconds)
+            if decision.retry_in_seconds and decision.retry_in_seconds > 0:
+                time.sleep(decision.retry_in_seconds)
         except Exception as exc:  # noqa: BLE001
             attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)

@@ -190,6 +190,8 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.134 起 success/failure/skip 日志新增 `log_schema_version`（当前 `1`），为后续日志字段演进提供兼容锚点。
 > S3.135 起 failure 日志新增 `error_class`（如 `HTTPStatusError`、`ConnectError`），便于按异常类别统计与告警。
 > S3.136 起 failure 日志新增 `error_family`（`http`/`transport`/`unexpected`），便于建立稳定的异常分组看板与告警规则。
+> S3.137 起重试决策统一收敛到 helper，并新增 `retry_after_source`、`backoff_seconds`、`retry_window_ms`，配套表驱动测试覆盖关键组合。
+> S3.138 起将 `retry_reason` 标准化为稳定枚举（如 `http_429`、`http_non_retryable_403`、`transport_retryable`），降低告警规则分支复杂度。
 
 ## 本地开发
 
