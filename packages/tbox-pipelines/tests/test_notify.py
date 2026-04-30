@@ -233,8 +233,9 @@ def test_send_webhook_no_retry_on_non_transient_http(
 
 
 def test_send_webhook_retry_honors_retry_after_header(
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    caplog.set_level(logging.WARNING)
     slept: list[float] = []
     monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
 
@@ -269,11 +270,14 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert ok
     assert _Client429.n == 2
     assert slept == [3.0]
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "retry_in_seconds=3.0" in joined
 
 
 def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    caplog.set_level(logging.WARNING)
     slept: list[float] = []
     monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
 
@@ -308,6 +312,8 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert ok
     assert _Client429Invalid.n == 2
     assert slept == [0.2]
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "retry_in_seconds=0.2" in joined
 
 
 def test_send_webhook_retry_after_http_date_supported(
