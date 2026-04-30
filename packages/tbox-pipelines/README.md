@@ -203,6 +203,8 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.147 起新增 `docs/examples/webhook_alert_rules.index.md`（样例总索引 + 字段映射速查），便于跨平台统一落地。
 > S3.148 起新增 `webhook_alert_rules.migration_checklist.md` 与 `webhook_alert_rules.troubleshooting.md`，形成告警规则落地与排障闭环文档。
 > S3.149 起新增 `docs/examples/webhook_alerting_runbook.md`（平台无关告警运维 SOP），覆盖分级响应、交接与复盘模板。
+> S3.150 起新增 `docs/examples/webhook_alerting_baseline.md`（告警治理基线包），统一阈值、分环境策略、抑制与升级策略。
+> S3.151 起新增 `docs/examples/webhook_alerting_baseline.parameterized.md`（critical/non-critical 参数化模板），支持快速套用治理基线。
 
 ## 本地开发
 
