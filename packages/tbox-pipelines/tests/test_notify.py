@@ -289,9 +289,7 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
         def __exit__(self, *_e) -> None:
             return None
 
-        def post(
-            self, url: str, headers: dict[str, str], json: dict[str, Any]
-        ) -> _DummyResponse:
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
             _Client429Invalid.n += 1
             if _Client429Invalid.n == 1:
                 req = httpx.Request("POST", url)
@@ -310,6 +308,51 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert ok
     assert _Client429Invalid.n == 2
     assert slept == [0.2]
+
+
+def test_send_webhook_retry_after_http_date_supported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    slept: list[float] = []
+    monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
+    monkeypatch.setattr("tbox_pipelines.notify.time.time", lambda: 1000.0)
+
+    class _Client429Date:
+        n = 0
+
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_Client429Date":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            _Client429Date.n += 1
+            if _Client429Date.n == 1:
+                req = httpx.Request("POST", url)
+                # 1005s epoch => 5 seconds after mocked now.
+                resp = httpx.Response(
+                    429,
+                    request=req,
+                    headers={"Retry-After": "Thu, 01 Jan 1970 00:16:45 GMT"},
+                )
+                raise httpx.HTTPStatusError("rate limited", request=req, response=resp)
+            return _DummyResponse()
+
+    _Client429Date.n = 0
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _Client429Date)
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "ra3"},
+        max_retries=1,
+        retry_backoff_seconds=0.1,
+    )
+    assert ok
+    assert _Client429Date.n == 2
+    assert slept == [5.0]
 
 
 def test_should_notify_default_failed_only() -> None:
