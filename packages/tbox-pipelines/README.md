@@ -149,6 +149,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.101 起进入 Phase B：`start` 日志默认输出 canonical 字段集并升级 `log_version=2`；曾支持 `TBOX_WEBHOOK_LOG_COMPAT_V1=true` 追加 deprecated 字段（**S3.103 已移除**）。
 > S3.102 起曾在 CI 为 `TBOX_WEBHOOK_LOG_COMPAT_V1` 提供注释版 `env` 片段（S3.103 已移除）；提案文档曾含 Phase C 准入清单。
 > S3.103 起 Phase C：移除 `TBOX_WEBHOOK_LOG_COMPAT_V1` 与 v1-extended `start` 字段；**迁移窗口截止 2026-06-30（UTC 日末）** 后仅保留 canonical 输出。
+> S3.104 起扩展 `.gitignore`（`logs/`、`.pytest_cache`、`__pycache__/` 等），减少本地生成物进入 `git status` 未跟踪列表。
 
 ## 本地开发
 
