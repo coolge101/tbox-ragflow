@@ -19,7 +19,11 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
   - `RAGFLOW_NOTIFY_WEBHOOK_URL` (optional, fail alerts by default)
   - `RAGFLOW_NOTIFY_ON_SUCCESS` (default `false`)
   - `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` (default `10`, minimum `1`; per-request `httpx` timeout for sync-summary webhook)
+  - `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES` (default: inherit `RAGFLOW_HTTP_MAX_RETRIES` / JSON `http_max_retries` after merge)
+  - `RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS` (default: inherit `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` / JSON `http_retry_backoff_seconds`)
   - `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS` (default `10`, minimum `1`; RBAC alert webhook)
+  - `TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES` (default: inherit HTTP retry settings)
+  - `TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS` (default: inherit HTTP retry backoff)
   - `TBOX_SOURCE_PROVIDER` (`stub` or `http_json`, default `stub`)
   - `TBOX_SOURCE_API_URL` (required when `TBOX_SOURCE_PROVIDER=http_json`)
   - `TBOX_SOURCE_API_KEY` (optional bearer token for source API)
@@ -158,6 +162,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.108 起 webhook `POST` 带 `User-Agent: tbox-pipelines/<version>`（见 `docs/WEBHOOK_CONTRACT.md`）。
 > S3.109 起 webhook 带 `X-TBOX-Sync-Id`（`sync_id` 非空时）；`run_sync` 复用 `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` 对可瞬时失败重试（与 `RagflowClient` 一致，见契约文档）。
 > S3.110 起 `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` 可经 JSON 或 `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS`、`TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS` 配置（默认 `10`，下限 `1` 秒）。
+> S3.111 起 webhook 重试与退避可独立配置（`notify_webhook_max_retries` 等 JSON 与 `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES` 等 env）；未配置时继承合并后的 `http_max_retries` / `http_retry_backoff_seconds`（见 `docs/WEBHOOK_CONTRACT.md`）。
 
 ## 本地开发
 
