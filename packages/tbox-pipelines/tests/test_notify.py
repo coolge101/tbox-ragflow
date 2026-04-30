@@ -80,6 +80,7 @@ def test_webhook_notify_failed_log_uses_redacted_url(
     )
     assert not ok
     joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
     assert "payload_type=tbox_sync_summary" in joined
     assert "sync_id=s1" in joined
     assert "attempt_elapsed_ms=" in joined
@@ -202,8 +203,9 @@ def test_send_webhook_retries_transient_connect_errors(
 
 
 def test_send_webhook_no_retry_on_non_transient_http(
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    caplog.set_level(logging.WARNING)
     monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda _s: None)
 
     class _Client403:
@@ -234,6 +236,10 @@ def test_send_webhook_no_retry_on_non_transient_http(
     )
     assert not ok
     assert _Client403.n == 1
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "final=True" in joined
+    assert "retry=False" in joined
 
 
 def test_send_webhook_retry_honors_retry_after_header(
@@ -275,6 +281,8 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert _Client429.n == 2
     assert slept == [3.0]
     joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "final=False" in joined
     assert "retry_policy=retry_after" in joined
     assert "retry_eligible=True" in joined
     assert "retries_remaining=1" in joined
@@ -323,6 +331,8 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert _Client429Invalid.n == 2
     assert slept == [0.2]
     joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "final=False" in joined
     assert "retry_policy=backoff" in joined
     assert "retry_eligible=True" in joined
     assert "retries_remaining=1" in joined
@@ -396,6 +406,7 @@ def test_send_webhook_notification_logs_ok_at_debug(
     assert ok
     msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG]
     assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
+    assert any("outcome=success" in m for m in msgs)
     assert any("payload_type=tbox_sync_summary" in m for m in msgs)
     assert any("sync_id=abc" in m for m in msgs)
     assert any("attempt_elapsed_ms=" in m and "total_elapsed_ms=" in m for m in msgs)
