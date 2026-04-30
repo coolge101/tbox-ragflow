@@ -39,6 +39,7 @@ def _emit_sync_summary(summary: dict[str, Any], config) -> None:
             config.notify_webhook_url,
             summary,
             timeout_seconds=config.notify_webhook_timeout_seconds,
+            bearer_token=config.notify_webhook_bearer_token or None,
             max_retries=config.notify_webhook_max_retries,
             retry_backoff_seconds=config.notify_webhook_retry_backoff_seconds,
         )
@@ -81,6 +82,7 @@ def _emit_rbac_event(
         config.rbac_alert_webhook_url,
         webhook_payload,
         timeout_seconds=config.rbac_alert_webhook_timeout_seconds,
+        bearer_token=config.rbac_alert_webhook_bearer_token or None,
         max_retries=config.rbac_alert_webhook_max_retries,
         retry_backoff_seconds=config.rbac_alert_webhook_retry_backoff_seconds,
     )

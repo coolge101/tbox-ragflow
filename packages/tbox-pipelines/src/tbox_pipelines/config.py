@@ -26,6 +26,8 @@ class PipelineConfig:
     notify_webhook_retry_backoff_seconds: float
     rbac_alert_webhook_max_retries: int
     rbac_alert_webhook_retry_backoff_seconds: float
+    notify_webhook_bearer_token: str
+    rbac_alert_webhook_bearer_token: str
     source_provider: str
     source_api_url: str
     source_api_key: str
@@ -108,6 +110,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
     env_rbac_alert_webhook_retry_backoff = os.getenv(
         "TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS",
     )
+    env_notify_webhook_bearer = os.getenv("RAGFLOW_NOTIFY_WEBHOOK_BEARER_TOKEN")
+    env_rbac_alert_webhook_bearer = os.getenv("TBOX_RBAC_ALERT_WEBHOOK_BEARER_TOKEN")
     env_source_provider = os.getenv("TBOX_SOURCE_PROVIDER")
     env_source_api_url = os.getenv("TBOX_SOURCE_API_URL", "")
     env_source_api_key = os.getenv("TBOX_SOURCE_API_KEY", "")
@@ -176,6 +180,12 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         env_rbac_alert_webhook_retry_backoff,
         _to_float(payload.get("rbac_alert_webhook_retry_backoff_seconds"), http_backoff_eff),
     )
+    notify_webhook_bearer_token = str(
+        env_notify_webhook_bearer or payload.get("notify_webhook_bearer_token") or "",
+    ).strip()
+    rbac_alert_webhook_bearer_token = str(
+        env_rbac_alert_webhook_bearer or payload.get("rbac_alert_webhook_bearer_token") or "",
+    ).strip()
     source_provider = (
         str(env_source_provider or payload.get("source_provider", "stub")).strip().lower()
     )
@@ -227,6 +237,8 @@ def load_config(config_path: str | None = None) -> PipelineConfig:
         notify_webhook_retry_backoff_seconds=max(0.0, notify_webhook_retry_backoff_seconds),
         rbac_alert_webhook_max_retries=max(0, rbac_alert_webhook_max_retries),
         rbac_alert_webhook_retry_backoff_seconds=max(0.0, rbac_alert_webhook_retry_backoff_seconds),
+        notify_webhook_bearer_token=notify_webhook_bearer_token,
+        rbac_alert_webhook_bearer_token=rbac_alert_webhook_bearer_token,
         source_provider=source_provider,
         source_api_url=source_api_url,
         source_api_key=source_api_key,
