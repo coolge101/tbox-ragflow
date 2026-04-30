@@ -171,12 +171,15 @@ def _post_webhook_json(
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.debug(
                 "webhook_notify_ok outcome=%s payload_type=%s sync_id=%s url=%s http_status=%s "
-                "attempt=%s/%s attempt_elapsed_ms=%s total_elapsed_ms=%s",
+                "attempt=%s/%s attempt_index=%s attempt_total=%s "
+                "attempt_elapsed_ms=%s total_elapsed_ms=%s",
                 "success",
                 payload_type,
                 sync_id,
                 log_url,
                 response.status_code,
+                attempt,
+                attempts,
                 attempt,
                 attempts,
                 attempt_elapsed_ms,
@@ -206,7 +209,7 @@ def _post_webhook_json(
                         retry_policy = "retry_after"
             logger.warning(
                 "webhook_notify_failed outcome=%s payload_type=%s sync_id=%s url=%s attempt=%s/%s "
-                "retry=%s final=%s "
+                "attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
@@ -215,6 +218,8 @@ def _post_webhook_json(
                 payload_type,
                 sync_id,
                 log_url,
+                attempt,
+                attempts,
                 attempt,
                 attempts,
                 will_retry,
@@ -239,7 +244,7 @@ def _post_webhook_json(
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.warning(
                 "webhook_notify_failed outcome=%s payload_type=%s sync_id=%s url=%s attempt=%s/%s "
-                "retry=%s final=%s "
+                "attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
@@ -248,6 +253,8 @@ def _post_webhook_json(
                 payload_type,
                 sync_id,
                 log_url,
+                attempt,
+                attempts,
                 attempt,
                 attempts,
                 False,
