@@ -5,6 +5,7 @@ reference across different log/monitoring platforms.
 
 ## Sample files
 
+- Directory overview: [`README.md`](README.md)
 - Generic template: [`webhook_alert_rules.sample.md`](webhook_alert_rules.sample.md)
 - Datadog style: [`webhook_alert_rules.datadog.sample.md`](webhook_alert_rules.datadog.sample.md)
 - Loki/Prometheus style: [`webhook_alert_rules.promql.sample.md`](webhook_alert_rules.promql.sample.md)

@@ -45,6 +45,7 @@ Compatibility guidance:
 - Keep `retry_reason_version` in parser output and branch logic by version only when taxonomy changes.
 
 Copy-ready sample files:
+- [`examples/README.md`](examples/README.md) (directory overview and maintenance conventions)
 - [`examples/webhook_alert_rules.index.md`](examples/webhook_alert_rules.index.md) (cross-platform index + field mapping)
 - [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
@@ -278,6 +279,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.153 起新增 Datadog/Prometheus 渲染样例（`*.rendered.yaml`），提供从通用模板到平台规则的即用参考。
 > S3.154 起新增 render 规范与验收清单（`render_spec` + `render_acceptance_checklist`），约束模板与渲染结果的一致性。
 > S3.155 起新增 render 变更记录模板与样例（`render_change_log.*`），统一沉淀渲染变更审计与回滚信息。
+> S3.156 起新增 `docs/examples/README.md`，统一说明 examples 目录职责分层、维护约定与合并门禁。
 
 ## Field Consolidation (Phase A)
 
