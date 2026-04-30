@@ -196,6 +196,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.140 起 failure 日志新增 `retry_reason_group`（粗粒度稳定分组），便于告警按大类聚合，减少对细粒度枚举的耦合。
 > S3.141 起 `WEBHOOK_CONTRACT` 增加基于 `retry_reason_group` 的告警模板与分流建议，便于快速落地监控规则。
 > S3.142 起新增 `docs/examples/webhook_alert_rules.sample.md`（可复制的告警规则示例），并在 `WEBHOOK_CONTRACT` 建立引用。
+> S3.143 起新增 `docs/examples/webhook_alert_rules.datadog.sample.md`（Datadog 查询语法样例），便于直接创建平台监控。
 
 ## 本地开发
 
