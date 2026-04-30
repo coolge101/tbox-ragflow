@@ -101,6 +101,22 @@ def _webhook_failure_is_transient(exc: BaseException) -> bool:
     return False
 
 
+def _webhook_retry_after_seconds(exc: BaseException) -> float | None:
+    """Best-effort parse ``Retry-After`` seconds from transient HTTP failures."""
+    if not isinstance(exc, httpx.HTTPStatusError):
+        return None
+    raw = exc.response.headers.get("Retry-After")
+    if not raw:
+        return None
+    try:
+        seconds = float(raw)
+    except ValueError:
+        return None
+    if seconds <= 0:
+        return None
+    return seconds
+
+
 def _post_webhook_json(
     webhook_url: str,
     headers: dict[str, str],
@@ -138,8 +154,12 @@ def _post_webhook_json(
             )
             if not will_retry:
                 return False
-            if backoff > 0:
-                time.sleep(backoff * attempt)
+            sleep_seconds = backoff * attempt
+            retry_after = _webhook_retry_after_seconds(exc)
+            if retry_after is not None:
+                sleep_seconds = max(sleep_seconds, retry_after)
+            if sleep_seconds > 0:
+                time.sleep(sleep_seconds)
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
