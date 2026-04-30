@@ -35,7 +35,12 @@ def _emit_sync_summary(summary: dict[str, Any], config) -> None:
     logger.info("sync_summary %s", json.dumps(summary, ensure_ascii=False))
     append_audit_record(config.audit_log_path, summary)
     if should_notify(summary, notify_on_success=config.notify_on_success):
-        notified = send_webhook_notification(config.notify_webhook_url, summary)
+        notified = send_webhook_notification(
+            config.notify_webhook_url,
+            summary,
+            max_retries=config.http_max_retries,
+            retry_backoff_seconds=config.http_retry_backoff_seconds,
+        )
         logger.info(
             "sync_notify status=%s sync_id=%s notified=%s",
             summary.get("status"),
@@ -71,7 +76,12 @@ def _emit_rbac_event(
     if not emit:
         return
     webhook_payload = {**event, "rbac_alert_suppressed_in_window": suppressed_in_window}
-    notified = send_rbac_webhook_notification(config.rbac_alert_webhook_url, webhook_payload)
+    notified = send_rbac_webhook_notification(
+        config.rbac_alert_webhook_url,
+        webhook_payload,
+        max_retries=config.http_max_retries,
+        retry_backoff_seconds=config.http_retry_backoff_seconds,
+    )
     if suppressed_in_window > 0:
         logger.info(
             "rbac_notify_aggregate suppressed_in_window=%s reason=%s sync_id=%s",

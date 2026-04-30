@@ -134,7 +134,7 @@ def test_run_sync_writes_rbac_audit_log(tmp_path) -> None:
 def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
     calls: list[dict] = []
 
-    def _fake_notify(_url: str, summary: dict, timeout_seconds: float = 10.0) -> bool:
+    def _fake_notify(_url: str, summary: dict, timeout_seconds: float = 10.0, **_kwargs) -> bool:
         _ = timeout_seconds
         calls.append(summary)
         return True
@@ -168,7 +168,7 @@ def test_run_sync_notifies_rbac_high_risk_event(monkeypatch) -> None:
 def test_run_sync_rbac_notify_dedupes_within_window(monkeypatch, tmp_path) -> None:
     calls: list[dict] = []
 
-    def _fake_notify(_url: str, summary: dict, timeout_seconds: float = 10.0) -> bool:
+    def _fake_notify(_url: str, summary: dict, timeout_seconds: float = 10.0, **_kwargs) -> bool:
         _ = timeout_seconds
         calls.append(summary)
         return True
