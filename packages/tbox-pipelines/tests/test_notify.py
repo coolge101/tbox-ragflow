@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import logging
 from datetime import date
 from typing import Any
 
@@ -50,6 +51,45 @@ def test_webhook_user_agent_fallback_when_package_missing(monkeypatch: pytest.Mo
     import tbox_pipelines.notify as notify_mod
 
     assert notify_mod._webhook_post_headers()["User-Agent"] == "tbox-pipelines"
+
+
+def test_webhook_notify_failed_log_uses_redacted_url(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.WARNING)
+
+    class _FailClient:
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_FailClient":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            raise httpx.ConnectError("simulated", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _FailClient)
+    ok = send_webhook_notification(
+        "https://user:pass@host.invalid/hook?token=SECRET&x=1#frag",
+        {"status": "failed", "sync_id": "s1"},
+    )
+    assert not ok
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "https://***@host.invalid/hook" in joined
+    assert "SECRET" not in joined
+
+
+def test_webhook_url_for_logs_strips_query_fragment_and_masks_userinfo() -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    assert (
+        notify_mod._webhook_url_for_logs("https://u:p@example.com/hook?token=secret#x")
+        == "https://***@example.com/hook"
+    )
+    assert notify_mod._webhook_url_for_logs("http://example.com/cb?k=v") == "http://example.com/cb"
 
 
 def test_webhook_idempotency_key_deterministic() -> None:
