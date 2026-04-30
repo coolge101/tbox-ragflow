@@ -12,5 +12,14 @@
   ],
   "examples_readme_required_tokens": [
     "bar"
-  ]
+  ],
+  "summary_contract": {
+    "event": "alert_docs_gate_ok",
+    "summary_version": 1,
+    "metric_keys": [
+      "required_example_files",
+      "required_stage_rules",
+      "examples_readme_required_tokens"
+    ]
+  }
 }
