@@ -219,6 +219,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.163 起新增 gate `--verbose` 诊断模式与测试，输出规则加载/检查摘要，提升 CI 失败排障效率。
 > S3.164 起 CI 中 docs gate 默认开启 `--verbose`，并使用日志分组输出，便于快速浏览与定位问题。
 > S3.165 起 gate 成功态增加结构化 summary 输出（单行 JSON），为 CI 健康度指标采集提供稳定锚点。
+> S3.166 起 gate summary 增加 `summary_version=1`，为后续摘要字段演进提供兼容能力。
 
 ## 本地开发
 
