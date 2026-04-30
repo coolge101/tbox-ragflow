@@ -186,6 +186,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.130 起无效 URL 跳过日志 `webhook_notify_skipped_invalid_url` 增加 `payload_type`、`sync_id`、`skip_reason=invalid_url`，实现成功/失败/跳过三条路径一致上下文。
 > S3.131 起新增日志一致性测试，校验 success/failure/skip 三条路径核心上下文字段持续齐全，减少后续重构回归。
 > S3.132 起 success/failure 日志新增结构化重试序号字段 `attempt_index`、`attempt_total`（同时保留 `attempt=x/y` 兼容旧检索）。
+> S3.133 起 success/failure 日志新增 `delivery_state`（`delivered`/`retrying`/`failed`），便于告警按终态直接分组。
 
 ## 本地开发
 
