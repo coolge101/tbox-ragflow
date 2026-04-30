@@ -20,6 +20,7 @@ def test_validate_alert_docs_links_rules_file_is_valid_json() -> None:
     assert isinstance(data.get("required_example_files"), list)
     assert isinstance(data.get("required_changelog_stage_tokens"), list)
     assert isinstance(data.get("examples_readme_required_tokens"), list)
+    assert isinstance(data.get("summary_contract"), dict)
 
 
 def test_validate_alert_docs_links_script_passes() -> None:
@@ -52,19 +53,16 @@ def test_validate_alert_docs_links_summary_metrics_contract() -> None:
     assert len(summary_lines) == 1
 
     payload = json.loads(summary_lines[0][len(prefix) :])
-    expected_keys = {
-        "event",
-        "summary_version",
-        "required_example_files",
-        "required_stage_rules",
-        "examples_readme_required_tokens",
-    }
+    rules = json.loads(_RULES.read_text(encoding="utf-8"))
+    summary_contract = rules["summary_contract"]
+    metric_keys = tuple(summary_contract["metric_keys"])
+
+    expected_keys = {"event", "summary_version", *metric_keys}
     assert set(payload) == expected_keys
-    assert payload["event"] == "alert_docs_gate_ok"
-    assert payload["summary_version"] == 1
-    assert isinstance(payload["required_example_files"], int)
-    assert isinstance(payload["required_stage_rules"], int)
-    assert isinstance(payload["examples_readme_required_tokens"], int)
+    assert payload["event"] == summary_contract["event"]
+    assert payload["summary_version"] == summary_contract["summary_version"]
+    for key in metric_keys:
+        assert isinstance(payload[key], int)
 
 
 def test_validate_alert_docs_links_script_verbose_mode() -> None:

@@ -75,5 +75,14 @@
     "webhook_alert_rules.index.md",
     "webhook_alerting_monitor_as_code.template.yaml",
     "webhook_alerting_render_spec.md"
-  ]
+  ],
+  "summary_contract": {
+    "event": "alert_docs_gate_ok",
+    "summary_version": 1,
+    "metric_keys": [
+      "required_example_files",
+      "required_stage_rules",
+      "examples_readme_required_tokens"
+    ]
+  }
 }

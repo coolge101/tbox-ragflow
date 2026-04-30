@@ -64,12 +64,60 @@ def _validate_rules_payload(payload: object, schema: object) -> list[str]:
     elif not all(isinstance(item, str) and item for item in errt):
         errors.append("examples_readme_required_tokens must contain non-empty strings")
 
+    # summary_contract: {event, summary_version, metric_keys}
+    summary_contract = payload.get("summary_contract")
+    if not isinstance(summary_contract, dict):
+        errors.append("summary_contract must be an object")
+    else:
+        event = summary_contract.get("event")
+        if not isinstance(event, str) or not event:
+            errors.append("summary_contract.event must be a non-empty string")
+
+        summary_version = summary_contract.get("summary_version")
+        if (
+            not isinstance(summary_version, int)
+            or isinstance(summary_version, bool)
+            or summary_version < 1
+        ):
+            errors.append("summary_contract.summary_version must be an integer >= 1")
+
+        metric_keys = summary_contract.get("metric_keys")
+        if not isinstance(metric_keys, list) or not metric_keys:
+            errors.append("summary_contract.metric_keys must be a non-empty array")
+        else:
+            allowed_metric_keys = {
+                "required_example_files",
+                "required_stage_rules",
+                "examples_readme_required_tokens",
+            }
+            if not all(isinstance(key, str) and key for key in metric_keys):
+                errors.append("summary_contract.metric_keys must contain non-empty strings")
+            invalid_metric_keys = [
+                key
+                for key in metric_keys
+                if isinstance(key, str) and key not in allowed_metric_keys
+            ]
+            if invalid_metric_keys:
+                errors.append(
+                    "summary_contract.metric_keys has unsupported key(s): "
+                    + ",".join(invalid_metric_keys)
+                )
+            if len(metric_keys) != len(set(metric_keys)):
+                errors.append("summary_contract.metric_keys must not contain duplicates")
+
     return errors
 
 
 def _load_rules(
     root: Path,
-) -> tuple[tuple[str, ...], tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
+) -> tuple[
+    tuple[str, ...],
+    tuple[tuple[str, tuple[str, ...]], ...],
+    tuple[str, ...],
+    str,
+    int,
+    tuple[str, ...],
+]:
     rules_env = str(root / "docs" / "examples" / "alert_docs_gate_rules.json")
     schema_env = str(root / "docs" / "examples" / "alert_docs_gate_rules.schema.json")
     rules_path = Path(os.environ.get("ALERT_DOCS_GATE_RULES_PATH", rules_env))
@@ -89,7 +137,18 @@ def _load_rules(
         if stage:
             stage_rules.append((stage, tokens))
     examples_readme_required_tokens = tuple(payload.get("examples_readme_required_tokens", []))
-    return required_example_files, tuple(stage_rules), examples_readme_required_tokens
+    summary_contract = payload.get("summary_contract", {})
+    summary_event = str(summary_contract.get("event", "")).strip()
+    summary_version = int(summary_contract.get("summary_version", 1))
+    summary_metric_keys = tuple(str(key) for key in summary_contract.get("metric_keys", []))
+    return (
+        required_example_files,
+        tuple(stage_rules),
+        examples_readme_required_tokens,
+        summary_event,
+        summary_version,
+        summary_metric_keys,
+    )
 
 
 def _missing_links(doc_text: str, expected_tokens: tuple[str, ...]) -> list[str]:
@@ -115,14 +174,21 @@ def _emit_success_summary(
     required_example_files: tuple[str, ...],
     required_changelog_stage_tokens: tuple[tuple[str, tuple[str, ...]], ...],
     examples_readme_required_tokens: tuple[str, ...],
+    summary_event: str,
+    summary_version: int,
+    summary_metric_keys: tuple[str, ...],
 ) -> None:
-    payload = {
-        "event": "alert_docs_gate_ok",
-        "summary_version": 1,
+    summary_metric_values = {
         "required_example_files": len(required_example_files),
         "required_stage_rules": len(required_changelog_stage_tokens),
         "examples_readme_required_tokens": len(examples_readme_required_tokens),
     }
+    payload = {
+        "event": summary_event,
+        "summary_version": summary_version,
+    }
+    for key in summary_metric_keys:
+        payload[key] = summary_metric_values[key]
     print(f"validate_alert_docs_links.py: summary {json.dumps(payload, ensure_ascii=True)}")
 
 
@@ -148,6 +214,9 @@ def main() -> int:
             required_example_files,
             required_changelog_stage_tokens,
             examples_readme_required_tokens,
+            summary_event,
+            summary_version,
+            summary_metric_keys,
         ) = _load_rules(root)
         _verbose(
             args.verbose,
@@ -155,7 +224,8 @@ def main() -> int:
                 "rules_loaded "
                 f"required_example_files={len(required_example_files)} "
                 f"required_stage_rules={len(required_changelog_stage_tokens)} "
-                f"readme_required_tokens={len(examples_readme_required_tokens)}"
+                f"readme_required_tokens={len(examples_readme_required_tokens)} "
+                f"summary_metric_keys={len(summary_metric_keys)}"
             ),
         )
     except Exception as exc:  # noqa: BLE001
@@ -243,6 +313,9 @@ def main() -> int:
         required_example_files=required_example_files,
         required_changelog_stage_tokens=required_changelog_stage_tokens,
         examples_readme_required_tokens=examples_readme_required_tokens,
+        summary_event=summary_event,
+        summary_version=summary_version,
+        summary_metric_keys=summary_metric_keys,
     )
     print("validate_alert_docs_links.py: ok all required doc links present")
     return 0
