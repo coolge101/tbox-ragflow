@@ -55,10 +55,10 @@ def test_start_log_contains_required_canonical_keys() -> None:
         _assert_key_once(line, key)
 
 
-def test_start_log_still_emits_phase_a_deprecated_keys() -> None:
-    line = _line_containing('start_json="$start_json,')
-    # Phase B keeps deprecated fields behind compatibility mode.
-    deprecated_keys = (
+def test_start_log_does_not_emit_removed_compat_fields() -> None:
+    """Phase C (post 2026-06-30): v1-extended keys must not appear in start_json."""
+    line = _line_containing('start_json="{')
+    removed_keys = (
         "validator_command_source",
         "validator_invocation",
         "validator_auto_install",
@@ -74,14 +74,15 @@ def test_start_log_still_emits_phase_a_deprecated_keys() -> None:
         "schema_exists",
         "schema_hash_verified",
     )
-    for key in deprecated_keys:
-        _assert_key_once(line, key)
+    for key in removed_keys:
+        assert f'"{key}"' not in line, f"removed field {key!r} must not appear in start_json"
 
 
-def test_phase_b_uses_log_version_2_and_compat_switch() -> None:
-    assert "LOG_VERSION=2" in _SCRIPT.read_text(encoding="utf-8")
-    compat_line = _line_containing("TBOX_WEBHOOK_LOG_COMPAT_V1")
-    assert "LOG_COMPAT_V1" in compat_line
+def test_phase_c_no_tbox_webhook_log_compat_v1() -> None:
+    text = _SCRIPT.read_text(encoding="utf-8")
+    assert "LOG_VERSION=2" in text
+    assert "TBOX_WEBHOOK_LOG_COMPAT_V1" not in text
+    assert "LOG_COMPAT_V1" not in text
 
 
 def test_start_log_mapping_matches_sample_event_keys() -> None:

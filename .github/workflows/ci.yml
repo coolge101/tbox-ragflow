@@ -66,12 +66,7 @@ jobs:
         with:
           node-version-file: packages/tbox-pipelines/.node-version
 
-      # validate_webhook_examples.sh emits canonical `start` JSON with log_version=2 by default.
-      # If a downstream consumer still parses deprecated v1-only fields, set:
-      #   TBOX_WEBHOOK_LOG_COMPAT_V1=true
-      # in this step's env (not required for CI; default unset keeps output minimal).
+      # validate_webhook_examples.sh emits canonical `start` JSON only (log_version=2).
+      # TBOX_WEBHOOK_LOG_COMPAT_V1 was removed after migration cutoff 2026-06-30 (UTC); see WEBHOOK_CONTRACT.md.
       - name: Validate webhook example JSON (JSON Schema)
         run: bash scripts/validate_webhook_examples.sh
-        # Uncomment only while validating parsers that still expect v1-extended `start` fields:
-        # env:
-        #   TBOX_WEBHOOK_LOG_COMPAT_V1: "true"
