@@ -327,7 +327,10 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert "retries_remaining=1" in joined
     assert "http_status=429" in joined
     assert "retry_after_seconds=3.0" in joined
+    assert "retry_after_source=header" in joined
+    assert "backoff_seconds=0.1" in joined
     assert "retry_in_seconds=3.0" in joined
+    assert "retry_window_ms=3000" in joined
     assert "retry_reason=http_status_429" in joined
     assert "error_class=HTTPStatusError" in joined
     assert "error_family=http" in joined
@@ -381,7 +384,10 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert "retries_remaining=1" in joined
     assert "http_status=429" in joined
     assert "retry_after_seconds=None" in joined
+    assert "retry_after_source=None" in joined
+    assert "backoff_seconds=0.2" in joined
     assert "retry_in_seconds=0.2" in joined
+    assert "retry_window_ms=200" in joined
     assert "retry_reason=http_status_429" in joined
     assert "error_class=HTTPStatusError" in joined
     assert "error_family=http" in joined
@@ -538,6 +544,11 @@ def test_webhook_log_context_fields_consistent_across_paths(
             "retry_eligible",
             "retries_remaining",
             "http_status",
+            "retry_after_seconds",
+            "retry_after_source",
+            "backoff_seconds",
+            "retry_in_seconds",
+            "retry_window_ms",
             "retry_reason",
             "error_class",
             "error_family",

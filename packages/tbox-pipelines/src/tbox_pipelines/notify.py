@@ -215,24 +215,31 @@ def _post_webhook_json(
             http_status = _webhook_failure_status_code(exc)
             retries_remaining = max(0, attempts - attempt)
             sleep_seconds: float | None = None
+            backoff_seconds: float | None = None
             retry_after_seconds: float | None = None
+            retry_after_source: str | None = None
+            retry_window_ms: int | None = None
             retry_policy = "none"
             if will_retry:
                 base_sleep_seconds = backoff * attempt
+                backoff_seconds = base_sleep_seconds
                 sleep_seconds = base_sleep_seconds
                 retry_policy = "backoff"
                 retry_after_seconds = _webhook_retry_after_seconds(exc)
                 if retry_after_seconds is not None:
+                    retry_after_source = "header"
                     sleep_seconds = max(sleep_seconds, retry_after_seconds)
                     if sleep_seconds > base_sleep_seconds:
                         retry_policy = "retry_after"
+                retry_window_ms = int(sleep_seconds * 1000) if sleep_seconds > 0 else 0
             logger.warning(
                 "webhook_notify_failed log_schema_version=%s outcome=%s payload_type=%s sync_id=%s "
                 "url=%s attempt=%s/%s "
                 "delivery_state=%s attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
-                "retry_after_seconds=%s retry_in_seconds=%s "
+                "retry_after_seconds=%s retry_after_source=%s backoff_seconds=%s "
+                "retry_in_seconds=%s retry_window_ms=%s "
                 "retry_reason=%s error_class=%s error_family=%s "
                 "attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
@@ -252,7 +259,10 @@ def _post_webhook_json(
                 retries_remaining,
                 http_status,
                 retry_after_seconds,
+                retry_after_source,
+                backoff_seconds,
                 sleep_seconds,
+                retry_window_ms,
                 retry_reason,
                 error_class,
                 error_family,
@@ -273,7 +283,8 @@ def _post_webhook_json(
                 "delivery_state=%s attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
-                "retry_after_seconds=%s retry_in_seconds=%s "
+                "retry_after_seconds=%s retry_after_source=%s backoff_seconds=%s "
+                "retry_in_seconds=%s retry_window_ms=%s "
                 "retry_reason=%s error_class=%s error_family=%s "
                 "attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
@@ -291,6 +302,8 @@ def _post_webhook_json(
                 "none",
                 False,
                 0,
+                None,
+                None,
                 None,
                 None,
                 None,
