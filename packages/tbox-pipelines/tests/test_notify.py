@@ -51,6 +51,26 @@ def test_webhook_user_agent_fallback_when_package_missing(monkeypatch: pytest.Mo
     assert notify_mod._webhook_post_headers()["User-Agent"] == "tbox-pipelines"
 
 
+def test_webhook_idempotency_key_deterministic() -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    a = notify_mod._webhook_idempotency_key(
+        notify_mod.WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+        {"sync_id": "1", "status": "ok"},
+    )
+    b = notify_mod._webhook_idempotency_key(
+        notify_mod.WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+        {"status": "ok", "sync_id": "1"},
+    )
+    assert a == b
+    assert len(a) == 64
+    c = notify_mod._webhook_idempotency_key(
+        notify_mod.WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+        {"sync_id": "1", "status": "failed"},
+    )
+    assert c != a
+
+
 def test_send_webhook_omits_sync_header_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
     _DummyClient.calls = []
@@ -58,7 +78,9 @@ def test_send_webhook_omits_sync_header_when_empty(monkeypatch: pytest.MonkeyPat
         "http://example.invalid/webhook",
         {"status": "failed", "sync_id": ""},
     )
-    assert "X-TBOX-Sync-Id" not in _DummyClient.calls[0]["headers"]
+    hdrs = _DummyClient.calls[0]["headers"]
+    assert "X-TBOX-Sync-Id" not in hdrs
+    assert len(hdrs["Idempotency-Key"]) == 64
 
 
 def test_send_webhook_retries_transient_connect_errors(
@@ -149,6 +171,10 @@ def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> N
     call = _DummyClient.calls[0]
     assert call["headers"]["Content-Type"] == "application/json"
     assert call["headers"]["User-Agent"].startswith("tbox-pipelines/")
+    assert call["headers"]["X-TBOX-Sync-Id"] == "abc"
+    ik = call["headers"]["Idempotency-Key"]
+    assert len(ik) == 64
+    assert all(c in "0123456789abcdef" for c in ik)
     assert call["json"]["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert call["json"]["type"] == WEBHOOK_TYPE_TBOX_SYNC_SUMMARY
 
@@ -171,6 +197,7 @@ def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch)
     assert len(_DummyClient.calls) == 1
     assert _DummyClient.calls[0]["headers"]["User-Agent"].startswith("tbox-pipelines/")
     assert _DummyClient.calls[0]["headers"]["X-TBOX-Sync-Id"] == "s1"
+    assert len(_DummyClient.calls[0]["headers"]["Idempotency-Key"]) == 64
     body = _DummyClient.calls[0]["json"]
     assert body["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert body["type"] == WEBHOOK_TYPE_TBOX_RBAC_ALERT
