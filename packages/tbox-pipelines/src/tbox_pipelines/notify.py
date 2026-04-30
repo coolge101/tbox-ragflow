@@ -8,7 +8,9 @@ See ``docs/WEBHOOK_CONTRACT.md`` Versioning.
 
 from __future__ import annotations
 
+import hashlib
 import importlib.metadata
+import json
 import logging
 import time
 from typing import Any
@@ -32,7 +34,18 @@ def _webhook_user_agent() -> str:
     return f"tbox-pipelines/{v}"
 
 
-def _webhook_post_headers(*, sync_id: str = "") -> dict[str, str]:
+def _webhook_idempotency_key(payload_type: str, inner: dict[str, Any]) -> str:
+    """Stable 64-char hex key for this logical POST (same across transport retries)."""
+    blob = json.dumps(inner, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    digest = hashlib.sha256(f"{payload_type}\n{blob}".encode("utf-8")).hexdigest()
+    return digest
+
+
+def _webhook_post_headers(
+    *,
+    sync_id: str = "",
+    idempotency_key: str | None = None,
+) -> dict[str, str]:
     headers: dict[str, str] = {
         "Content-Type": "application/json",
         "User-Agent": _webhook_user_agent(),
@@ -40,6 +53,8 @@ def _webhook_post_headers(*, sync_id: str = "") -> dict[str, str]:
     sid = str(sync_id).strip()
     if sid:
         headers["X-TBOX-Sync-Id"] = sid
+    if idempotency_key:
+        headers["Idempotency-Key"] = idempotency_key
     return headers
 
 
@@ -130,7 +145,8 @@ def send_webhook_notification(
 
     payload = build_tbox_sync_summary_payload(summary)
     sync_id = str(summary.get("sync_id", "") or "")
-    headers = _webhook_post_headers(sync_id=sync_id)
+    idem = _webhook_idempotency_key(WEBHOOK_TYPE_TBOX_SYNC_SUMMARY, summary)
+    headers = _webhook_post_headers(sync_id=sync_id, idempotency_key=idem)
 
     return _post_webhook_json(
         webhook_url,
@@ -155,7 +171,8 @@ def send_rbac_webhook_notification(
 
     payload = build_tbox_rbac_alert_payload(rbac_event)
     sync_id = str(rbac_event.get("sync_id", "") or "")
-    headers = _webhook_post_headers(sync_id=sync_id)
+    idem = _webhook_idempotency_key(WEBHOOK_TYPE_TBOX_RBAC_ALERT, rbac_event)
+    headers = _webhook_post_headers(sync_id=sync_id, idempotency_key=idem)
 
     return _post_webhook_json(
         webhook_url,
