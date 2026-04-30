@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+from datetime import date
 from typing import Any
 
 import httpx
@@ -69,6 +70,16 @@ def test_webhook_idempotency_key_deterministic() -> None:
         {"sync_id": "1", "status": "failed"},
     )
     assert c != a
+
+
+def test_webhook_idempotency_key_non_json_values_use_default_str() -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    k = notify_mod._webhook_idempotency_key(
+        notify_mod.WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+        {"d": date(2026, 4, 30)},
+    )
+    assert len(k) == 64
 
 
 def test_send_webhook_omits_sync_header_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -177,6 +188,20 @@ def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> N
     assert all(c in "0123456789abcdef" for c in ik)
     assert call["json"]["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert call["json"]["type"] == WEBHOOK_TYPE_TBOX_SYNC_SUMMARY
+    assert "Authorization" not in call["headers"]
+
+
+def test_send_webhook_notification_with_bearer_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "abc"},
+        bearer_token="secret-token",
+    )
+    assert ok
+    assert _DummyClient.calls[0]["headers"]["Authorization"] == "Bearer secret-token"
 
 
 def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -205,6 +230,20 @@ def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch)
     assert body["status"] == "failed"
     assert body["rbac"]["reason"] == "permission_denied"
     assert body["rbac"]["rbac_alert_suppressed_in_window"] == 2
+    assert "Authorization" not in _DummyClient.calls[0]["headers"]
+
+
+def test_send_rbac_webhook_notification_with_bearer(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_rbac_webhook_notification(
+        "http://example.invalid/rbac-hook",
+        {"sync_id": "s1", "status": "failed", "reason": "permission_denied"},
+        bearer_token="rbac-secret",
+    )
+    assert ok
+    assert _DummyClient.calls[0]["headers"]["Authorization"] == "Bearer rbac-secret"
 
 
 def test_build_payloads_match_send_helpers() -> None:

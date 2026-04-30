@@ -108,6 +108,16 @@ def test_webhook_retries_env_override_independent(
     assert cfg.rbac_alert_webhook_retry_backoff_seconds == 3.0
 
 
+def test_webhook_bearer_tokens_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("RAGFLOW_NOTIFY_WEBHOOK_BEARER_TOKEN", "sync-bearer")
+    monkeypatch.setenv("TBOX_RBAC_ALERT_WEBHOOK_BEARER_TOKEN", "rbac-bearer")
+    p = tmp_path / "p.json"
+    p.write_text(json.dumps(_base_payload()), encoding="utf-8")
+    cfg = load_config(str(p))
+    assert cfg.notify_webhook_bearer_token == "sync-bearer"
+    assert cfg.rbac_alert_webhook_bearer_token == "rbac-bearer"
+
+
 def test_notify_webhook_timeouts_clamped_minimum(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -121,5 +131,7 @@ def test_notify_webhook_timeouts_clamped_minimum(
     monkeypatch.delenv("RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS", raising=False)
     monkeypatch.delenv("TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES", raising=False)
     monkeypatch.delenv("TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS", raising=False)
+    monkeypatch.delenv("RAGFLOW_NOTIFY_WEBHOOK_BEARER_TOKEN", raising=False)
+    monkeypatch.delenv("TBOX_RBAC_ALERT_WEBHOOK_BEARER_TOKEN", raising=False)
     cfg = load_config(str(p))
     assert cfg.notify_webhook_timeout_seconds == 1.0

@@ -6,7 +6,9 @@ HTTP `POST` with `Content-Type: application/json`. All envelopes share top-level
 
 When the envelope `sync_id` is non-empty after trimming, the same value is sent as HTTP header **`X-TBOX-Sync-Id`** (optional for receivers; the JSON body always includes `sync_id`).
 
-Each `send_*` call adds **`Idempotency-Key`** (S3.112): a 64-char lowercase hex **SHA-256** of `payload_type` plus a **canonical JSON** serialization (`sort_keys`, compact separators, `ensure_ascii=True`) of the inner dict passed to the builder (`summary` or `rbac_event`). The value is stable for the same logical notification and across transport retries within that call; receivers may use it for deduplication if they support the header.
+Each `send_*` call adds **`Idempotency-Key`** (S3.112): a 64-char lowercase hex **SHA-256** of `payload_type` plus a **canonical JSON** serialization (`sort_keys`, compact separators, `ensure_ascii=True`, **`default=str`** for non-JSON-native values) of the inner dict passed to the builder (`summary` or `rbac_event`). The value is stable for the same logical notification and across transport retries within that call; receivers may use it for deduplication if they support the header.
+
+**Authorization (S3.113):** When configured, `notify.py` sends **`Authorization: Bearer <token>`** on the matching webhook only. Prefer environment variables **`RAGFLOW_NOTIFY_WEBHOOK_BEARER_TOKEN`** and **`TBOX_RBAC_ALERT_WEBHOOK_BEARER_TOKEN`** over JSON secrets in repo files. Do not log token values.
 
 **Retries (S3.109 / S3.111):** **408**, **429**, **500**, **502**, **503**, **504**, and transport errors (`httpx.RequestError`) are retried with sleep `retry_backoff_seconds * attempt` between tries. Other HTTP status codes are not retried. `run_sync` passes per-webhook `max_retries` / `retry_backoff_seconds` from `notify_webhook_*` and `rbac_alert_webhook_*` pipeline fields; when omitted they **inherit** the resolved `http_max_retries` / `http_retry_backoff_seconds` (same source as `RagflowClient`: `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` and JSON `http_max_retries` / `http_retry_backoff_seconds`). Override with JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES`, `RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS`, `TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES`, `TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS`. Library callers of `send_*` may keep defaults (`max_retries=0`) or override.
 
@@ -181,6 +183,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.110 起 `run_sync` 传入 `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds`（JSON 或 `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS`、`TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`，默认 10s、下限 1s）。
 > S3.111 起 webhook 重试次数与退避可独立于 RAGFlow HTTP：`notify_webhook_max_retries` 等四字段 / 对应 `RAGFLOW_NOTIFY_*`、`TBOX_RBAC_ALERT_WEBHOOK_*` env；未设置时继承已解析的 `http_max_retries` / `http_retry_backoff_seconds`。
 > S3.112 起 `notify` 为每次 `send_*` 生成 `Idempotency-Key`（64 位 hex SHA-256，见契约正文），同一调用内重试保持不变。
+> S3.113 起可选 `Authorization: Bearer`（`notify_webhook_bearer_token` / `rbac_alert_webhook_bearer_token` 或对应 env）；幂等键 JSON 序列化使用 `default=str`。
 
 ## Field Consolidation (Phase A)
 

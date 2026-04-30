@@ -36,7 +36,13 @@ def _webhook_user_agent() -> str:
 
 def _webhook_idempotency_key(payload_type: str, inner: dict[str, Any]) -> str:
     """Stable 64-char hex key for this logical POST (same across transport retries)."""
-    blob = json.dumps(inner, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    blob = json.dumps(
+        inner,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        default=str,
+    )
     digest = hashlib.sha256(f"{payload_type}\n{blob}".encode("utf-8")).hexdigest()
     return digest
 
@@ -45,6 +51,7 @@ def _webhook_post_headers(
     *,
     sync_id: str = "",
     idempotency_key: str | None = None,
+    bearer_token: str | None = None,
 ) -> dict[str, str]:
     headers: dict[str, str] = {
         "Content-Type": "application/json",
@@ -55,6 +62,9 @@ def _webhook_post_headers(
         headers["X-TBOX-Sync-Id"] = sid
     if idempotency_key:
         headers["Idempotency-Key"] = idempotency_key
+    tok = str(bearer_token or "").strip()
+    if tok:
+        headers["Authorization"] = f"Bearer {tok}"
     return headers
 
 
@@ -137,6 +147,7 @@ def send_webhook_notification(
     summary: dict[str, Any],
     timeout_seconds: float = 10.0,
     *,
+    bearer_token: str | None = None,
     max_retries: int = 0,
     retry_backoff_seconds: float = 1.0,
 ) -> bool:
@@ -146,7 +157,11 @@ def send_webhook_notification(
     payload = build_tbox_sync_summary_payload(summary)
     sync_id = str(summary.get("sync_id", "") or "")
     idem = _webhook_idempotency_key(WEBHOOK_TYPE_TBOX_SYNC_SUMMARY, summary)
-    headers = _webhook_post_headers(sync_id=sync_id, idempotency_key=idem)
+    headers = _webhook_post_headers(
+        sync_id=sync_id,
+        idempotency_key=idem,
+        bearer_token=bearer_token,
+    )
 
     return _post_webhook_json(
         webhook_url,
@@ -163,6 +178,7 @@ def send_rbac_webhook_notification(
     rbac_event: dict[str, Any],
     timeout_seconds: float = 10.0,
     *,
+    bearer_token: str | None = None,
     max_retries: int = 0,
     retry_backoff_seconds: float = 1.0,
 ) -> bool:
@@ -172,7 +188,11 @@ def send_rbac_webhook_notification(
     payload = build_tbox_rbac_alert_payload(rbac_event)
     sync_id = str(rbac_event.get("sync_id", "") or "")
     idem = _webhook_idempotency_key(WEBHOOK_TYPE_TBOX_RBAC_ALERT, rbac_event)
-    headers = _webhook_post_headers(sync_id=sync_id, idempotency_key=idem)
+    headers = _webhook_post_headers(
+        sync_id=sync_id,
+        idempotency_key=idem,
+        bearer_token=bearer_token,
+    )
 
     return _post_webhook_json(
         webhook_url,
