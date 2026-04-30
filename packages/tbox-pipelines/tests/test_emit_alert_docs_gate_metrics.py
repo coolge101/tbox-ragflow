@@ -52,9 +52,7 @@ def test_emit_alert_docs_gate_metrics_enforces_contract_keys(tmp_path: Path) -> 
     }
     log_path = tmp_path / "alert_docs_gate.log"
     log_path.write_text(
-        "validate_alert_docs_links.py: summary "
-        + json.dumps(payload, ensure_ascii=True)
-        + "\n",
+        "validate_alert_docs_links.py: summary " + json.dumps(payload, ensure_ascii=True) + "\n",
         encoding="utf-8",
     )
 
