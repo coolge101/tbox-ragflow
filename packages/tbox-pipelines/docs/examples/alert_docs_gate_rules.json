@@ -1,6 +1,7 @@
 {
   "required_example_files": [
     "README.md",
+    "alert_docs_gate_rules.schema.json",
     "webhook_alert_rules.index.md",
     "webhook_alert_rules.sample.md",
     "webhook_alert_rules.datadog.sample.md",

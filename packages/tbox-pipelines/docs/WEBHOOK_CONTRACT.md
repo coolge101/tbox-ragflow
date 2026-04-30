@@ -46,6 +46,7 @@ Compatibility guidance:
 
 Copy-ready sample files:
 - [`examples/README.md`](examples/README.md) (directory overview and maintenance conventions)
+- [`examples/alert_docs_gate_rules.schema.json`](examples/alert_docs_gate_rules.schema.json) (gate rules schema)
 - [`examples/webhook_alert_rules.index.md`](examples/webhook_alert_rules.index.md) (cross-platform index + field mapping)
 - [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
@@ -284,6 +285,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.158 起将 alert docs link 校验接入 CI，并标准化脚本失败输出（`fail total_errors` + 编号错误项）以提升排障效率。
 > S3.159 起扩展 docs-link gate，增加 `README`/`WEBHOOK_CONTRACT` 关键 S3 changelog 与证据 token 一致性抽检，降低文档漂移风险。
 > S3.160 起将 docs gate 规则外置到 `docs/examples/alert_docs_gate_rules.json`，后续扩展阶段检查可只改规则文件。
+> S3.161 起新增 `alert_docs_gate_rules.schema.json` 并在 gate 脚本中执行 schema 级结构校验，降低规则误配风险。
 
 ## Field Consolidation (Phase A)
 
