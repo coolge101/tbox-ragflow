@@ -49,6 +49,7 @@ Copy-ready sample files:
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
 - [`examples/webhook_alert_rules.promql.sample.md`](examples/webhook_alert_rules.promql.sample.md) (Loki/Prometheus style)
 - [`examples/webhook_alert_rules.openobserve.sample.md`](examples/webhook_alert_rules.openobserve.sample.md) (OpenObserve query style)
+- [`examples/webhook_alert_rules.elasticsearch.sample.md`](examples/webhook_alert_rules.elasticsearch.sample.md) (Elasticsearch/KQL style)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -254,6 +255,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.143 起新增 `docs/examples/webhook_alert_rules.datadog.sample.md`，提供 Datadog 查询语法版告警样例。
 > S3.144 起新增 `docs/examples/webhook_alert_rules.promql.sample.md`，提供 Loki/Prometheus 风格告警样例。
 > S3.145 起新增 `docs/examples/webhook_alert_rules.openobserve.sample.md`，提供 OpenObserve 查询语法版告警样例。
+> S3.146 起新增 `docs/examples/webhook_alert_rules.elasticsearch.sample.md`，提供 Elasticsearch/KQL 风格告警样例。
 
 ## Field Consolidation (Phase A)
 
