@@ -177,6 +177,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.121 起 `webhook_notify_failed` 增加 `retry_after_seconds`（解析到 `Retry-After` 时记录秒值），便于判断服务端限流提示是否生效。
 > S3.122 起 `webhook_notify_failed` 增加 `retry_reason`（如 `request_error`、`http_status_429`、`http_status_non_retryable`），便于按失败类型做日志聚合。
 > S3.123 起 `webhook_notify_failed` 增加 `http_status`（HTTP 异常时记录状态码），便于直接按状态码统计失败分布。
+> S3.124 起 `webhook_notify_failed` 增加 `retries_remaining`（当前失败后剩余重试次数），便于快速识别接近重试上限的告警。
 
 ## 本地开发
 
