@@ -15,6 +15,7 @@ reference across different log/monitoring platforms.
 - Operations runbook: [`webhook_alerting_runbook.md`](webhook_alerting_runbook.md)
 - Governance baseline pack: [`webhook_alerting_baseline.md`](webhook_alerting_baseline.md)
 - Parameterized baseline template: [`webhook_alerting_baseline.parameterized.md`](webhook_alerting_baseline.parameterized.md)
+- Monitor-as-code template: [`webhook_alerting_monitor_as_code.template.yaml`](webhook_alerting_monitor_as_code.template.yaml)
 
 ## Core rule categories
 
@@ -58,3 +59,4 @@ Use these logical fields as the stable contract, then adapt to each platform's q
 5. Run production operations with [`webhook_alerting_runbook.md`](webhook_alerting_runbook.md)
 6. Standardize long-term policy with [`webhook_alerting_baseline.md`](webhook_alerting_baseline.md)
 7. Operationalize quickly using [`webhook_alerting_baseline.parameterized.md`](webhook_alerting_baseline.parameterized.md)
+8. Render platform rules from [`webhook_alerting_monitor_as_code.template.yaml`](webhook_alerting_monitor_as_code.template.yaml)
