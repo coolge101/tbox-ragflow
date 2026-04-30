@@ -31,6 +31,8 @@ def test_validate_alert_docs_links_script_passes() -> None:
         text=True,
     )
     assert res.returncode == 0, res.stderr
+    assert "summary {" in res.stdout
+    assert '"event": "alert_docs_gate_ok"' in res.stdout
     assert "ok all required doc links present" in res.stdout
 
 

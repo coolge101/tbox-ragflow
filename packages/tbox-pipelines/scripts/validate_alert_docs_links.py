@@ -110,6 +110,21 @@ def _verbose(enabled: bool, message: str) -> None:
         print(f"validate_alert_docs_links.py: verbose {message}")
 
 
+def _emit_success_summary(
+    *,
+    required_example_files: tuple[str, ...],
+    required_changelog_stage_tokens: tuple[tuple[str, tuple[str, ...]], ...],
+    examples_readme_required_tokens: tuple[str, ...],
+) -> None:
+    payload = {
+        "event": "alert_docs_gate_ok",
+        "required_example_files": len(required_example_files),
+        "required_stage_rules": len(required_changelog_stage_tokens),
+        "examples_readme_required_tokens": len(examples_readme_required_tokens),
+    }
+    print(f"validate_alert_docs_links.py: summary {json.dumps(payload, ensure_ascii=True)}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate cross-links for alert docs")
     parser.add_argument(
@@ -223,6 +238,11 @@ def main() -> int:
         _emit_errors(errors)
         return 1
 
+    _emit_success_summary(
+        required_example_files=required_example_files,
+        required_changelog_stage_tokens=required_changelog_stage_tokens,
+        examples_readme_required_tokens=examples_readme_required_tokens,
+    )
     print("validate_alert_docs_links.py: ok all required doc links present")
     return 0
 
