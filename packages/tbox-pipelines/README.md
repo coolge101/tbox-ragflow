@@ -181,6 +181,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.125 起 `webhook_notify_failed` 增加 `retry_eligible`（失败类型本身是否可重试），帮助区分“可重试但已无剩余次数”与“本质不可重试”。
 > S3.126 起 `webhook_notify_ok` / `webhook_notify_failed` 增加 `payload_type`，便于按 webhook 类型做日志聚合。
 > S3.127 起 `webhook_notify_ok` / `webhook_notify_failed` 增加 `sync_id`，便于与同步任务日志关联排障。
+> S3.128 起 `webhook_notify_ok` / `webhook_notify_failed` 增加 `attempt_elapsed_ms` 和 `total_elapsed_ms`，便于定位慢请求与累计重试耗时。
 
 ## 本地开发
 
