@@ -153,6 +153,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.105 起 `docs/WEBHOOK_CONTRACT.md` 与 README 对齐补充 S3.104 `.gitignore` 说明。
 > S3.106 起在 `notify.py` 与 `WEBHOOK_CONTRACT.md` 明确区分：**HTTP 负载 `payload_version`** 与 **校验脚本 stdout `log_version`**（当前 `2`），避免混用。
 > S3.107 起 `notify` 暴露 `build_tbox_*_payload` 与 `WEBHOOK_TYPE_*`，发送路径复用 builder；pytest 校验顶层键与 `webhook_payload.schema.json` 一致。
+> S3.108 起 webhook `POST` 带 `User-Agent: tbox-pipelines/<version>`（见 `docs/WEBHOOK_CONTRACT.md`）。
 
 ## 本地开发
 

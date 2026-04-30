@@ -8,6 +8,7 @@ See ``docs/WEBHOOK_CONTRACT.md`` Versioning.
 
 from __future__ import annotations
 
+import importlib.metadata
 import logging
 from typing import Any
 
@@ -20,6 +21,21 @@ WEBHOOK_PAYLOAD_VERSION = 1
 
 WEBHOOK_TYPE_TBOX_SYNC_SUMMARY = "tbox_sync_summary"
 WEBHOOK_TYPE_TBOX_RBAC_ALERT = "tbox_rbac_alert"
+
+
+def _webhook_user_agent() -> str:
+    try:
+        v = importlib.metadata.version("tbox-pipelines")
+    except importlib.metadata.PackageNotFoundError:
+        return "tbox-pipelines"
+    return f"tbox-pipelines/{v}"
+
+
+def _webhook_post_headers() -> dict[str, str]:
+    return {
+        "Content-Type": "application/json",
+        "User-Agent": _webhook_user_agent(),
+    }
 
 
 def build_tbox_sync_summary_payload(summary: dict[str, Any]) -> dict[str, Any]:
@@ -58,7 +74,7 @@ def send_webhook_notification(
         with httpx.Client(timeout=timeout_seconds) as client:
             response = client.post(
                 webhook_url,
-                headers={"Content-Type": "application/json"},
+                headers=_webhook_post_headers(),
                 json=payload,
             )
             response.raise_for_status()
@@ -82,7 +98,7 @@ def send_rbac_webhook_notification(
         with httpx.Client(timeout=timeout_seconds) as client:
             response = client.post(
                 webhook_url,
-                headers={"Content-Type": "application/json"},
+                headers=_webhook_post_headers(),
                 json=payload,
             )
             response.raise_for_status()

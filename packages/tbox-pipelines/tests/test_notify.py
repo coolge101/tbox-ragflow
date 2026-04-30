@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata
 from typing import Any
 
 import pytest
@@ -39,6 +40,16 @@ class _DummyClient:
         return _DummyResponse()
 
 
+def test_webhook_user_agent_fallback_when_package_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise(_name: str) -> str:
+        raise importlib.metadata.PackageNotFoundError
+
+    monkeypatch.setattr("tbox_pipelines.notify.importlib.metadata.version", _raise)
+    import tbox_pipelines.notify as notify_mod
+
+    assert notify_mod._webhook_post_headers()["User-Agent"] == "tbox-pipelines"
+
+
 def test_should_notify_default_failed_only() -> None:
     assert should_notify({"status": "failed"}, notify_on_success=False)
     assert not should_notify({"status": "ok"}, notify_on_success=False)
@@ -55,6 +66,8 @@ def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> N
     assert ok
     assert len(_DummyClient.calls) == 1
     call = _DummyClient.calls[0]
+    assert call["headers"]["Content-Type"] == "application/json"
+    assert call["headers"]["User-Agent"].startswith("tbox-pipelines/")
     assert call["json"]["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert call["json"]["type"] == WEBHOOK_TYPE_TBOX_SYNC_SUMMARY
 
@@ -75,6 +88,7 @@ def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch)
     )
     assert ok
     assert len(_DummyClient.calls) == 1
+    assert _DummyClient.calls[0]["headers"]["User-Agent"].startswith("tbox-pipelines/")
     body = _DummyClient.calls[0]["json"]
     assert body["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert body["type"] == WEBHOOK_TYPE_TBOX_RBAC_ALERT
