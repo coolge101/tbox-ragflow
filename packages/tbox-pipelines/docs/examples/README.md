@@ -75,6 +75,7 @@ Before merging docs changes in this directory:
   - Use `python scripts/validate_alert_docs_links.py --verbose` for CI-style diagnostics.
   - Success summary output includes `summary_version` (current `1`) for parser compatibility.
   - Summary metric keys are controlled by `summary_contract.metric_keys` in rules.
+  - CI metric replay uses `python scripts/emit_alert_docs_gate_metrics.py --log-path ...`.
   - This gate now also checks selected S3 changelog consistency in both
     `README.md` and `WEBHOOK_CONTRACT.md`.
   - Rules are configured in `alert_docs_gate_rules.json` with
