@@ -194,6 +194,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.138 起将 `retry_reason` 标准化为稳定枚举（如 `http_429`、`http_non_retryable_403`、`transport_retryable`），降低告警规则分支复杂度。
 > S3.139 起 failure 日志新增 `retry_reason_version`（当前 `1`），为 retry reason taxonomy 迭代提供兼容锚点。
 > S3.140 起 failure 日志新增 `retry_reason_group`（粗粒度稳定分组），便于告警按大类聚合，减少对细粒度枚举的耦合。
+> S3.141 起 `WEBHOOK_CONTRACT` 增加基于 `retry_reason_group` 的告警模板与分流建议，便于快速落地监控规则。
 
 ## 本地开发
 
