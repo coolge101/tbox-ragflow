@@ -48,7 +48,10 @@ jobs:
         run: pytest -q
 
       - name: Validate alert docs links
-        run: python scripts/validate_alert_docs_links.py
+        run: |
+          echo "::group::alert-docs-link-gate"
+          python scripts/validate_alert_docs_links.py --verbose
+          echo "::endgroup::"
 
       - name: Validate .node-version format
         run: |
