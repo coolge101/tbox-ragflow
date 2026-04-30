@@ -213,6 +213,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.157 起新增 `scripts/validate_alert_docs_links.py`（含测试），为 examples 文档关键互链提供自动自检门禁。
 > S3.158 起将 `validate_alert_docs_links.py` 纳入 CI（并覆盖 `scripts` 的 Ruff 检查），同时标准化失败输出格式，便于快速定位缺链。
 > S3.159 起扩展 docs-link gate，新增 README/WEBHOOK_CONTRACT 的关键 S3 changelog 证据一致性检查，减少跨文档演进漂移。
+> S3.160 起引入 `docs/examples/alert_docs_gate_rules.json`，将 gate 规则配置化，便于后续按阶段增量维护。
 
 ## 本地开发
 

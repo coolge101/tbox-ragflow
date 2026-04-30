@@ -1,0 +1,78 @@
+{
+  "required_example_files": [
+    "README.md",
+    "webhook_alert_rules.index.md",
+    "webhook_alert_rules.sample.md",
+    "webhook_alert_rules.datadog.sample.md",
+    "webhook_alert_rules.promql.sample.md",
+    "webhook_alert_rules.openobserve.sample.md",
+    "webhook_alert_rules.elasticsearch.sample.md",
+    "webhook_alert_rules.migration_checklist.md",
+    "webhook_alert_rules.troubleshooting.md",
+    "webhook_alerting_runbook.md",
+    "webhook_alerting_baseline.md",
+    "webhook_alerting_baseline.parameterized.md",
+    "webhook_alerting_monitor_as_code.template.yaml",
+    "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
+    "webhook_alerting_monitor_as_code.prometheus.rendered.yaml",
+    "webhook_alerting_render_spec.md",
+    "webhook_alerting_render_acceptance_checklist.md",
+    "webhook_alerting_render_change_log.template.md",
+    "webhook_alerting_render_change_log.sample.md"
+  ],
+  "required_changelog_stage_tokens": [
+    {
+      "stage": "S3.153",
+      "evidence_tokens": [
+        "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
+        "webhook_alerting_monitor_as_code.prometheus.rendered.yaml"
+      ]
+    },
+    {
+      "stage": "S3.154",
+      "evidence_tokens": [
+        "webhook_alerting_render_spec.md",
+        "webhook_alerting_render_acceptance_checklist.md"
+      ]
+    },
+    {
+      "stage": "S3.155",
+      "evidence_tokens": [
+        "webhook_alerting_render_change_log.template.md",
+        "webhook_alerting_render_change_log.sample.md"
+      ]
+    },
+    {
+      "stage": "S3.156",
+      "evidence_tokens": [
+        "docs/examples/README.md"
+      ]
+    },
+    {
+      "stage": "S3.157",
+      "evidence_tokens": [
+        "validate_alert_docs_links.py"
+      ]
+    },
+    {
+      "stage": "S3.158",
+      "evidence_tokens": [
+        "validate_alert_docs_links.py",
+        "CI"
+      ]
+    },
+    {
+      "stage": "S3.159",
+      "evidence_tokens": [
+        "README",
+        "WEBHOOK_CONTRACT",
+        "一致性"
+      ]
+    }
+  ],
+  "examples_readme_required_tokens": [
+    "webhook_alert_rules.index.md",
+    "webhook_alerting_monitor_as_code.template.yaml",
+    "webhook_alerting_render_spec.md"
+  ]
+}
