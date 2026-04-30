@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 # Bump when envelope or semantics change for receivers that branch on version.
 WEBHOOK_PAYLOAD_VERSION = 1
 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION = 1
+WEBHOOK_RETRY_REASON_VERSION = 1
 
 WEBHOOK_TYPE_TBOX_SYNC_SUMMARY = "tbox_sync_summary"
 WEBHOOK_TYPE_TBOX_RBAC_ALERT = "tbox_rbac_alert"
@@ -292,7 +293,7 @@ def _post_webhook_json(
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_after_source=%s backoff_seconds=%s "
                 "retry_in_seconds=%s retry_window_ms=%s "
-                "retry_reason=%s error_class=%s error_family=%s "
+                "retry_reason=%s retry_reason_version=%s error_class=%s error_family=%s "
                 "attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "failure",
@@ -316,6 +317,7 @@ def _post_webhook_json(
                 decision.retry_in_seconds,
                 decision.retry_window_ms,
                 retry_reason,
+                WEBHOOK_RETRY_REASON_VERSION,
                 error_class,
                 error_family,
                 attempt_elapsed_ms,
@@ -337,7 +339,7 @@ def _post_webhook_json(
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_after_source=%s backoff_seconds=%s "
                 "retry_in_seconds=%s retry_window_ms=%s "
-                "retry_reason=%s error_class=%s error_family=%s "
+                "retry_reason=%s retry_reason_version=%s error_class=%s error_family=%s "
                 "attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "failure",
@@ -360,6 +362,7 @@ def _post_webhook_json(
                 None,
                 None,
                 "unexpected_error",
+                WEBHOOK_RETRY_REASON_VERSION,
                 _webhook_error_class(exc),
                 _webhook_error_family(exc),
                 attempt_elapsed_ms,

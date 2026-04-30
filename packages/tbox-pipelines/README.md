@@ -192,6 +192,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.136 起 failure 日志新增 `error_family`（`http`/`transport`/`unexpected`），便于建立稳定的异常分组看板与告警规则。
 > S3.137 起重试决策统一收敛到 helper，并新增 `retry_after_source`、`backoff_seconds`、`retry_window_ms`，配套表驱动测试覆盖关键组合。
 > S3.138 起将 `retry_reason` 标准化为稳定枚举（如 `http_429`、`http_non_retryable_403`、`transport_retryable`），降低告警规则分支复杂度。
+> S3.139 起 failure 日志新增 `retry_reason_version`（当前 `1`），为 retry reason taxonomy 迭代提供兼容锚点。
 
 ## 本地开发
 
