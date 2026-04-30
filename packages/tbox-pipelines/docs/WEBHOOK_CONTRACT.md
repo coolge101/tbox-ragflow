@@ -8,6 +8,8 @@ When the envelope `sync_id` is non-empty after trimming, the same value is sent 
 
 **Retries (S3.109):** `run_sync` passes pipeline `http_max_retries` / `http_retry_backoff_seconds` (from `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS`, same as `RagflowClient`) into webhook POSTs. **408**, **429**, **500**, **502**, **503**, **504**, and transport errors (`httpx.RequestError`) are retried with sleep `retry_backoff_seconds * attempt` between tries. Other HTTP status codes are not retried. Library callers may keep `send_*` defaults (`max_retries=0`) or override.
 
+**Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
+
 ## Envelope (all types)
 
 | Field | Type | Description |
@@ -174,6 +176,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.107 起 `notify` 提供 `build_tbox_sync_summary_payload` / `build_tbox_rbac_alert_payload` 与 `WEBHOOK_TYPE_*` 常量；`send_*` 复用 builder；`pytest` 将 builder 顶层键与 schema 推导的内层键对齐。
 > S3.108 起 `notify` 的 webhook `POST` 增加 `User-Agent: tbox-pipelines/<version>`（不可解析时为 `tbox-pipelines`），便于接收端日志归因。
 > S3.109 起非空 `sync_id` 时增加请求头 `X-TBOX-Sync-Id`；`run_sync` 将 `http_max_retries` / `http_retry_backoff_seconds` 传入 webhook，对网络错误与 408/429/5xx 可重试状态做有限次重试。
+> S3.110 起 `run_sync` 传入 `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds`（JSON 或 `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS`、`TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`，默认 10s、下限 1s）。
 
 ## Field Consolidation (Phase A)
 

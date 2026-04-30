@@ -11,6 +11,8 @@
   "rbac_audit_log_path": "logs/rbac_audit.jsonl",
   "notify_webhook_url": "",
   "notify_on_success": false,
+  "notify_webhook_timeout_seconds": 10.0,
+  "rbac_alert_webhook_timeout_seconds": 10.0,
   "source_provider": "stub",
   "source_api_url": "",
   "source_api_key": "",
