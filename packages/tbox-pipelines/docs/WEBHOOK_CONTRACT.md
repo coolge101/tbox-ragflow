@@ -2,6 +2,8 @@
 
 HTTP `POST` with `Content-Type: application/json`. All envelopes share top-level fields; interpret by `type`.
 
+`notify.py` also sends **`User-Agent: tbox-pipelines/<version>`** (from installed package metadata, or `tbox-pipelines` if the distribution is not discoverable) on both webhook POSTs so receivers can attribute traffic.
+
 ## Envelope (all types)
 
 | Field | Type | Description |
@@ -166,6 +168,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.105 起在本文 Versioning 与 README 对齐补充：S3.104 `.gitignore` 说明（文档/变更日志一致）。
 > S3.106 起在 `notify.py` 模块文档与 Versioning 节明确：**HTTP 负载 `payload_version`** 与 **校验脚本 stdout `log_version`**（当前 `2`）无关，避免混用。
 > S3.107 起 `notify` 提供 `build_tbox_sync_summary_payload` / `build_tbox_rbac_alert_payload` 与 `WEBHOOK_TYPE_*` 常量；`send_*` 复用 builder；`pytest` 将 builder 顶层键与 schema 推导的内层键对齐。
+> S3.108 起 `notify` 的 webhook `POST` 增加 `User-Agent: tbox-pipelines/<version>`（不可解析时为 `tbox-pipelines`），便于接收端日志归因。
 
 ## Field Consolidation (Phase A)
 
