@@ -22,6 +22,8 @@ from tbox_pipelines.notify import (
 
 
 class _DummyResponse:
+    status_code = 200
+
     def raise_for_status(self) -> None:
         return None
 
@@ -230,9 +232,104 @@ def test_send_webhook_no_retry_on_non_transient_http(
     assert _Client403.n == 1
 
 
+def test_send_webhook_retry_honors_retry_after_header(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    slept: list[float] = []
+    monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
+
+    class _Client429:
+        n = 0
+
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_Client429":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            _Client429.n += 1
+            if _Client429.n == 1:
+                req = httpx.Request("POST", url)
+                resp = httpx.Response(429, request=req, headers={"Retry-After": "3"})
+                raise httpx.HTTPStatusError("rate limited", request=req, response=resp)
+            return _DummyResponse()
+
+    _Client429.n = 0
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _Client429)
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "ra1"},
+        max_retries=1,
+        retry_backoff_seconds=0.1,
+    )
+    assert ok
+    assert _Client429.n == 2
+    assert slept == [3.0]
+
+
+def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    slept: list[float] = []
+    monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
+
+    class _Client429Invalid:
+        n = 0
+
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_Client429Invalid":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            _Client429Invalid.n += 1
+            if _Client429Invalid.n == 1:
+                req = httpx.Request("POST", url)
+                resp = httpx.Response(429, request=req, headers={"Retry-After": "soon"})
+                raise httpx.HTTPStatusError("rate limited", request=req, response=resp)
+            return _DummyResponse()
+
+    _Client429Invalid.n = 0
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _Client429Invalid)
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "ra2"},
+        max_retries=1,
+        retry_backoff_seconds=0.2,
+    )
+    assert ok
+    assert _Client429Invalid.n == 2
+    assert slept == [0.2]
+
+
 def test_should_notify_default_failed_only() -> None:
     assert should_notify({"status": "failed"}, notify_on_success=False)
     assert not should_notify({"status": "ok"}, notify_on_success=False)
+
+
+def test_send_webhook_notification_logs_ok_at_debug(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_webhook_notification(
+        "https://hooks.example.invalid/webhook?token=x",
+        {"status": "failed", "sync_id": "abc"},
+    )
+    assert ok
+    msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG]
+    assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
+    assert any("https://hooks.example.invalid/webhook" in m and "token=" not in m for m in msgs)
 
 
 def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> None:
