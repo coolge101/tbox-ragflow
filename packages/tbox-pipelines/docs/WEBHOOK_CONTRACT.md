@@ -45,6 +45,7 @@ Compatibility guidance:
 - Keep `retry_reason_version` in parser output and branch logic by version only when taxonomy changes.
 
 Copy-ready sample files:
+- [`examples/webhook_alert_rules.index.md`](examples/webhook_alert_rules.index.md) (cross-platform index + field mapping)
 - [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
 - [`examples/webhook_alert_rules.promql.sample.md`](examples/webhook_alert_rules.promql.sample.md) (Loki/Prometheus style)
@@ -256,6 +257,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.144 起新增 `docs/examples/webhook_alert_rules.promql.sample.md`，提供 Loki/Prometheus 风格告警样例。
 > S3.145 起新增 `docs/examples/webhook_alert_rules.openobserve.sample.md`，提供 OpenObserve 查询语法版告警样例。
 > S3.146 起新增 `docs/examples/webhook_alert_rules.elasticsearch.sample.md`，提供 Elasticsearch/KQL 风格告警样例。
+> S3.147 起新增 `docs/examples/webhook_alert_rules.index.md`，统一聚合各平台样例并补充字段映射速查。
 
 ## Field Consolidation (Phase A)
 
