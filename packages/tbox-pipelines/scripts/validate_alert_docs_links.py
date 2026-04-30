@@ -28,6 +28,27 @@ REQUIRED_EXAMPLE_FILES = (
     "webhook_alerting_render_change_log.sample.md",
 )
 
+REQUIRED_CHANGELOG_STAGE_TOKENS = (
+    (
+        "S3.153",
+        "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
+        "webhook_alerting_monitor_as_code.prometheus.rendered.yaml",
+    ),
+    (
+        "S3.154",
+        "webhook_alerting_render_spec.md",
+        "webhook_alerting_render_acceptance_checklist.md",
+    ),
+    (
+        "S3.155",
+        "webhook_alerting_render_change_log.template.md",
+        "webhook_alerting_render_change_log.sample.md",
+    ),
+    ("S3.156", "docs/examples/README.md"),
+    ("S3.157", "validate_alert_docs_links.py"),
+    ("S3.158", "validate_alert_docs_links.py", "CI"),
+)
+
 
 def _missing_links(doc_text: str, expected_tokens: tuple[str, ...]) -> list[str]:
     return [token for token in expected_tokens if token not in doc_text]
@@ -71,6 +92,7 @@ def main() -> int:
     index_text = index_path.read_text(encoding="utf-8")
     contract_text = contract_path.read_text(encoding="utf-8")
     examples_readme_text = examples_readme_path.read_text(encoding="utf-8")
+    readme_root_path = root / "README.md"
 
     index_link_expected = tuple(
         name for name in REQUIRED_EXAMPLE_FILES if name != "webhook_alert_rules.index.md"
@@ -95,6 +117,24 @@ def main() -> int:
     missing_in_examples_readme = _missing_links(examples_readme_text, readme_must_include)
     for token in missing_in_examples_readme:
         errors.append(f"examples README missing token: {token}")
+
+    if not readme_root_path.exists():
+        errors.append("missing root README.md for changelog checks")
+    else:
+        readme_root_text = readme_root_path.read_text(encoding="utf-8")
+        for stage, *tokens in REQUIRED_CHANGELOG_STAGE_TOKENS:
+            if stage not in readme_root_text:
+                errors.append(f"README missing changelog stage token: {stage}")
+            for token in tokens:
+                if token not in readme_root_text:
+                    errors.append(f"README stage {stage} missing evidence token: {token}")
+
+    for stage, *tokens in REQUIRED_CHANGELOG_STAGE_TOKENS:
+        if stage not in contract_text:
+            errors.append(f"WEBHOOK_CONTRACT missing changelog stage token: {stage}")
+        for token in tokens:
+            if token not in contract_text:
+                errors.append(f"WEBHOOK_CONTRACT stage {stage} missing evidence token: {token}")
 
     if errors:
         _emit_errors(errors)
