@@ -157,3 +157,38 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.98 起 `start` 日志增加 `sample_path_field="path"` 字段，显式标识 sample 路径字段名。
 > S3.99 起 `start` 日志增加 `sample_type_field="sample_type"` 字段，显式标识 sample 类型字段名。
 > S3.100 起 `start` 日志增加 `sample_elapsed_field="elapsed_ms"` 字段，显式标识 sample 耗时字段名。
+> S3.101 起进入 Phase B：`start` 日志默认输出 canonical 字段集并升级 `log_version=2`；设置 `TBOX_WEBHOOK_LOG_COMPAT_V1=true` 时额外输出已标记 deprecated 的兼容字段。
+
+## Field Consolidation (Phase A)
+
+S3.75-S3.100 的 `start` 日志字段已进入压缩治理阶段。Phase A 目标是先**标记弃用**（不改运行行为）。
+
+提案文档见：[`S3.75-S3.100-field-consolidation-proposal.md`](S3.75-S3.100-field-consolidation-proposal.md)
+
+当前标记为 deprecated（仍保留输出，后续版本再移除）：
+
+- `validator_command_source`
+- `validator_invocation`
+- `validator_auto_install`
+- `sample_result_status_field`
+- `sample_total_field`
+- `sample_path_field`
+- `sample_type_field`
+- `samples_glob_applied`
+- `samples_sorted`
+- `samples_nonempty`
+- `sample_count_expected`
+- `samples_bytes_computed`
+- `schema_exists`
+- `schema_hash_verified`
+
+## Field Consolidation (Phase B)
+
+Phase B 已实现“默认精简 + 可选兼容”：
+
+- 默认行为：
+  - `start` 日志输出 canonical 字段集
+  - `log_version=2`
+- 兼容开关：
+  - 设定环境变量 `TBOX_WEBHOOK_LOG_COMPAT_V1=true`
+  - 在 canonical 基础上追加 deprecated 字段，便于下游迁移期间平滑兼容

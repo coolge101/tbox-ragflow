@@ -4,7 +4,13 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-LOG_VERSION=1
+LOG_VERSION=2
+LOG_COMPAT_V1="${TBOX_WEBHOOK_LOG_COMPAT_V1:-false}"
+if [[ "$LOG_COMPAT_V1" == "1" || "$LOG_COMPAT_V1" == "true" || "$LOG_COMPAT_V1" == "TRUE" ]]; then
+  LOG_COMPAT_V1="true"
+else
+  LOG_COMPAT_V1="false"
+fi
 
 epoch_ms() {
   if [[ -n "${EPOCHREALTIME:-}" ]]; then
@@ -98,7 +104,12 @@ samples_total_bytes=0
 for f in "${samples[@]}"; do
   samples_total_bytes=$((samples_total_bytes + $(wc -c < "$f" | tr -d '[:space:]')))
 done
-echo "validate_webhook_examples.sh: start {\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"validation_mode\":\"schema+samples\",\"validator_engine\":\"ajv-cli\",\"validator_schema_draft\":\"draft-07\",\"validator_command\":\"npx --yes ajv-cli validate\",\"validator_command_source\":\"inline\",\"validator_invocation\":\"npx\",\"validator_auto_install\":true,\"run_scope\":\"all_samples\",\"sample_iteration_mode\":\"sequential\",\"sample_validation_unit\":\"file\",\"sample_result_status_field\":\"status\",\"sample_elapsed_field\":\"elapsed_ms\",\"sample_elapsed_unit\":\"ms\",\"sample_index_base\":1,\"sample_total_field\":\"total\",\"sample_path_field\":\"path\",\"sample_type_field\":\"sample_type\",\"schema\":\"$(json_escape "$schema")\",\"schema_exists\":true,\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_hash_alg\":\"sha256\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"schema_hash_verified\":true,\"samples_dir\":\"$(json_escape "$samples_dir")\",\"samples_glob\":\"$(json_escape "$samples_glob")\",\"samples_glob_applied\":true,\"sample_count_source\":\"glob\",\"sort_locale\":\"$(json_escape "$sort_locale")\",\"samples_sorted\":true,\"samples_nonempty\":true,\"precheck_passed\":true,\"samples\":$sample_count,\"sample_count_expected\":$sample_count_expected,\"samples_total_bytes\":$samples_total_bytes,\"samples_bytes_computed\":true}"
+start_json="{\"event\":\"start\",\"component\":\"validate_webhook_examples.sh\",\"log_version\":$LOG_VERSION,\"run_id\":\"$(json_escape "$run_id")\",\"started_at_utc\":\"$(json_escape "$started_at_utc")\",\"cwd\":\"$(json_escape "$ROOT")\",\"validation_mode\":\"schema+samples\",\"validator_engine\":\"ajv-cli\",\"validator_schema_draft\":\"draft-07\",\"validator_command\":\"npx --yes ajv-cli validate\",\"run_scope\":\"all_samples\",\"sample_iteration_mode\":\"sequential\",\"sample_validation_unit\":\"file\",\"sample_elapsed_field\":\"elapsed_ms\",\"sample_elapsed_unit\":\"ms\",\"sample_index_base\":1,\"schema\":\"$(json_escape "$schema")\",\"schema_mtime_utc\":\"$(json_escape "$schema_mtime_utc")\",\"schema_size_bytes\":$schema_size_bytes,\"schema_hash_alg\":\"sha256\",\"schema_sha256\":\"$(json_escape "$schema_sha256")\",\"samples_dir\":\"$(json_escape "$samples_dir")\",\"samples_glob\":\"$(json_escape "$samples_glob")\",\"sample_count_source\":\"glob\",\"sort_locale\":\"$(json_escape "$sort_locale")\",\"precheck_passed\":true,\"samples\":$sample_count,\"samples_total_bytes\":$samples_total_bytes}"
+if [[ "$LOG_COMPAT_V1" == "true" ]]; then
+  start_json="${start_json%}}"
+  start_json="$start_json,\"validator_command_source\":\"inline\",\"validator_invocation\":\"npx\",\"validator_auto_install\":true,\"sample_result_status_field\":\"status\",\"sample_total_field\":\"total\",\"sample_path_field\":\"path\",\"sample_type_field\":\"sample_type\",\"schema_exists\":true,\"schema_hash_verified\":true,\"samples_glob_applied\":true,\"samples_sorted\":true,\"samples_nonempty\":true,\"sample_count_expected\":$sample_count_expected,\"samples_bytes_computed\":true}"
+fi
+echo "validate_webhook_examples.sh: start $start_json"
 
 idx=0
 for f in "${samples[@]}"; do
