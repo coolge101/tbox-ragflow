@@ -3,51 +3,26 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
-REQUIRED_EXAMPLE_FILES = (
-    "README.md",
-    "webhook_alert_rules.index.md",
-    "webhook_alert_rules.sample.md",
-    "webhook_alert_rules.datadog.sample.md",
-    "webhook_alert_rules.promql.sample.md",
-    "webhook_alert_rules.openobserve.sample.md",
-    "webhook_alert_rules.elasticsearch.sample.md",
-    "webhook_alert_rules.migration_checklist.md",
-    "webhook_alert_rules.troubleshooting.md",
-    "webhook_alerting_runbook.md",
-    "webhook_alerting_baseline.md",
-    "webhook_alerting_baseline.parameterized.md",
-    "webhook_alerting_monitor_as_code.template.yaml",
-    "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
-    "webhook_alerting_monitor_as_code.prometheus.rendered.yaml",
-    "webhook_alerting_render_spec.md",
-    "webhook_alerting_render_acceptance_checklist.md",
-    "webhook_alerting_render_change_log.template.md",
-    "webhook_alerting_render_change_log.sample.md",
-)
 
-REQUIRED_CHANGELOG_STAGE_TOKENS = (
-    (
-        "S3.153",
-        "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
-        "webhook_alerting_monitor_as_code.prometheus.rendered.yaml",
-    ),
-    (
-        "S3.154",
-        "webhook_alerting_render_spec.md",
-        "webhook_alerting_render_acceptance_checklist.md",
-    ),
-    (
-        "S3.155",
-        "webhook_alerting_render_change_log.template.md",
-        "webhook_alerting_render_change_log.sample.md",
-    ),
-    ("S3.156", "docs/examples/README.md"),
-    ("S3.157", "validate_alert_docs_links.py"),
-    ("S3.158", "validate_alert_docs_links.py", "CI"),
-)
+def _load_rules(
+    root: Path,
+) -> tuple[tuple[str, ...], tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
+    rules_path = root / "docs" / "examples" / "alert_docs_gate_rules.json"
+    payload = json.loads(rules_path.read_text(encoding="utf-8"))
+
+    required_example_files = tuple(payload.get("required_example_files", []))
+    stage_rules: list[tuple[str, tuple[str, ...]]] = []
+    for item in payload.get("required_changelog_stage_tokens", []):
+        stage = str(item.get("stage", "")).strip()
+        tokens = tuple(str(t) for t in item.get("evidence_tokens", []))
+        if stage:
+            stage_rules.append((stage, tokens))
+    examples_readme_required_tokens = tuple(payload.get("examples_readme_required_tokens", []))
+    return required_example_files, tuple(stage_rules), examples_readme_required_tokens
 
 
 def _missing_links(doc_text: str, expected_tokens: tuple[str, ...]) -> list[str]:
@@ -72,8 +47,17 @@ def main() -> int:
     examples_readme_path = examples / "README.md"
 
     errors: list[str] = []
+    try:
+        (
+            required_example_files,
+            required_changelog_stage_tokens,
+            examples_readme_required_tokens,
+        ) = _load_rules(root)
+    except Exception as exc:  # noqa: BLE001
+        _emit_errors([f"failed to load gate rules json: {exc}"])
+        return 1
 
-    for filename in REQUIRED_EXAMPLE_FILES:
+    for filename in required_example_files:
         path = examples / filename
         if not path.exists():
             errors.append(f"missing required docs/examples file: {filename}")
@@ -95,7 +79,7 @@ def main() -> int:
     readme_root_path = root / "README.md"
 
     index_link_expected = tuple(
-        name for name in REQUIRED_EXAMPLE_FILES if name != "webhook_alert_rules.index.md"
+        name for name in required_example_files if name != "webhook_alert_rules.index.md"
     )
     index_tokens = tuple(f"[`{name}`]({name})" for name in index_link_expected)
     missing_in_index = _missing_links(index_text, index_tokens)
@@ -103,18 +87,16 @@ def main() -> int:
         errors.append(f"index missing link token: {token}")
 
     contract_tokens = tuple(
-        f"[`examples/{name}`](examples/{name})" for name in REQUIRED_EXAMPLE_FILES
+        f"[`examples/{name}`](examples/{name})" for name in required_example_files
     )
     missing_in_contract = _missing_links(contract_text, contract_tokens)
     for token in missing_in_contract:
         errors.append(f"WEBHOOK_CONTRACT missing link token: {token}")
 
-    readme_must_include = (
-        "webhook_alert_rules.index.md",
-        "webhook_alerting_monitor_as_code.template.yaml",
-        "webhook_alerting_render_spec.md",
+    missing_in_examples_readme = _missing_links(
+        examples_readme_text,
+        examples_readme_required_tokens,
     )
-    missing_in_examples_readme = _missing_links(examples_readme_text, readme_must_include)
     for token in missing_in_examples_readme:
         errors.append(f"examples README missing token: {token}")
 
@@ -122,14 +104,14 @@ def main() -> int:
         errors.append("missing root README.md for changelog checks")
     else:
         readme_root_text = readme_root_path.read_text(encoding="utf-8")
-        for stage, *tokens in REQUIRED_CHANGELOG_STAGE_TOKENS:
+        for stage, tokens in required_changelog_stage_tokens:
             if stage not in readme_root_text:
                 errors.append(f"README missing changelog stage token: {stage}")
             for token in tokens:
                 if token not in readme_root_text:
                     errors.append(f"README stage {stage} missing evidence token: {token}")
 
-    for stage, *tokens in REQUIRED_CHANGELOG_STAGE_TOKENS:
+    for stage, tokens in required_changelog_stage_tokens:
         if stage not in contract_text:
             errors.append(f"WEBHOOK_CONTRACT missing changelog stage token: {stage}")
         for token in tokens:

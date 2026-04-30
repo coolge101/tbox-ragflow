@@ -283,6 +283,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.157 起新增 `scripts/validate_alert_docs_links.py` 与对应测试，提供 examples 关键互链完整性的轻量门禁。
 > S3.158 起将 alert docs link 校验接入 CI，并标准化脚本失败输出（`fail total_errors` + 编号错误项）以提升排障效率。
 > S3.159 起扩展 docs-link gate，增加 `README`/`WEBHOOK_CONTRACT` 关键 S3 changelog 与证据 token 一致性抽检，降低文档漂移风险。
+> S3.160 起将 docs gate 规则外置到 `docs/examples/alert_docs_gate_rules.json`，后续扩展阶段检查可只改规则文件。
 
 ## Field Consolidation (Phase A)
 
