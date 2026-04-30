@@ -55,6 +55,7 @@ Copy-ready sample files:
 - [`examples/webhook_alert_rules.troubleshooting.md`](examples/webhook_alert_rules.troubleshooting.md) (noise/missing-alert triage)
 - [`examples/webhook_alerting_runbook.md`](examples/webhook_alerting_runbook.md) (incident operations SOP)
 - [`examples/webhook_alerting_baseline.md`](examples/webhook_alerting_baseline.md) (governance baseline pack)
+- [`examples/webhook_alerting_baseline.parameterized.md`](examples/webhook_alerting_baseline.parameterized.md) (critical/non-critical parameterized template)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -265,6 +266,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.148 起新增告警迁移清单与排障指南（`migration_checklist` + `troubleshooting`），补齐从模板到生产落地的操作闭环。
 > S3.149 起新增平台无关 `webhook_alerting_runbook.md`（分级响应/值班交接/复盘模板），补齐生产运维 SOP。
 > S3.150 起新增 `webhook_alerting_baseline.md`，沉淀阈值/分环境/抑制/升级/变更管理的告警治理基线包。
+> S3.151 起新增 `webhook_alerting_baseline.parameterized.md`，提供 critical/non-critical 双档参数化治理模板，降低落地改造成本。
 
 ## Field Consolidation (Phase A)
 
