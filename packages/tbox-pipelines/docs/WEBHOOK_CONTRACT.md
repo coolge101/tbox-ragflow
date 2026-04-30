@@ -45,11 +45,14 @@ Compatibility guidance:
 - Keep `retry_reason_version` in parser output and branch logic by version only when taxonomy changes.
 
 Copy-ready sample files:
+- [`examples/webhook_alert_rules.index.md`](examples/webhook_alert_rules.index.md) (cross-platform index + field mapping)
 - [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
 - [`examples/webhook_alert_rules.promql.sample.md`](examples/webhook_alert_rules.promql.sample.md) (Loki/Prometheus style)
 - [`examples/webhook_alert_rules.openobserve.sample.md`](examples/webhook_alert_rules.openobserve.sample.md) (OpenObserve query style)
 - [`examples/webhook_alert_rules.elasticsearch.sample.md`](examples/webhook_alert_rules.elasticsearch.sample.md) (Elasticsearch/KQL style)
+- [`examples/webhook_alert_rules.migration_checklist.md`](examples/webhook_alert_rules.migration_checklist.md) (rollout checklist)
+- [`examples/webhook_alert_rules.troubleshooting.md`](examples/webhook_alert_rules.troubleshooting.md) (noise/missing-alert triage)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -256,6 +259,8 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.144 起新增 `docs/examples/webhook_alert_rules.promql.sample.md`，提供 Loki/Prometheus 风格告警样例。
 > S3.145 起新增 `docs/examples/webhook_alert_rules.openobserve.sample.md`，提供 OpenObserve 查询语法版告警样例。
 > S3.146 起新增 `docs/examples/webhook_alert_rules.elasticsearch.sample.md`，提供 Elasticsearch/KQL 风格告警样例。
+> S3.147 起新增 `docs/examples/webhook_alert_rules.index.md`，统一聚合各平台样例并补充字段映射速查。
+> S3.148 起新增告警迁移清单与排障指南（`migration_checklist` + `troubleshooting`），补齐从模板到生产落地的操作闭环。
 
 ## Field Consolidation (Phase A)
 
