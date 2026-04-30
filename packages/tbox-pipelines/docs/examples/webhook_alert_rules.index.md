@@ -12,6 +12,7 @@ reference across different log/monitoring platforms.
 - Elasticsearch/KQL style: [`webhook_alert_rules.elasticsearch.sample.md`](webhook_alert_rules.elasticsearch.sample.md)
 - Migration checklist: [`webhook_alert_rules.migration_checklist.md`](webhook_alert_rules.migration_checklist.md)
 - Troubleshooting guide: [`webhook_alert_rules.troubleshooting.md`](webhook_alert_rules.troubleshooting.md)
+- Operations runbook: [`webhook_alerting_runbook.md`](webhook_alerting_runbook.md)
 
 ## Core rule categories
 
@@ -52,3 +53,4 @@ Use these logical fields as the stable contract, then adapt to each platform's q
 2. Choose platform-specific syntax sample
 3. Execute [`webhook_alert_rules.migration_checklist.md`](webhook_alert_rules.migration_checklist.md)
 4. During pilot, use [`webhook_alert_rules.troubleshooting.md`](webhook_alert_rules.troubleshooting.md)
+5. Run production operations with [`webhook_alerting_runbook.md`](webhook_alerting_runbook.md)
