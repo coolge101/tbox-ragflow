@@ -6,6 +6,10 @@ import pytest
 
 from tbox_pipelines.notify import (
     WEBHOOK_PAYLOAD_VERSION,
+    WEBHOOK_TYPE_TBOX_RBAC_ALERT,
+    WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+    build_tbox_rbac_alert_payload,
+    build_tbox_sync_summary_payload,
     send_rbac_webhook_notification,
     send_webhook_notification,
     should_notify,
@@ -52,7 +56,7 @@ def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> N
     assert len(_DummyClient.calls) == 1
     call = _DummyClient.calls[0]
     assert call["json"]["payload_version"] == WEBHOOK_PAYLOAD_VERSION
-    assert call["json"]["type"] == "tbox_sync_summary"
+    assert call["json"]["type"] == WEBHOOK_TYPE_TBOX_SYNC_SUMMARY
 
 
 def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -73,11 +77,30 @@ def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch)
     assert len(_DummyClient.calls) == 1
     body = _DummyClient.calls[0]["json"]
     assert body["payload_version"] == WEBHOOK_PAYLOAD_VERSION
-    assert body["type"] == "tbox_rbac_alert"
+    assert body["type"] == WEBHOOK_TYPE_TBOX_RBAC_ALERT
     assert body["sync_id"] == "s1"
     assert body["status"] == "failed"
     assert body["rbac"]["reason"] == "permission_denied"
     assert body["rbac"]["rbac_alert_suppressed_in_window"] == 2
+
+
+def test_build_payloads_match_send_helpers() -> None:
+    summary = {"status": "failed", "sync_id": "z"}
+    assert build_tbox_sync_summary_payload(summary) == {
+        "payload_version": WEBHOOK_PAYLOAD_VERSION,
+        "type": WEBHOOK_TYPE_TBOX_SYNC_SUMMARY,
+        "status": "failed",
+        "sync_id": "z",
+        "summary": summary,
+    }
+    ev = {"sync_id": "s", "status": "failed", "reason": "x"}
+    assert build_tbox_rbac_alert_payload(ev) == {
+        "payload_version": WEBHOOK_PAYLOAD_VERSION,
+        "type": WEBHOOK_TYPE_TBOX_RBAC_ALERT,
+        "status": "failed",
+        "sync_id": "s",
+        "rbac": ev,
+    }
 
 
 def test_should_notify_rbac_event_high_risk() -> None:
