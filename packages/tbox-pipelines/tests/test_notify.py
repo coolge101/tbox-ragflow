@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.metadata
 from typing import Any
 
+import httpx
 import pytest
 
 from tbox_pipelines.notify import (
@@ -50,6 +51,86 @@ def test_webhook_user_agent_fallback_when_package_missing(monkeypatch: pytest.Mo
     assert notify_mod._webhook_post_headers()["User-Agent"] == "tbox-pipelines"
 
 
+def test_send_webhook_omits_sync_header_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+    assert send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": ""},
+    )
+    assert "X-TBOX-Sync-Id" not in _DummyClient.calls[0]["headers"]
+
+
+def test_send_webhook_retries_transient_connect_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda _s: None)
+
+    class _Flaky:
+        n = 0
+
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_Flaky":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            _Flaky.n += 1
+            if _Flaky.n < 3:
+                raise httpx.ConnectError("simulated", request=httpx.Request("POST", url))
+            return _DummyResponse()
+
+    _Flaky.n = 0
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _Flaky)
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "z"},
+        max_retries=3,
+        retry_backoff_seconds=0.01,
+    )
+    assert ok
+    assert _Flaky.n == 3
+
+
+def test_send_webhook_no_retry_on_non_transient_http(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda _s: None)
+
+    class _Client403:
+        n = 0
+
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_Client403":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            _Client403.n += 1
+            req = httpx.Request("POST", url)
+            resp = httpx.Response(403, request=req)
+            raise httpx.HTTPStatusError("forbidden", request=req, response=resp)
+
+    _Client403.n = 0
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _Client403)
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "x"},
+        max_retries=3,
+        retry_backoff_seconds=0.01,
+    )
+    assert not ok
+    assert _Client403.n == 1
+
+
 def test_should_notify_default_failed_only() -> None:
     assert should_notify({"status": "failed"}, notify_on_success=False)
     assert not should_notify({"status": "ok"}, notify_on_success=False)
@@ -89,6 +170,7 @@ def test_send_rbac_webhook_notification_payload(monkeypatch: pytest.MonkeyPatch)
     assert ok
     assert len(_DummyClient.calls) == 1
     assert _DummyClient.calls[0]["headers"]["User-Agent"].startswith("tbox-pipelines/")
+    assert _DummyClient.calls[0]["headers"]["X-TBOX-Sync-Id"] == "s1"
     body = _DummyClient.calls[0]["json"]
     assert body["payload_version"] == WEBHOOK_PAYLOAD_VERSION
     assert body["type"] == WEBHOOK_TYPE_TBOX_RBAC_ALERT

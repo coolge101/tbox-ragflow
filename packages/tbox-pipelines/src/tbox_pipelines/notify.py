@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import logging
+import time
 from typing import Any
 
 import httpx
@@ -31,11 +32,67 @@ def _webhook_user_agent() -> str:
     return f"tbox-pipelines/{v}"
 
 
-def _webhook_post_headers() -> dict[str, str]:
-    return {
+def _webhook_post_headers(*, sync_id: str = "") -> dict[str, str]:
+    headers: dict[str, str] = {
         "Content-Type": "application/json",
         "User-Agent": _webhook_user_agent(),
     }
+    sid = str(sync_id).strip()
+    if sid:
+        headers["X-TBOX-Sync-Id"] = sid
+    return headers
+
+
+def _webhook_failure_is_transient(exc: BaseException) -> bool:
+    if isinstance(exc, httpx.RequestError):
+        return True
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in (408, 429, 500, 502, 503, 504)
+    return False
+
+
+def _post_webhook_json(
+    webhook_url: str,
+    headers: dict[str, str],
+    payload: dict[str, Any],
+    *,
+    timeout_seconds: float,
+    max_retries: int,
+    retry_backoff_seconds: float,
+) -> bool:
+    attempts = max(1, max(0, max_retries) + 1)
+    backoff = max(0.0, retry_backoff_seconds)
+    for attempt in range(1, attempts + 1):
+        try:
+            with httpx.Client(timeout=timeout_seconds) as client:
+                response = client.post(webhook_url, headers=headers, json=payload)
+                response.raise_for_status()
+            return True
+        except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+            will_retry = _webhook_failure_is_transient(exc) and attempt < attempts
+            logger.warning(
+                "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
+                webhook_url,
+                attempt,
+                attempts,
+                will_retry,
+                exc,
+            )
+            if not will_retry:
+                return False
+            if backoff > 0:
+                time.sleep(backoff * attempt)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "webhook_notify_failed url=%s attempt=%s/%s retry=%s error=%s",
+                webhook_url,
+                attempt,
+                attempts,
+                False,
+                exc,
+            )
+            return False
+    return False
 
 
 def build_tbox_sync_summary_payload(summary: dict[str, Any]) -> dict[str, Any]:
@@ -64,48 +121,50 @@ def send_webhook_notification(
     webhook_url: str,
     summary: dict[str, Any],
     timeout_seconds: float = 10.0,
+    *,
+    max_retries: int = 0,
+    retry_backoff_seconds: float = 1.0,
 ) -> bool:
     if not webhook_url:
         return False
 
     payload = build_tbox_sync_summary_payload(summary)
+    sync_id = str(summary.get("sync_id", "") or "")
+    headers = _webhook_post_headers(sync_id=sync_id)
 
-    try:
-        with httpx.Client(timeout=timeout_seconds) as client:
-            response = client.post(
-                webhook_url,
-                headers=_webhook_post_headers(),
-                json=payload,
-            )
-            response.raise_for_status()
-        return True
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("webhook_notify_failed url=%s error=%s", webhook_url, exc)
-        return False
+    return _post_webhook_json(
+        webhook_url,
+        headers,
+        payload,
+        timeout_seconds=timeout_seconds,
+        max_retries=max_retries,
+        retry_backoff_seconds=retry_backoff_seconds,
+    )
 
 
 def send_rbac_webhook_notification(
     webhook_url: str,
     rbac_event: dict[str, Any],
     timeout_seconds: float = 10.0,
+    *,
+    max_retries: int = 0,
+    retry_backoff_seconds: float = 1.0,
 ) -> bool:
     if not webhook_url:
         return False
 
     payload = build_tbox_rbac_alert_payload(rbac_event)
+    sync_id = str(rbac_event.get("sync_id", "") or "")
+    headers = _webhook_post_headers(sync_id=sync_id)
 
-    try:
-        with httpx.Client(timeout=timeout_seconds) as client:
-            response = client.post(
-                webhook_url,
-                headers=_webhook_post_headers(),
-                json=payload,
-            )
-            response.raise_for_status()
-        return True
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("webhook_notify_failed url=%s error=%s", webhook_url, exc)
-        return False
+    return _post_webhook_json(
+        webhook_url,
+        headers,
+        payload,
+        timeout_seconds=timeout_seconds,
+        max_retries=max_retries,
+        retry_backoff_seconds=retry_backoff_seconds,
+    )
 
 
 def should_notify(summary: dict[str, Any], notify_on_success: bool) -> bool:
