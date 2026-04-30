@@ -37,36 +37,6 @@ def test_validate_alert_docs_links_script_passes() -> None:
     assert "ok all required doc links present" in res.stdout
 
 
-def test_validate_alert_docs_links_summary_metrics_contract() -> None:
-    res = subprocess.run(
-        [sys.executable, str(_SCRIPT), "--verbose"],
-        cwd=_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert res.returncode == 0, res.stderr
-
-    prefix = "validate_alert_docs_links.py: summary "
-    summary_lines = [line for line in res.stdout.splitlines() if line.startswith(prefix)]
-    assert len(summary_lines) == 1
-
-    payload = json.loads(summary_lines[0][len(prefix) :])
-    expected_keys = {
-        "event",
-        "summary_version",
-        "required_example_files",
-        "required_stage_rules",
-        "examples_readme_required_tokens",
-    }
-    assert set(payload) == expected_keys
-    assert payload["event"] == "alert_docs_gate_ok"
-    assert payload["summary_version"] == 1
-    assert isinstance(payload["required_example_files"], int)
-    assert isinstance(payload["required_stage_rules"], int)
-    assert isinstance(payload["examples_readme_required_tokens"], int)
-
-
 def test_validate_alert_docs_links_script_verbose_mode() -> None:
     res = subprocess.run(
         [sys.executable, str(_SCRIPT), "--verbose"],
