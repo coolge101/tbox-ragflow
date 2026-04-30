@@ -291,6 +291,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.164 起 CI 默认启用 gate `--verbose` 并用 GitHub Actions 日志分组包裹输出，提升流水线日志可读性。
 > S3.165 起 gate 成功路径新增结构化 `summary` 单行输出（JSON），便于后续 CI 侧做指标采集与趋势观测。
 > S3.166 起 `summary` 输出新增 `summary_version=1`，为后续摘要字段扩展提供兼容锚点。
+> S3.167 起 CI 新增 gate summary 提取与固定字段回显（`alert_docs_gate_metrics ...`），便于后续接入指标系统。
 
 ## Field Consolidation (Phase A)
 

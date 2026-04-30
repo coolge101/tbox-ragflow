@@ -50,7 +50,30 @@ jobs:
       - name: Validate alert docs links
         run: |
           echo "::group::alert-docs-link-gate"
-          python scripts/validate_alert_docs_links.py --verbose
+          python scripts/validate_alert_docs_links.py --verbose | tee /tmp/alert_docs_gate.log
+          summary_line="$(python - <<'PY'
+import pathlib
+prefix = "validate_alert_docs_links.py: summary "
+for line in pathlib.Path("/tmp/alert_docs_gate.log").read_text(encoding="utf-8").splitlines():
+    if line.startswith(prefix):
+        print(line[len(prefix):])
+        break
+else:
+    raise SystemExit("missing alert docs gate summary line")
+PY
+)"
+          python - <<'PY' "$summary_line"
+import json
+import sys
+s = json.loads(sys.argv[1])
+print(
+    "alert_docs_gate_metrics "
+    f"summary_version={s.get('summary_version')} "
+    f"required_example_files={s.get('required_example_files')} "
+    f"required_stage_rules={s.get('required_stage_rules')} "
+    f"examples_readme_required_tokens={s.get('examples_readme_required_tokens')}"
+)
+PY
           echo "::endgroup::"
 
       - name: Validate .node-version format
