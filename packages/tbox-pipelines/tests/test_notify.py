@@ -190,6 +190,62 @@ def test_webhook_idempotency_key_non_json_values_use_default_str() -> None:
     assert len(k) == 64
 
 
+@pytest.mark.parametrize(
+    (
+        "status_code",
+        "retry_after",
+        "backoff",
+        "expected_policy",
+        "expected_retry_in",
+        "expected_source",
+    ),
+    [
+        (429, "3", 0.1, "retry_after", 3.0, "header"),
+        (429, None, 0.2, "backoff", 0.2, None),
+        (429, "soon", 0.2, "backoff", 0.2, None),
+    ],
+)
+def test_webhook_retry_decision_http_status_cases(
+    status_code: int,
+    retry_after: str | None,
+    backoff: float,
+    expected_policy: str,
+    expected_retry_in: float,
+    expected_source: str | None,
+) -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    headers = {"Retry-After": retry_after} if retry_after is not None else {}
+    req = httpx.Request("POST", "http://example.invalid/webhook")
+    resp = httpx.Response(status_code, request=req, headers=headers)
+    exc = httpx.HTTPStatusError("boom", request=req, response=resp)
+    d = notify_mod._webhook_retry_decision(exc=exc, attempt=1, attempts=2, backoff=backoff)
+    assert d.will_retry
+    assert not d.is_final
+    assert d.delivery_state == "retrying"
+    assert d.retry_policy == expected_policy
+    assert d.retry_in_seconds == expected_retry_in
+    assert d.retry_after_source == expected_source
+    assert d.retry_window_ms == int(expected_retry_in * 1000)
+
+
+def test_webhook_retry_decision_non_retryable_http_final() -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    req = httpx.Request("POST", "http://example.invalid/webhook")
+    resp = httpx.Response(403, request=req)
+    exc = httpx.HTTPStatusError("forbidden", request=req, response=resp)
+    d = notify_mod._webhook_retry_decision(exc=exc, attempt=1, attempts=3, backoff=0.5)
+    assert not d.will_retry
+    assert d.is_final
+    assert d.delivery_state == "failed"
+    assert d.retry_policy == "none"
+    assert d.retry_eligible is False
+    assert d.retries_remaining == 2
+    assert d.retry_in_seconds is None
+    assert d.retry_window_ms is None
+
+
 def test_send_webhook_omits_sync_header_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
     _DummyClient.calls = []
