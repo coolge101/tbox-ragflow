@@ -190,6 +190,7 @@ Phase B 曾实现“默认 canonical + 可选 `TBOX_WEBHOOK_LOG_COMPAT_V1`”。
 
 ## Field Consolidation (Phase C)
 
-- **迁移截止日**：`2026-06-30`（UTC，含当日；维护者可在此日期后合并移除 PR）。
-- **行为**：`validate_webhook_examples.sh` 的 `start` 行仅包含 canonical 键；环境变量 `TBOX_WEBHOOK_LOG_COMPAT_V1` **不再读取且无效果**（已删除实现）。
-- **PR 做法**：单 PR 合并脚本、契约测试、CI 注释与本文档；合并说明中写明截止日与破坏性变更范围。
+- **迁移截止日**：`2026-06-30`（UTC，含当日）——对外承诺的 v1-extended / compat **语义支持终点**；依赖方须在此前改为只解析 canonical `start`。
+- **行为**：`validate_webhook_examples.sh` 的 `start` 行仅包含 canonical 键；环境变量 `TBOX_WEBHOOK_LOG_COMPAT_V1` **已删除**，设置与否均无效果。
+- **PR 做法**：单 PR 合并脚本、契约测试、CI 注释与本文档；PR 描述中写明截止日与破坏性变更范围。
+- **合并时间与 review**：本分支已含删除实现，便于提前 review；若组织要求「代码删除不得早于日历截止日」，可将 **计划合并日** 安排在 `2026-06-30` 之后，再发补丁 release（流程由维护者定）。
