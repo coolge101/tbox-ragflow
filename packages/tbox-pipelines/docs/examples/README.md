@@ -72,6 +72,7 @@ Before merging docs changes in this directory:
 - Run `python scripts/validate_alert_docs_links.py` from `packages/tbox-pipelines`.
   - This gate now also checks selected S3 changelog consistency in both
     `README.md` and `WEBHOOK_CONTRACT.md`.
-  - Rules are configured in `alert_docs_gate_rules.json` (keep it in sync with new stages/files).
+  - Rules are configured in `alert_docs_gate_rules.json` with
+    `alert_docs_gate_rules.schema.json` as structure contract.
 - Walk through `webhook_alerting_render_acceptance_checklist.md`.
 - Confirm cross-file links are still valid.

@@ -8,11 +8,74 @@ import sys
 from pathlib import Path
 
 
+def _validate_rules_payload(payload: object, schema: object) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(schema, dict):
+        return ["rules schema must be a JSON object"]
+    if not isinstance(payload, dict):
+        return ["rules payload must be a JSON object"]
+
+    required = schema.get("required", [])
+    if isinstance(required, list):
+        for key in required:
+            if isinstance(key, str) and key not in payload:
+                errors.append(f"rules missing required key: {key}")
+
+    properties = schema.get("properties", {})
+    if not isinstance(properties, dict):
+        return errors
+
+    # required_example_files: array[str]
+    ref = payload.get("required_example_files")
+    if not isinstance(ref, list) or not ref:
+        errors.append("required_example_files must be a non-empty array")
+    elif not all(isinstance(item, str) and item for item in ref):
+        errors.append("required_example_files must contain non-empty strings")
+
+    # required_changelog_stage_tokens: array[{stage,evidence_tokens}]
+    rcs = payload.get("required_changelog_stage_tokens")
+    if not isinstance(rcs, list) or not rcs:
+        errors.append("required_changelog_stage_tokens must be a non-empty array")
+    else:
+        for idx, item in enumerate(rcs, start=1):
+            if not isinstance(item, dict):
+                errors.append(f"required_changelog_stage_tokens[{idx}] must be an object")
+                continue
+            stage = item.get("stage")
+            tokens = item.get("evidence_tokens")
+            if not isinstance(stage, str) or not stage.startswith("S") or "." not in stage:
+                errors.append(f"required_changelog_stage_tokens[{idx}].stage is invalid")
+            if not isinstance(tokens, list) or not tokens:
+                errors.append(
+                    f"required_changelog_stage_tokens[{idx}]."
+                    "evidence_tokens must be non-empty array"
+                )
+            elif not all(isinstance(tok, str) and tok for tok in tokens):
+                errors.append(
+                    f"required_changelog_stage_tokens[{idx}].evidence_tokens must contain strings"
+                )
+
+    # examples_readme_required_tokens: array[str]
+    errt = payload.get("examples_readme_required_tokens")
+    if not isinstance(errt, list) or not errt:
+        errors.append("examples_readme_required_tokens must be a non-empty array")
+    elif not all(isinstance(item, str) and item for item in errt):
+        errors.append("examples_readme_required_tokens must contain non-empty strings")
+
+    return errors
+
+
 def _load_rules(
     root: Path,
 ) -> tuple[tuple[str, ...], tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
     rules_path = root / "docs" / "examples" / "alert_docs_gate_rules.json"
+    schema_path = root / "docs" / "examples" / "alert_docs_gate_rules.schema.json"
     payload = json.loads(rules_path.read_text(encoding="utf-8"))
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    schema_errors = _validate_rules_payload(payload, schema)
+    if schema_errors:
+        msg = "; ".join(schema_errors)
+        raise ValueError(f"rules payload failed schema checks: {msg}")
 
     required_example_files = tuple(payload.get("required_example_files", []))
     stage_rules: list[tuple[str, tuple[str, ...]]] = []
