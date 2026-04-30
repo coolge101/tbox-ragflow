@@ -158,13 +158,15 @@ def _post_webhook_json(
     attempts = max(1, max(0, max_retries) + 1)
     backoff = max(0.0, retry_backoff_seconds)
     log_url = _webhook_url_for_logs(webhook_url)
+    payload_type = str(payload.get("type", "") or "unknown")
     for attempt in range(1, attempts + 1):
         try:
             with httpx.Client(timeout=timeout_seconds) as client:
                 response = client.post(webhook_url, headers=headers, json=payload)
                 response.raise_for_status()
             logger.debug(
-                "webhook_notify_ok url=%s http_status=%s attempt=%s/%s",
+                "webhook_notify_ok payload_type=%s url=%s http_status=%s attempt=%s/%s",
+                payload_type,
                 log_url,
                 response.status_code,
                 attempt,
@@ -190,10 +192,12 @@ def _post_webhook_json(
                     if sleep_seconds > base_sleep_seconds:
                         retry_policy = "retry_after"
             logger.warning(
-                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_policy=%s "
+                "webhook_notify_failed payload_type=%s url=%s attempt=%s/%s retry=%s "
+                "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
                 "retry_reason=%s error=%s",
+                payload_type,
                 log_url,
                 attempt,
                 attempts,
@@ -213,10 +217,12 @@ def _post_webhook_json(
                 time.sleep(sleep_seconds)
         except Exception as exc:  # noqa: BLE001
             logger.warning(
-                "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_policy=%s "
+                "webhook_notify_failed payload_type=%s url=%s attempt=%s/%s retry=%s "
+                "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
                 "retry_reason=%s error=%s",
+                payload_type,
                 log_url,
                 attempt,
                 attempts,
