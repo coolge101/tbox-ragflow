@@ -183,6 +183,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.127 起 `webhook_notify_ok` / `webhook_notify_failed` 增加 `sync_id`，便于与同步任务日志关联排障。
 > S3.128 起 `webhook_notify_ok` / `webhook_notify_failed` 增加 `attempt_elapsed_ms` 和 `total_elapsed_ms`，便于定位慢请求与累计重试耗时。
 > S3.129 起日志统一增加 `outcome`（success/failure），并在失败日志增加 `final`（是否最终失败），便于告警分级与筛选。
+> S3.130 起无效 URL 跳过日志 `webhook_notify_skipped_invalid_url` 增加 `payload_type`、`sync_id`、`skip_reason=invalid_url`，实现成功/失败/跳过三条路径一致上下文。
 
 ## 本地开发
 

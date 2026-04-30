@@ -112,7 +112,33 @@ def test_send_webhook_skips_invalid_url_scheme(
     )
     assert not ok
     assert _DummyClient.calls == []
-    assert any("webhook_notify_skipped_invalid_url" in r.getMessage() for r in caplog.records)
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "webhook_notify_skipped_invalid_url" in joined
+    assert "payload_type=tbox_sync_summary" in joined
+    assert "sync_id=a" in joined
+    assert "skip_reason=invalid_url" in joined
+    assert "url=file:///tmp/x" in joined
+
+
+def test_send_rbac_webhook_skips_invalid_url_with_context(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.WARNING)
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_rbac_webhook_notification(
+        "file:///tmp/rbac",
+        {"status": "failed", "sync_id": "rb1", "reason": "permission_denied"},
+    )
+    assert not ok
+    assert _DummyClient.calls == []
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "webhook_notify_skipped_invalid_url" in joined
+    assert "payload_type=tbox_rbac_alert" in joined
+    assert "sync_id=rb1" in joined
+    assert "skip_reason=invalid_url" in joined
+    assert "url=file:///tmp/rbac" in joined
 
 
 def test_webhook_url_for_logs_strips_query_fragment_and_masks_userinfo() -> None:
