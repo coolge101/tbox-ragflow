@@ -179,6 +179,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.123 起 `webhook_notify_failed` 增加 `http_status`（HTTP 异常时记录状态码），便于直接按状态码统计失败分布。
 > S3.124 起 `webhook_notify_failed` 增加 `retries_remaining`（当前失败后剩余重试次数），便于快速识别接近重试上限的告警。
 > S3.125 起 `webhook_notify_failed` 增加 `retry_eligible`（失败类型本身是否可重试），帮助区分“可重试但已无剩余次数”与“本质不可重试”。
+> S3.126 起 `webhook_notify_ok` / `webhook_notify_failed` 增加 `payload_type`，便于按 webhook 类型做日志聚合。
 
 ## 本地开发
 
