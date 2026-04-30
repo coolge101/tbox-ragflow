@@ -118,6 +118,7 @@ def _emit_success_summary(
 ) -> None:
     payload = {
         "event": "alert_docs_gate_ok",
+        "summary_version": 1,
         "required_example_files": len(required_example_files),
         "required_stage_rules": len(required_changelog_stage_tokens),
         "examples_readme_required_tokens": len(examples_readme_required_tokens),
