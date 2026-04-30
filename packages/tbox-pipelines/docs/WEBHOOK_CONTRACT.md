@@ -47,6 +47,7 @@ Compatibility guidance:
 Copy-ready sample files:
 - [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
+- [`examples/webhook_alert_rules.promql.sample.md`](examples/webhook_alert_rules.promql.sample.md) (Loki/Prometheus style)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -250,6 +251,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.141 起补充基于 `retry_reason_group` 的告警模板，明确 `failed`/`retrying` 分流与稳定聚合建议。
 > S3.142 起新增 `docs/examples/webhook_alert_rules.sample.md`，提供可复制改造的告警规则样例。
 > S3.143 起新增 `docs/examples/webhook_alert_rules.datadog.sample.md`，提供 Datadog 查询语法版告警样例。
+> S3.144 起新增 `docs/examples/webhook_alert_rules.promql.sample.md`，提供 Loki/Prometheus 风格告警样例。
 
 ## Field Consolidation (Phase A)
 
