@@ -80,3 +80,43 @@ def test_emit_alert_docs_gate_metrics_missing_summary_line_fails(tmp_path: Path)
     )
     assert emit_res.returncode != 0
     assert "missing alert docs gate summary line" in emit_res.stderr
+
+
+def test_emit_alert_docs_gate_metrics_json_mirror_output(tmp_path: Path) -> None:
+    log_path = tmp_path / "alert_docs_gate.log"
+    validate_res = subprocess.run(
+        [sys.executable, str(_VALIDATE_SCRIPT), "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert validate_res.returncode == 0, validate_res.stderr
+    log_path.write_text(validate_res.stdout, encoding="utf-8")
+
+    emit_res = subprocess.run(
+        [
+            sys.executable,
+            str(_EMIT_SCRIPT),
+            "--log-path",
+            str(log_path),
+            "--emit-json",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert emit_res.returncode == 0, emit_res.stderr
+    lines = [line for line in emit_res.stdout.splitlines() if line.strip()]
+    assert len(lines) == 2
+    assert lines[0].startswith("alert_docs_gate_metrics ")
+    assert lines[1].startswith("alert_docs_gate_metrics_json ")
+
+    json_payload = json.loads(lines[1][len("alert_docs_gate_metrics_json ") :])
+    rules = json.loads(_RULES.read_text(encoding="utf-8"))
+    summary_contract = rules["summary_contract"]
+    assert json_payload["event"] == summary_contract["event"]
+    assert json_payload["summary_version"] == summary_contract["summary_version"]
+    for key in summary_contract["metric_keys"]:
+        assert isinstance(json_payload[key], int)
