@@ -82,6 +82,17 @@ def _webhook_url_for_logs(url: str) -> str:
     return urlunparse((p.scheme, netloc, p.path or "", "", "", ""))
 
 
+def _webhook_http_url_allowed(url: str) -> bool:
+    """Only allow absolute ``http``/``https`` URLs with a host (avoid ``file:`` etc.)."""
+    try:
+        p = urlparse(url.strip())
+    except ValueError:
+        return False
+    if p.scheme.lower() not in ("http", "https"):
+        return False
+    return bool(p.netloc)
+
+
 def _webhook_failure_is_transient(exc: BaseException) -> bool:
     if isinstance(exc, httpx.RequestError):
         return True
@@ -168,6 +179,12 @@ def send_webhook_notification(
 ) -> bool:
     if not webhook_url:
         return False
+    if not _webhook_http_url_allowed(webhook_url):
+        logger.warning(
+            "webhook_notify_skipped_invalid_url url=%s",
+            _webhook_url_for_logs(webhook_url),
+        )
+        return False
 
     payload = build_tbox_sync_summary_payload(summary)
     sync_id = str(summary.get("sync_id", "") or "")
@@ -198,6 +215,12 @@ def send_rbac_webhook_notification(
     retry_backoff_seconds: float = 1.0,
 ) -> bool:
     if not webhook_url:
+        return False
+    if not _webhook_http_url_allowed(webhook_url):
+        logger.warning(
+            "webhook_notify_skipped_invalid_url url=%s",
+            _webhook_url_for_logs(webhook_url),
+        )
         return False
 
     payload = build_tbox_rbac_alert_payload(rbac_event)
