@@ -2,7 +2,7 @@
 
 HTTP JSON bodies use envelope field ``payload_version`` (see ``WEBHOOK_PAYLOAD_VERSION``).
 That is unrelated to ``log_version`` on ``scripts/validate_webhook_examples.sh`` stdout
-lines (CI/debug; see that script and ``tests/test_validate_webhook_log_contract.py``).
+lines (CI/debug; currently ``2``; see ``tests/test_validate_webhook_log_contract.py``).
 See ``docs/WEBHOOK_CONTRACT.md`` Versioning.
 """
 

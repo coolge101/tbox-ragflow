@@ -80,7 +80,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 
 ## Versioning
 
-- HTTP POST bodies use **`payload_version`** on the JSON envelope. Do not confuse this with **`log_version`** on `validate_webhook_examples.sh` JSON log lines (validator/CI only).
+- HTTP POST bodies use **`payload_version`** on the JSON envelope (`WEBHOOK_PAYLOAD_VERSION` in `notify.py`). Do not confuse this with **`log_version`** on `validate_webhook_examples.sh` stdout JSON log lines (validator/CI only; currently **`2`**). **HTTP 负载**与校验脚本 **`log_version`** 无关，请勿混用。
 - Increment `WEBHOOK_PAYLOAD_VERSION` in `tbox_pipelines/notify.py` when adding required envelope fields or changing meaning of `type` values.
 - Prefer additive changes inside `summary` / `rbac` without bumping envelope version when possible.
 - When `payload_version` or required envelope keys change, update `webhook_payload.schema.json` and the `docs/examples/*.sample.json` files (CI validates all of them).
@@ -164,7 +164,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.103 起 Phase C：`TBOX_WEBHOOK_LOG_COMPAT_V1` 及 v1-extended `start` 字段已移除；**迁移窗口截止 `2026-06-30`（UTC 日末）**，此后脚本仅输出 canonical `start` JSON。
 > S3.104 起扩展 `packages/tbox-pipelines/.gitignore`（`logs/`、`.pytest_cache`、`__pycache__/` 等），减少本地生成物干扰 `git status` 与提交审阅（与 README 变更日志一致）。
 > S3.105 起在本文 Versioning 与 README 对齐补充：S3.104 `.gitignore` 说明（文档/变更日志一致）。
-> S3.106 起在 `notify.py` 模块文档与 Versioning 节明确：**HTTP 负载 `payload_version`** 与 **校验脚本 stdout `log_version`** 无关，避免混用。
+> S3.106 起在 `notify.py` 模块文档与 Versioning 节明确：**HTTP 负载 `payload_version`** 与 **校验脚本 stdout `log_version`**（当前 `2`）无关，避免混用。
 > S3.107 起 `notify` 提供 `build_tbox_sync_summary_payload` / `build_tbox_rbac_alert_payload` 与 `WEBHOOK_TYPE_*` 常量；`send_*` 复用 builder；`pytest` 将 builder 顶层键与 schema 推导的内层键对齐。
 
 ## Field Consolidation (Phase A)
