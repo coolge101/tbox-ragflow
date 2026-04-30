@@ -160,6 +160,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.101 起进入 Phase B：`start` 日志默认输出 canonical 字段集并升级 `log_version=2`；曾支持 `TBOX_WEBHOOK_LOG_COMPAT_V1=true` 追加 deprecated 字段（**S3.103 已移除**）。
 > S3.102 起曾在 CI workflow 中为 `TBOX_WEBHOOK_LOG_COMPAT_V1` 提供注释版 `env` 示例（**S3.103 已移除**）；`S3.75-S3.100-field-consolidation-proposal.md` 曾补充 Phase B 说明与 Phase C 准入清单。
 > S3.103 起 Phase C：`TBOX_WEBHOOK_LOG_COMPAT_V1` 及 v1-extended `start` 字段已移除；**迁移窗口截止 `2026-06-30`（UTC 日末）**，此后脚本仅输出 canonical `start` JSON。
+> S3.104 起扩展 `packages/tbox-pipelines/.gitignore`（`logs/`、`.pytest_cache`、`__pycache__/` 等），减少本地生成物干扰 `git status` 与提交审阅（与 README 变更日志一致）。
 
 ## Field Consolidation (Phase A)
 
