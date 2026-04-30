@@ -1,3 +1,10 @@
+"""Webhook HTTP notification helpers.
+
+HTTP JSON bodies use envelope field ``payload_version`` (see ``WEBHOOK_PAYLOAD_VERSION``).
+That is unrelated to ``log_version`` on ``scripts/validate_webhook_examples.sh`` stdout
+lines (CI/debug; currently ``2``). See ``docs/WEBHOOK_CONTRACT.md`` Versioning.
+"""
+
 from __future__ import annotations
 
 import logging
