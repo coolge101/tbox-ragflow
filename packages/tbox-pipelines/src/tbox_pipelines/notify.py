@@ -171,13 +171,14 @@ def _post_webhook_json(
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.debug(
                 "webhook_notify_ok outcome=%s payload_type=%s sync_id=%s url=%s http_status=%s "
-                "attempt=%s/%s attempt_index=%s attempt_total=%s "
+                "delivery_state=%s attempt=%s/%s attempt_index=%s attempt_total=%s "
                 "attempt_elapsed_ms=%s total_elapsed_ms=%s",
                 "success",
                 payload_type,
                 sync_id,
                 log_url,
                 response.status_code,
+                "delivered",
                 attempt,
                 attempts,
                 attempt,
@@ -192,6 +193,7 @@ def _post_webhook_json(
             retry_eligible = _webhook_failure_is_transient(exc)
             will_retry = retry_eligible and attempt < attempts
             is_final = not will_retry
+            delivery_state = "retrying" if will_retry else "failed"
             retry_reason = _webhook_retry_reason(exc, will_retry)
             http_status = _webhook_failure_status_code(exc)
             retries_remaining = max(0, attempts - attempt)
@@ -209,7 +211,7 @@ def _post_webhook_json(
                         retry_policy = "retry_after"
             logger.warning(
                 "webhook_notify_failed outcome=%s payload_type=%s sync_id=%s url=%s attempt=%s/%s "
-                "attempt_index=%s attempt_total=%s retry=%s final=%s "
+                "delivery_state=%s attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
@@ -220,6 +222,7 @@ def _post_webhook_json(
                 log_url,
                 attempt,
                 attempts,
+                delivery_state,
                 attempt,
                 attempts,
                 will_retry,
@@ -244,7 +247,7 @@ def _post_webhook_json(
             total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.warning(
                 "webhook_notify_failed outcome=%s payload_type=%s sync_id=%s url=%s attempt=%s/%s "
-                "attempt_index=%s attempt_total=%s retry=%s final=%s "
+                "delivery_state=%s attempt_index=%s attempt_total=%s retry=%s final=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
@@ -255,6 +258,7 @@ def _post_webhook_json(
                 log_url,
                 attempt,
                 attempts,
+                "failed",
                 attempt,
                 attempts,
                 False,

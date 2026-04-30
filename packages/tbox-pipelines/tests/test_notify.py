@@ -86,6 +86,7 @@ def test_webhook_notify_failed_log_uses_redacted_url(
     assert not ok
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "delivery_state=failed" in joined
     assert "payload_type=tbox_sync_summary" in joined
     assert "sync_id=s1" in joined
     assert "attempt_elapsed_ms=" in joined
@@ -269,6 +270,7 @@ def test_send_webhook_no_retry_on_non_transient_http(
     assert _Client403.n == 1
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "delivery_state=failed" in joined
     assert "final=True" in joined
     assert "retry=False" in joined
 
@@ -313,6 +315,7 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert slept == [3.0]
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "delivery_state=retrying" in joined
     assert "final=False" in joined
     assert "retry_policy=retry_after" in joined
     assert "retry_eligible=True" in joined
@@ -363,6 +366,7 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert slept == [0.2]
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "outcome=failure" in joined
+    assert "delivery_state=retrying" in joined
     assert "final=False" in joined
     assert "retry_policy=backoff" in joined
     assert "retry_eligible=True" in joined
@@ -438,6 +442,7 @@ def test_send_webhook_notification_logs_ok_at_debug(
     msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG]
     assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
     assert any("outcome=success" in m for m in msgs)
+    assert any("delivery_state=delivered" in m for m in msgs)
     assert any("payload_type=tbox_sync_summary" in m for m in msgs)
     assert any("sync_id=abc" in m for m in msgs)
     assert any("attempt_elapsed_ms=" in m and "total_elapsed_ms=" in m for m in msgs)
@@ -467,6 +472,7 @@ def test_webhook_log_context_fields_consistent_across_paths(
             "sync_id",
             "url",
             "attempt",
+            "delivery_state",
             "attempt_index",
             "attempt_total",
             "http_status",
@@ -510,6 +516,7 @@ def test_webhook_log_context_fields_consistent_across_paths(
             "sync_id",
             "url",
             "attempt",
+            "delivery_state",
             "attempt_index",
             "attempt_total",
             "retry",
