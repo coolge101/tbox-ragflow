@@ -155,3 +155,43 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.96 起 `start` 日志增加 `sample_index_base=1` 字段，显式标识 sample 索引从 1 开始。
 > S3.97 起 `start` 日志增加 `sample_total_field="total"` 字段，显式标识 sample 总量字段名。
 > S3.98 起 `start` 日志增加 `sample_path_field="path"` 字段，显式标识 sample 路径字段名。
+> S3.99 起 `start` 日志增加 `sample_type_field="sample_type"` 字段，显式标识 sample 类型字段名。
+> S3.100 起 `start` 日志增加 `sample_elapsed_field="elapsed_ms"` 字段，显式标识 sample 耗时字段名。
+> S3.101 起进入 Phase B：`start` 日志默认输出 canonical 字段集并升级 `log_version=2`；曾支持 `TBOX_WEBHOOK_LOG_COMPAT_V1=true` 追加 deprecated 字段（**S3.103 已移除**）。
+> S3.102 起曾在 CI workflow 中为 `TBOX_WEBHOOK_LOG_COMPAT_V1` 提供注释版 `env` 示例（**S3.103 已移除**）；`S3.75-S3.100-field-consolidation-proposal.md` 曾补充 Phase B 说明与 Phase C 准入清单。
+> S3.103 起 Phase C：`TBOX_WEBHOOK_LOG_COMPAT_V1` 及 v1-extended `start` 字段已移除；**迁移窗口截止 `2026-06-30`（UTC 日末）**，此后脚本仅输出 canonical `start` JSON。
+> S3.104 起扩展 `packages/tbox-pipelines/.gitignore`（`logs/`、`.pytest_cache`、`__pycache__/` 等），减少本地生成物干扰 `git status` 与提交审阅（与 README 变更日志一致）。
+
+## Field Consolidation (Phase A)
+
+S3.75-S3.100 的 `start` 日志字段已进入压缩治理阶段。Phase A 曾**文档标记**下列字段为 deprecated（历史列表；**S3.103 起不再出现在 `start` 输出中**）。
+
+提案文档见：[`S3.75-S3.100-field-consolidation-proposal.md`](S3.75-S3.100-field-consolidation-proposal.md)
+
+历史 deprecated 名（已移除，勿再依赖）：
+
+- `validator_command_source`
+- `validator_invocation`
+- `validator_auto_install`
+- `sample_result_status_field`
+- `sample_total_field`
+- `sample_path_field`
+- `sample_type_field`
+- `samples_glob_applied`
+- `samples_sorted`
+- `samples_nonempty`
+- `sample_count_expected`
+- `samples_bytes_computed`
+- `schema_exists`
+- `schema_hash_verified`
+
+## Field Consolidation (Phase B)（历史）
+
+Phase B 曾实现“默认 canonical + 可选 `TBOX_WEBHOOK_LOG_COMPAT_V1`”。**S3.103 / Phase C 已删除兼容开关**；若你仍依赖上述扩展字段，须在 **2026-06-30（UTC）** 前改为只解析 canonical 字段集（见 `tests/test_validate_webhook_log_contract.py` 与脚本内 `start_json`）。
+
+## Field Consolidation (Phase C)
+
+- **迁移截止日**：`2026-06-30`（UTC，含当日）——对外承诺的 v1-extended / compat **语义支持终点**；依赖方须在此前改为只解析 canonical `start`。
+- **行为**：`validate_webhook_examples.sh` 的 `start` 行仅包含 canonical 键；环境变量 `TBOX_WEBHOOK_LOG_COMPAT_V1` **已删除**，设置与否均无效果。
+- **PR 做法**：单 PR 合并脚本、契约测试、CI 注释与本文档；PR 描述中写明截止日与破坏性变更范围。
+- **合并时间与 review**：本分支已含删除实现，便于提前 review；若组织要求「代码删除不得早于日历截止日」，可将 **计划合并日** 安排在 `2026-06-30` 之后，再发补丁 release（流程由维护者定）。
