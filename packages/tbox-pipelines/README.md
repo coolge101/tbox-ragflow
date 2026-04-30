@@ -222,6 +222,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.166 起 gate summary 增加 `summary_version=1`，为后续摘要字段演进提供兼容能力。
 > S3.167 起 CI 增加 gate summary 解析与固定计数回显（`alert_docs_gate_metrics`），便于日志检索和指标采集。
 > S3.169 起将 gate summary 字段白名单配置化（`summary_contract.metric_keys`），使输出字段集由 `alert_docs_gate_rules.json` 驱动并受 schema 约束。
+> S3.170 起将 CI 的 `alert_docs_gate_metrics` 提取下沉到独立脚本 `emit_alert_docs_gate_metrics.py`，按 summary 动态字段输出，减少 workflow 内联脚本引号/语法风险。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发

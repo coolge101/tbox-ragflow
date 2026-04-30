@@ -293,6 +293,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.166 起 `summary` 输出新增 `summary_version=1`，为后续摘要字段扩展提供兼容锚点。
 > S3.167 起 CI 新增 gate summary 提取与固定字段回显（`alert_docs_gate_metrics ...`），便于后续接入指标系统。
 > S3.169 起将 gate summary 字段白名单配置化（`summary_contract.metric_keys`），由 `alert_docs_gate_rules.json` 控制输出键集合并由 schema 校验。
+> S3.170 起 CI 改为调用 `emit_alert_docs_gate_metrics.py` 提取并回显 `alert_docs_gate_metrics`，指标键从 summary JSON 动态继承，避免 workflow 内联 Python 引号陷阱。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)
