@@ -72,3 +72,6 @@ jobs:
       # in this step's env (not required for CI; default unset keeps output minimal).
       - name: Validate webhook example JSON (JSON Schema)
         run: bash scripts/validate_webhook_examples.sh
+        # Uncomment only while validating parsers that still expect v1-extended `start` fields:
+        # env:
+        #   TBOX_WEBHOOK_LOG_COMPAT_V1: "true"

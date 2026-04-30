@@ -158,6 +158,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.99 起 `start` 日志增加 `sample_type_field="sample_type"` 字段，显式标识 sample 类型字段名。
 > S3.100 起 `start` 日志增加 `sample_elapsed_field="elapsed_ms"` 字段，显式标识 sample 耗时字段名。
 > S3.101 起进入 Phase B：`start` 日志默认输出 canonical 字段集并升级 `log_version=2`；设置 `TBOX_WEBHOOK_LOG_COMPAT_V1=true` 时额外输出已标记 deprecated 的兼容字段。
+> S3.102 起 CI workflow 在 webhook 校验步骤附带可取消注释的 `env` 示例；`S3.75-S3.100-field-consolidation-proposal.md` 补充 Phase B 已落地说明与 Phase C 移除准入清单。
 
 ## Field Consolidation (Phase A)
 

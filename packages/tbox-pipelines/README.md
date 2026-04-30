@@ -147,6 +147,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.99 起 `start` 日志增加 `sample_type_field="sample_type"` 字段，显式标识 sample 类型字段名。
 > S3.100 起 `start` 日志增加 `sample_elapsed_field="elapsed_ms"` 字段，显式标识 sample 耗时字段名。
 > S3.101 起进入 Phase B：`start` 日志默认输出 canonical 字段集并升级 `log_version=2`；设置 `TBOX_WEBHOOK_LOG_COMPAT_V1=true` 时追加 deprecated 兼容字段。
+> S3.102 起 CI workflow 为兼容开关提供注释版 `env` 片段；字段压缩提案文档同步 Phase C 准入清单。
 
 ## 本地开发
 
