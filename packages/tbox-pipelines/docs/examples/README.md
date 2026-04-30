@@ -70,5 +70,7 @@ Before merging docs changes in this directory:
 
 - Run lint/test validation commands used by this project.
 - Run `python scripts/validate_alert_docs_links.py` from `packages/tbox-pipelines`.
+  - This gate now also checks selected S3 changelog consistency in both
+    `README.md` and `WEBHOOK_CONTRACT.md`.
 - Walk through `webhook_alerting_render_acceptance_checklist.md`.
 - Confirm cross-file links are still valid.
