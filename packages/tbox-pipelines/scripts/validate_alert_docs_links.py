@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -104,7 +105,20 @@ def _emit_errors(errors: list[str]) -> None:
         print(f"validate_alert_docs_links.py: error[{idx}] {err}", file=sys.stderr)
 
 
+def _verbose(enabled: bool, message: str) -> None:
+    if enabled:
+        print(f"validate_alert_docs_links.py: verbose {message}")
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate cross-links for alert docs")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print detailed diagnostic progress and counters",
+    )
+    args = parser.parse_args()
+
     root = Path(__file__).resolve().parent.parent
     docs = root / "docs"
     examples = docs / "examples"
@@ -119,6 +133,15 @@ def main() -> int:
             required_changelog_stage_tokens,
             examples_readme_required_tokens,
         ) = _load_rules(root)
+        _verbose(
+            args.verbose,
+            (
+                "rules_loaded "
+                f"required_example_files={len(required_example_files)} "
+                f"required_stage_rules={len(required_changelog_stage_tokens)} "
+                f"readme_required_tokens={len(examples_readme_required_tokens)}"
+            ),
+        )
     except Exception as exc:  # noqa: BLE001
         _emit_errors([f"failed to load gate rules json: {exc}"])
         return 1
@@ -134,6 +157,7 @@ def main() -> int:
         errors.append("missing contract file: docs/WEBHOOK_CONTRACT.md")
     if not examples_readme_path.exists():
         errors.append("missing examples overview: docs/examples/README.md")
+    _verbose(args.verbose, f"precheck_missing_paths={len(errors)}")
 
     if errors:
         _emit_errors(errors)
@@ -183,6 +207,17 @@ def main() -> int:
         for token in tokens:
             if token not in contract_text:
                 errors.append(f"WEBHOOK_CONTRACT stage {stage} missing evidence token: {token}")
+
+    _verbose(
+        args.verbose,
+        (
+            "check_summary "
+            f"missing_index_links={len(missing_in_index)} "
+            f"missing_contract_links={len(missing_in_contract)} "
+            f"missing_examples_readme_tokens={len(missing_in_examples_readme)} "
+            f"total_errors={len(errors)}"
+        ),
+    )
 
     if errors:
         _emit_errors(errors)

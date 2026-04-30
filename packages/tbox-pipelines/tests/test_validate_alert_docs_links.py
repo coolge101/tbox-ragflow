@@ -34,6 +34,20 @@ def test_validate_alert_docs_links_script_passes() -> None:
     assert "ok all required doc links present" in res.stdout
 
 
+def test_validate_alert_docs_links_script_verbose_mode() -> None:
+    res = subprocess.run(
+        [sys.executable, str(_SCRIPT), "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0, res.stderr
+    assert "verbose rules_loaded" in res.stdout
+    assert "verbose check_summary" in res.stdout
+    assert "ok all required doc links present" in res.stdout
+
+
 def test_validate_alert_docs_links_invalid_rules_samples_fail() -> None:
     bad_cases = (
         (

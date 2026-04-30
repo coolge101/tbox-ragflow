@@ -287,6 +287,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.160 起将 docs gate 规则外置到 `docs/examples/alert_docs_gate_rules.json`，后续扩展阶段检查可只改规则文件。
 > S3.161 起新增 `alert_docs_gate_rules.schema.json` 并在 gate 脚本中执行 schema 级结构校验，降低规则误配风险。
 > S3.162 起新增 gate 失败案例样本库（`docs/examples/gate_rules_invalid/*.json`）并在测试中校验预期错误，增强回归覆盖。
+> S3.163 起为 `validate_alert_docs_links.py` 增加 `--verbose` 诊断模式，输出规则加载与检查统计，便于 CI 失败快速定位。
 
 ## Field Consolidation (Phase A)
 
