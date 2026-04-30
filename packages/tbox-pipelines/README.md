@@ -173,6 +173,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.117 起 webhook 可重试 HTTP 失败若返回 `Retry-After`（秒值），重试等待采用 `max(线性退避, Retry-After)`；无效/缺失时回退原 `retry_backoff_seconds * attempt`。
 > S3.118 起 `Retry-After` 额外支持 HTTP-date（不仅秒值）；折算后仍采用 `max(线性退避, Retry-After)`。
 > S3.119 起 `webhook_notify_failed` 增加 `retry_in_seconds`（下一次重试前实际等待秒数；不重试时为 `None`），便于排障与日志聚合。
+> S3.120 起 `webhook_notify_failed` 增加 `retry_policy`（`backoff`/`retry_after`/`none`），用于标识重试等待来源。
 
 ## 本地开发
 
