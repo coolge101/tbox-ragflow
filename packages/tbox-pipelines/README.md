@@ -209,6 +209,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.153 起新增 `webhook_alerting_monitor_as_code.datadog.rendered.yaml` 与 `webhook_alerting_monitor_as_code.prometheus.rendered.yaml`，提供即用型平台渲染样例。
 > S3.154 起新增 `webhook_alerting_render_spec.md` 与 `webhook_alerting_render_acceptance_checklist.md`，固化渲染一致性规范与合并门禁。
 > S3.155 起新增 `webhook_alerting_render_change_log.template.md` 与 `webhook_alerting_render_change_log.sample.md`，规范渲染变更审计记录。
+> S3.156 起新增 `docs/examples/README.md`（examples 总览与维护约定），提升多人协作下的文档可维护性。
 
 ## 本地开发
 
