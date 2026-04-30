@@ -189,6 +189,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.133 起 success/failure 日志新增 `delivery_state`（`delivered`/`retrying`/`failed`），便于告警按终态直接分组。
 > S3.134 起 success/failure/skip 日志新增 `log_schema_version`（当前 `1`），为后续日志字段演进提供兼容锚点。
 > S3.135 起 failure 日志新增 `error_class`（如 `HTTPStatusError`、`ConnectError`），便于按异常类别统计与告警。
+> S3.136 起 failure 日志新增 `error_family`（`http`/`transport`/`unexpected`），便于建立稳定的异常分组看板与告警规则。
 
 ## 本地开发
 

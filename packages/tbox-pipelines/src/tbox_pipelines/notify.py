@@ -125,6 +125,14 @@ def _webhook_error_class(exc: BaseException) -> str:
     return exc.__class__.__name__
 
 
+def _webhook_error_family(exc: BaseException) -> str:
+    if isinstance(exc, httpx.HTTPStatusError):
+        return "http"
+    if isinstance(exc, httpx.RequestError):
+        return "transport"
+    return "unexpected"
+
+
 def _webhook_retry_after_seconds(exc: BaseException) -> float | None:
     """Best-effort parse ``Retry-After`` seconds or HTTP-date from failures."""
     if not isinstance(exc, httpx.HTTPStatusError):
@@ -203,6 +211,7 @@ def _post_webhook_json(
             delivery_state = "retrying" if will_retry else "failed"
             retry_reason = _webhook_retry_reason(exc, will_retry)
             error_class = _webhook_error_class(exc)
+            error_family = _webhook_error_family(exc)
             http_status = _webhook_failure_status_code(exc)
             retries_remaining = max(0, attempts - attempt)
             sleep_seconds: float | None = None
@@ -224,7 +233,8 @@ def _post_webhook_json(
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
-                "retry_reason=%s error_class=%s attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
+                "retry_reason=%s error_class=%s error_family=%s "
+                "attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "failure",
                 payload_type,
@@ -245,6 +255,7 @@ def _post_webhook_json(
                 sleep_seconds,
                 retry_reason,
                 error_class,
+                error_family,
                 attempt_elapsed_ms,
                 total_elapsed_ms,
                 exc,
@@ -263,7 +274,8 @@ def _post_webhook_json(
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
-                "retry_reason=%s error_class=%s attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
+                "retry_reason=%s error_class=%s error_family=%s "
+                "attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 WEBHOOK_NOTIFY_LOG_SCHEMA_VERSION,
                 "failure",
                 payload_type,
@@ -284,6 +296,7 @@ def _post_webhook_json(
                 None,
                 "unexpected_error",
                 _webhook_error_class(exc),
+                _webhook_error_family(exc),
                 attempt_elapsed_ms,
                 total_elapsed_ms,
                 exc,
