@@ -10,6 +10,8 @@ reference across different log/monitoring platforms.
 - Loki/Prometheus style: [`webhook_alert_rules.promql.sample.md`](webhook_alert_rules.promql.sample.md)
 - OpenObserve style: [`webhook_alert_rules.openobserve.sample.md`](webhook_alert_rules.openobserve.sample.md)
 - Elasticsearch/KQL style: [`webhook_alert_rules.elasticsearch.sample.md`](webhook_alert_rules.elasticsearch.sample.md)
+- Migration checklist: [`webhook_alert_rules.migration_checklist.md`](webhook_alert_rules.migration_checklist.md)
+- Troubleshooting guide: [`webhook_alert_rules.troubleshooting.md`](webhook_alert_rules.troubleshooting.md)
 
 ## Core rule categories
 
@@ -43,3 +45,10 @@ Use these logical fields as the stable contract, then adapt to each platform's q
 - Build long-lived routing on `retry_reason_group`.
 - Keep parser output for both `retry_reason` and `retry_reason_version`.
 - Use `retry_reason` for detailed drill-down, not top-level paging splits.
+
+## Suggested adoption path
+
+1. Start from [`webhook_alert_rules.sample.md`](webhook_alert_rules.sample.md)
+2. Choose platform-specific syntax sample
+3. Execute [`webhook_alert_rules.migration_checklist.md`](webhook_alert_rules.migration_checklist.md)
+4. During pilot, use [`webhook_alert_rules.troubleshooting.md`](webhook_alert_rules.troubleshooting.md)

@@ -201,6 +201,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.145 起新增 `docs/examples/webhook_alert_rules.openobserve.sample.md`（OpenObserve 查询语法样例），扩展轻量日志平台落地参考。
 > S3.146 起新增 `docs/examples/webhook_alert_rules.elasticsearch.sample.md`（Elasticsearch/KQL 风格样例），补充 ELK 生态落地模板。
 > S3.147 起新增 `docs/examples/webhook_alert_rules.index.md`（样例总索引 + 字段映射速查），便于跨平台统一落地。
+> S3.148 起新增 `webhook_alert_rules.migration_checklist.md` 与 `webhook_alert_rules.troubleshooting.md`，形成告警规则落地与排障闭环文档。
 
 ## 本地开发
 
