@@ -73,6 +73,16 @@ def _to_metrics_line(
     missing_keys = [key for key in metric_keys if key not in payload]
     if missing_keys:
         raise ValueError(f"summary payload missing metric key(s): {','.join(missing_keys)}")
+    invalid_metric_values: list[str] = []
+    for key in metric_keys:
+        value = payload[key]
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            invalid_metric_values.append(key)
+    if invalid_metric_values:
+        raise ValueError(
+            "summary payload metric value must be a non-negative integer for key(s): "
+            + ",".join(invalid_metric_values)
+        )
 
     parts: list[str] = ["alert_docs_gate_metrics"]
     parts.append(f"event={payload['event']}")
