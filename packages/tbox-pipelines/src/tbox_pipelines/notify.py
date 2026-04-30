@@ -103,6 +103,17 @@ def _webhook_failure_is_transient(exc: BaseException) -> bool:
     return False
 
 
+def _webhook_retry_reason(exc: BaseException, will_retry: bool) -> str:
+    if isinstance(exc, httpx.RequestError):
+        return "request_error" if will_retry else "request_error_no_retry"
+    if isinstance(exc, httpx.HTTPStatusError):
+        code = exc.response.status_code
+        if will_retry:
+            return f"http_status_{code}"
+        return "http_status_non_retryable"
+    return "unexpected_error"
+
+
 def _webhook_retry_after_seconds(exc: BaseException) -> float | None:
     """Best-effort parse ``Retry-After`` seconds or HTTP-date from failures."""
     if not isinstance(exc, httpx.HTTPStatusError):
@@ -156,6 +167,7 @@ def _post_webhook_json(
             return True
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             will_retry = _webhook_failure_is_transient(exc) and attempt < attempts
+            retry_reason = _webhook_retry_reason(exc, will_retry)
             sleep_seconds: float | None = None
             retry_after_seconds: float | None = None
             retry_policy = "none"
@@ -170,7 +182,7 @@ def _post_webhook_json(
                         retry_policy = "retry_after"
             logger.warning(
                 "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_policy=%s "
-                "retry_after_seconds=%s retry_in_seconds=%s error=%s",
+                "retry_after_seconds=%s retry_in_seconds=%s retry_reason=%s error=%s",
                 log_url,
                 attempt,
                 attempts,
@@ -178,6 +190,7 @@ def _post_webhook_json(
                 retry_policy,
                 retry_after_seconds,
                 sleep_seconds,
+                retry_reason,
                 exc,
             )
             if not will_retry:
@@ -187,7 +200,7 @@ def _post_webhook_json(
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "webhook_notify_failed url=%s attempt=%s/%s retry=%s retry_policy=%s "
-                "retry_after_seconds=%s retry_in_seconds=%s error=%s",
+                "retry_after_seconds=%s retry_in_seconds=%s retry_reason=%s error=%s",
                 log_url,
                 attempt,
                 attempts,
@@ -195,6 +208,7 @@ def _post_webhook_json(
                 "none",
                 None,
                 None,
+                "unexpected_error",
                 exc,
             )
             return False

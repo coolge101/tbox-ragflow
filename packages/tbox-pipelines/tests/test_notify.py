@@ -274,6 +274,7 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert "retry_policy=retry_after" in joined
     assert "retry_after_seconds=3.0" in joined
     assert "retry_in_seconds=3.0" in joined
+    assert "retry_reason=http_status_429" in joined
 
 
 def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
@@ -318,6 +319,7 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert "retry_policy=backoff" in joined
     assert "retry_after_seconds=None" in joined
     assert "retry_in_seconds=0.2" in joined
+    assert "retry_reason=http_status_429" in joined
 
 
 def test_send_webhook_retry_after_http_date_supported(
