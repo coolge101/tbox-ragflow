@@ -57,6 +57,10 @@ Copy-ready sample files:
 - [`examples/webhook_alerting_baseline.md`](examples/webhook_alerting_baseline.md) (governance baseline pack)
 - [`examples/webhook_alerting_baseline.parameterized.md`](examples/webhook_alerting_baseline.parameterized.md) (critical/non-critical parameterized template)
 - [`examples/webhook_alerting_monitor_as_code.template.yaml`](examples/webhook_alerting_monitor_as_code.template.yaml) (generic monitor-as-code mapping)
+- [`examples/webhook_alerting_monitor_as_code.datadog.rendered.yaml`](examples/webhook_alerting_monitor_as_code.datadog.rendered.yaml) (Datadog rendered example)
+- [`examples/webhook_alerting_monitor_as_code.prometheus.rendered.yaml`](examples/webhook_alerting_monitor_as_code.prometheus.rendered.yaml) (Prometheus/Loki rendered example)
+- [`examples/webhook_alerting_render_spec.md`](examples/webhook_alerting_render_spec.md) (render invariants/spec)
+- [`examples/webhook_alerting_render_acceptance_checklist.md`](examples/webhook_alerting_render_acceptance_checklist.md) (render merge gate)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -269,6 +273,8 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.150 起新增 `webhook_alerting_baseline.md`，沉淀阈值/分环境/抑制/升级/变更管理的告警治理基线包。
 > S3.151 起新增 `webhook_alerting_baseline.parameterized.md`，提供 critical/non-critical 双档参数化治理模板，降低落地改造成本。
 > S3.152 起新增 `webhook_alerting_monitor_as_code.template.yaml`，将参数化基线映射为通用 monitor-as-code 结构，便于平台渲染。
+> S3.153 起新增 Datadog/Prometheus 渲染样例（`*.rendered.yaml`），提供从通用模板到平台规则的即用参考。
+> S3.154 起新增 render 规范与验收清单（`render_spec` + `render_acceptance_checklist`），约束模板与渲染结果的一致性。
 
 ## Field Consolidation (Phase A)
 

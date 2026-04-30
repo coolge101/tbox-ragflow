@@ -16,6 +16,10 @@ reference across different log/monitoring platforms.
 - Governance baseline pack: [`webhook_alerting_baseline.md`](webhook_alerting_baseline.md)
 - Parameterized baseline template: [`webhook_alerting_baseline.parameterized.md`](webhook_alerting_baseline.parameterized.md)
 - Monitor-as-code template: [`webhook_alerting_monitor_as_code.template.yaml`](webhook_alerting_monitor_as_code.template.yaml)
+- Datadog rendered monitor bundle: [`webhook_alerting_monitor_as_code.datadog.rendered.yaml`](webhook_alerting_monitor_as_code.datadog.rendered.yaml)
+- Prometheus rendered monitor bundle: [`webhook_alerting_monitor_as_code.prometheus.rendered.yaml`](webhook_alerting_monitor_as_code.prometheus.rendered.yaml)
+- Render specification: [`webhook_alerting_render_spec.md`](webhook_alerting_render_spec.md)
+- Render acceptance checklist: [`webhook_alerting_render_acceptance_checklist.md`](webhook_alerting_render_acceptance_checklist.md)
 
 ## Core rule categories
 
@@ -60,3 +64,7 @@ Use these logical fields as the stable contract, then adapt to each platform's q
 6. Standardize long-term policy with [`webhook_alerting_baseline.md`](webhook_alerting_baseline.md)
 7. Operationalize quickly using [`webhook_alerting_baseline.parameterized.md`](webhook_alerting_baseline.parameterized.md)
 8. Render platform rules from [`webhook_alerting_monitor_as_code.template.yaml`](webhook_alerting_monitor_as_code.template.yaml)
+9. Start from rendered examples for Datadog/Prometheus and tune thresholds per channel
+10. Apply [`webhook_alerting_render_spec.md`](webhook_alerting_render_spec.md) and
+    [`webhook_alerting_render_acceptance_checklist.md`](webhook_alerting_render_acceptance_checklist.md)
+    before merge
