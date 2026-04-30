@@ -1,0 +1,124 @@
+# Rendered example: Prometheus/Loki-oriented monitor-as-code
+# Source template: webhook_alerting_monitor_as_code.template.yaml
+
+version: 1
+template_id: webhook-alerting-baseline-prometheus-rendered
+
+metadata:
+  owner_team: tbox-platform-oncall
+  escalation_team: tbox-platform-escalation
+  environment: prod
+  profile: critical
+  channel_name: ragflow-prod-webhook
+
+compatibility:
+  route_by: retry_reason_group
+  drilldown_by: retry_reason
+  taxonomy_version_field: retry_reason_version
+
+suppression:
+  maintenance_policy: "Mute during approved maintenance windows"
+  dedup_keys: [payload_type, retry_reason_group, http_status, error_class]
+  warning_cooldown: 15m
+
+escalation:
+  no_ack_after: 10m
+  no_mitigation_after: 30m
+  path: [primary_oncall, secondary_oncall, integration_owner, infrastructure_owner]
+
+variables:
+  A_FINAL_FAIL_THRESHOLD: 1
+  A_FINAL_FAIL_WINDOW: 5m
+  B_RETRY_SPIKE_MULTIPLIER: 3
+  B_RETRY_SPIKE_WINDOW: 15m
+  C_TRANSPORT_WARN_THRESHOLD: 5
+  C_TRANSPORT_HIGH_THRESHOLD: 20
+  C_TRANSPORT_WINDOW: 10m
+  D_429_WARN_THRESHOLD: 5
+  D_429_WINDOW: 10m
+
+monitors:
+  - id: final-delivery-failure
+    severity: critical
+    route: page
+    prometheus:
+      engine: loki_logql
+      expr: |
+        sum by (payload_type, retry_reason_group, http_status, error_class) (
+          count_over_time({app="tbox-pipelines"} |= "webhook_notify_failed"
+            | logfmt
+            | outcome="failure"
+            | delivery_state="failed"
+            | final="True"
+          [5m])
+        ) >= 1
+
+  - id: retrying-spike
+    severity: warning
+    route: warning
+    prometheus:
+      engine: loki_logql
+      expr: |
+        (
+          sum by (payload_type, retry_reason_group) (
+            count_over_time({app="tbox-pipelines"} |= "webhook_notify_failed"
+              | logfmt
+              | outcome="failure"
+              | delivery_state="retrying"
+              | final="False"
+            [15m])
+          )
+        )
+        >
+        3
+        *
+        (
+          sum by (payload_type, retry_reason_group) (
+            count_over_time({app="tbox-pipelines"} |= "webhook_notify_failed"
+              | logfmt
+              | outcome="failure"
+              | delivery_state="retrying"
+              | final="False"
+            [15m] offset 15m)
+          )
+        )
+
+  - id: transport-instability-warning
+    severity: warning
+    route: warning
+    prometheus:
+      engine: loki_logql
+      expr: |
+        sum by (payload_type, error_class) (
+          count_over_time({app="tbox-pipelines"} |= "webhook_notify_failed"
+            | logfmt
+            | retry_reason_group=~"transport_retryable|transport_non_retryable"
+          [10m])
+        ) >= 5
+
+  - id: transport-instability-high
+    severity: high
+    route: page
+    prometheus:
+      engine: loki_logql
+      expr: |
+        sum by (payload_type, error_class) (
+          count_over_time({app="tbox-pipelines"} |= "webhook_notify_failed"
+            | logfmt
+            | retry_reason_group=~"transport_retryable|transport_non_retryable"
+          [10m])
+        ) >= 20
+
+  - id: rate-limit-pressure-429
+    severity: warning
+    route: warning
+    prometheus:
+      engine: loki_logql
+      expr: |
+        sum by (payload_type, sync_id) (
+          count_over_time({app="tbox-pipelines"} |= "webhook_notify_failed"
+            | logfmt
+            | retry_reason_group="http_retryable"
+            | http_status="429"
+          [10m])
+        ) >= 5
