@@ -281,6 +281,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.155 起新增 render 变更记录模板与样例（`render_change_log.*`），统一沉淀渲染变更审计与回滚信息。
 > S3.156 起新增 `docs/examples/README.md`，统一说明 examples 目录职责分层、维护约定与合并门禁。
 > S3.157 起新增 `scripts/validate_alert_docs_links.py` 与对应测试，提供 examples 关键互链完整性的轻量门禁。
+> S3.158 起将 alert docs link 校验接入 CI，并标准化脚本失败输出（`fail total_errors` + 编号错误项）以提升排障效率。
 
 ## Field Consolidation (Phase A)
 
