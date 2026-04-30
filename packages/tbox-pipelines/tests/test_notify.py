@@ -82,6 +82,32 @@ def test_webhook_notify_failed_log_uses_redacted_url(
     assert "SECRET" not in joined
 
 
+def test_webhook_http_url_allowed_only_http_https_with_host() -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    assert notify_mod._webhook_http_url_allowed("http://example.com/h")
+    assert notify_mod._webhook_http_url_allowed("https://x.example/hook")
+    assert not notify_mod._webhook_http_url_allowed("file:///etc/passwd")
+    assert not notify_mod._webhook_http_url_allowed("relative/path")
+    assert not notify_mod._webhook_http_url_allowed("ftp://example.com/x")
+
+
+def test_send_webhook_skips_invalid_url_scheme(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.WARNING)
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_webhook_notification(
+        "file:///tmp/x",
+        {"status": "failed", "sync_id": "a"},
+    )
+    assert not ok
+    assert _DummyClient.calls == []
+    assert any("webhook_notify_skipped_invalid_url" in r.getMessage() for r in caplog.records)
+
+
 def test_webhook_url_for_logs_strips_query_fragment_and_masks_userinfo() -> None:
     import tbox_pipelines.notify as notify_mod
 

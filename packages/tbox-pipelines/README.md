@@ -168,6 +168,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.112 起 webhook `POST` 带 `Idempotency-Key`（SHA-256，见 `docs/WEBHOOK_CONTRACT.md`），便于接收端去重。
 > S3.113 起可选 Bearer：`RAGFLOW_NOTIFY_WEBHOOK_BEARER_TOKEN` / `TBOX_RBAC_ALERT_WEBHOOK_BEARER_TOKEN`（或 JSON 字段，不推荐入库）；幂等键序列化对非 JSON 原生值使用 `default=str`。
 > S3.114 起 webhook 失败日志中的 URL 脱敏（无 query/fragment，掩码 `user:pass@`），见 `docs/WEBHOOK_CONTRACT.md`。
+> S3.115 起 webhook URL 仅允许绝对 `http`/`https`（含 host）；`file:` 等 scheme 会被拒绝并打脱敏告警日志。
 
 ## 本地开发
 
