@@ -171,6 +171,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.115 起 webhook URL 仅允许绝对 `http`/`https`（含 host）；`file:` 等 scheme 会被拒绝并打脱敏告警日志。
 > S3.116 起 webhook 成功后在 DEBUG 记录 `webhook_notify_ok`（脱敏 URL、HTTP 状态、尝试序号），见 `docs/WEBHOOK_CONTRACT.md`。
 > S3.117 起 webhook 可重试 HTTP 失败若返回 `Retry-After`（秒值），重试等待采用 `max(线性退避, Retry-After)`；无效/缺失时回退原 `retry_backoff_seconds * attempt`。
+> S3.118 起 `Retry-After` 额外支持 HTTP-date（不仅秒值）；折算后仍采用 `max(线性退避, Retry-After)`。
 
 ## 本地开发
 

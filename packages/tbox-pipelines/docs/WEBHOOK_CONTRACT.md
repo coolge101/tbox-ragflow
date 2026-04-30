@@ -16,7 +16,7 @@ Each `send_*` call adds **`Idempotency-Key`** (S3.112): a 64-char lowercase hex 
 
 **Success observability (S3.116):** After a successful `POST` (`raise_for_status` passes), `notify` emits **`webhook_notify_ok`** at **DEBUG** with **redacted** `url`, **`http_status`**, and **`attempt`/`attempts`** (useful when retries occurred).
 
-**Retries (S3.109 / S3.111 / S3.117):** **408**, **429**, **500**, **502**, **503**, **504**, and transport errors (`httpx.RequestError`) are retried. Base sleep is `retry_backoff_seconds * attempt`. When a transient HTTP response includes `Retry-After` with parseable seconds, `notify` sleeps `max(base_backoff, retry_after_seconds)` before the next attempt. Other HTTP status codes are not retried. `run_sync` passes per-webhook `max_retries` / `retry_backoff_seconds` from `notify_webhook_*` and `rbac_alert_webhook_*` pipeline fields; when omitted they **inherit** the resolved `http_max_retries` / `http_retry_backoff_seconds` (same source as `RagflowClient`: `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` and JSON `http_max_retries` / `http_retry_backoff_seconds`). Override with JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES`, `RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS`, `TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES`, `TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS`. Library callers of `send_*` may keep defaults (`max_retries=0`) or override.
+**Retries (S3.109 / S3.111 / S3.117 / S3.118):** **408**, **429**, **500**, **502**, **503**, **504**, and transport errors (`httpx.RequestError`) are retried. Base sleep is `retry_backoff_seconds * attempt`. When a transient HTTP response includes `Retry-After`, `notify` accepts either seconds or HTTP-date and sleeps `max(base_backoff, retry_after_seconds)` before the next attempt. Other HTTP status codes are not retried. `run_sync` passes per-webhook `max_retries` / `retry_backoff_seconds` from `notify_webhook_*` and `rbac_alert_webhook_*` pipeline fields; when omitted they **inherit** the resolved `http_max_retries` / `http_retry_backoff_seconds` (same source as `RagflowClient`: `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` and JSON `http_max_retries` / `http_retry_backoff_seconds`). Override with JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES`, `RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS`, `TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES`, `TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS`. Library callers of `send_*` may keep defaults (`max_retries=0`) or override.
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -194,6 +194,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.115 起仅允许绝对 `http`/`https` 且含 host 的 webhook URL；否则记录 `webhook_notify_skipped_invalid_url` 并不发起请求。
 > S3.116 起成功投递后打 `webhook_notify_ok`（DEBUG，脱敏 `url`、`http_status`、`attempt/total`）。
 > S3.117 起 webhook 可重试 HTTP 失败若带 `Retry-After` 秒值，则重试等待采用 `max(retry_backoff_seconds * attempt, Retry-After)`；无效/缺失时回退到原退避。
+> S3.118 起 `Retry-After` 额外支持 HTTP-date（除秒值外），统一折算后仍采用 `max(线性退避, Retry-After)`。
 
 ## Field Consolidation (Phase A)
 
