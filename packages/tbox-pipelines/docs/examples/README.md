@@ -45,6 +45,8 @@ Recommended reading order:
   - Guardrails to prevent semantic drift across rendered bundles.
 - `render_change_log.*`:
   - Audit trail format for render/template updates.
+- `gate_rules_invalid/*.json`:
+  - Negative samples for docs gate regression tests.
 
 ## Maintenance conventions
 

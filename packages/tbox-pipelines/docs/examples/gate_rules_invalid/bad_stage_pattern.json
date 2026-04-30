@@ -1,0 +1,16 @@
+{
+  "required_example_files": [
+    "README.md"
+  ],
+  "required_changelog_stage_tokens": [
+    {
+      "stage": "3.200",
+      "evidence_tokens": [
+        "foo"
+      ]
+    }
+  ],
+  "examples_readme_required_tokens": [
+    "bar"
+  ]
+}

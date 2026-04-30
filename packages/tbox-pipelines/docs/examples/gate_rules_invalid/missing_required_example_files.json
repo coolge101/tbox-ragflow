@@ -1,0 +1,13 @@
+{
+  "required_changelog_stage_tokens": [
+    {
+      "stage": "S3.200",
+      "evidence_tokens": [
+        "foo"
+      ]
+    }
+  ],
+  "examples_readme_required_tokens": [
+    "bar"
+  ]
+}

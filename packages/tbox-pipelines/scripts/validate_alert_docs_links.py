@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -68,8 +69,10 @@ def _validate_rules_payload(payload: object, schema: object) -> list[str]:
 def _load_rules(
     root: Path,
 ) -> tuple[tuple[str, ...], tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
-    rules_path = root / "docs" / "examples" / "alert_docs_gate_rules.json"
-    schema_path = root / "docs" / "examples" / "alert_docs_gate_rules.schema.json"
+    rules_env = str(root / "docs" / "examples" / "alert_docs_gate_rules.json")
+    schema_env = str(root / "docs" / "examples" / "alert_docs_gate_rules.schema.json")
+    rules_path = Path(os.environ.get("ALERT_DOCS_GATE_RULES_PATH", rules_env))
+    schema_path = Path(os.environ.get("ALERT_DOCS_GATE_SCHEMA_PATH", schema_env))
     payload = json.loads(rules_path.read_text(encoding="utf-8"))
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     schema_errors = _validate_rules_payload(payload, schema)
