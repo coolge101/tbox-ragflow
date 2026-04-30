@@ -45,6 +45,11 @@ class _DummyClient:
         return _DummyResponse()
 
 
+def _assert_log_contains_fields(message: str, fields: tuple[str, ...]) -> None:
+    for field in fields:
+        assert f"{field}=" in message
+
+
 def test_webhook_user_agent_fallback_when_package_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     def _raise(_name: str) -> str:
         raise importlib.metadata.PackageNotFoundError
@@ -437,6 +442,98 @@ def test_send_webhook_notification_logs_ok_at_debug(
     assert any("sync_id=abc" in m for m in msgs)
     assert any("attempt_elapsed_ms=" in m and "total_elapsed_ms=" in m for m in msgs)
     assert any("https://hooks.example.invalid/webhook" in m and "token=" not in m for m in msgs)
+
+
+def test_webhook_log_context_fields_consistent_across_paths(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.DEBUG)
+
+    # success path
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+    assert send_webhook_notification(
+        "http://example.invalid/ok",
+        {"status": "failed", "sync_id": "ctx1"},
+    )
+    success_msg = next(
+        r.getMessage() for r in caplog.records if "webhook_notify_ok" in r.getMessage()
+    )
+    _assert_log_contains_fields(
+        success_msg,
+        (
+            "outcome",
+            "payload_type",
+            "sync_id",
+            "url",
+            "attempt",
+            "http_status",
+            "attempt_elapsed_ms",
+            "total_elapsed_ms",
+        ),
+    )
+
+    # failure path
+    class _AlwaysFailClient:
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_AlwaysFailClient":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            req = httpx.Request("POST", url)
+            resp = httpx.Response(403, request=req)
+            raise httpx.HTTPStatusError("forbidden", request=req, response=resp)
+
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _AlwaysFailClient)
+    assert not send_webhook_notification(
+        "http://example.invalid/fail",
+        {"status": "failed", "sync_id": "ctx2"},
+        max_retries=0,
+    )
+    failed_msg = next(
+        r.getMessage()
+        for r in reversed(caplog.records)
+        if "webhook_notify_failed" in r.getMessage()
+    )
+    _assert_log_contains_fields(
+        failed_msg,
+        (
+            "outcome",
+            "payload_type",
+            "sync_id",
+            "url",
+            "attempt",
+            "retry",
+            "final",
+            "retry_policy",
+            "retry_eligible",
+            "retries_remaining",
+            "http_status",
+            "retry_reason",
+            "attempt_elapsed_ms",
+            "total_elapsed_ms",
+        ),
+    )
+
+    # skipped path
+    assert not send_webhook_notification(
+        "file:///tmp/skip",
+        {"status": "failed", "sync_id": "ctx3"},
+    )
+    skipped_msg = next(
+        r.getMessage()
+        for r in reversed(caplog.records)
+        if "webhook_notify_skipped_invalid_url" in r.getMessage()
+    )
+    _assert_log_contains_fields(
+        skipped_msg,
+        ("payload_type", "sync_id", "skip_reason", "url"),
+    )
 
 
 def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> None:
