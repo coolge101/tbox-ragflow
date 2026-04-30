@@ -120,3 +120,34 @@ def test_emit_alert_docs_gate_metrics_json_mirror_output(tmp_path: Path) -> None
     assert json_payload["summary_version"] == summary_contract["summary_version"]
     for key in summary_contract["metric_keys"]:
         assert isinstance(json_payload[key], int)
+
+
+def test_emit_alert_docs_gate_metrics_enforces_metric_value_type(tmp_path: Path) -> None:
+    rules = json.loads(_RULES.read_text(encoding="utf-8"))
+    summary_contract = rules["summary_contract"]
+    metric_keys = summary_contract["metric_keys"]
+    payload = {
+        "event": summary_contract["event"],
+        "summary_version": summary_contract["summary_version"],
+        metric_keys[0]: 1,
+        metric_keys[1]: -1,
+        metric_keys[2]: "3",
+    }
+    log_path = tmp_path / "alert_docs_gate.log"
+    log_path.write_text(
+        "validate_alert_docs_links.py: summary " + json.dumps(payload, ensure_ascii=True) + "\n",
+        encoding="utf-8",
+    )
+
+    emit_res = subprocess.run(
+        [sys.executable, str(_EMIT_SCRIPT), "--log-path", str(log_path)],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert emit_res.returncode != 0
+    assert (
+        "summary payload metric value must be a non-negative integer for key(s): "
+        f"{metric_keys[1]},{metric_keys[2]}"
+    ) in emit_res.stderr
