@@ -82,6 +82,8 @@ def test_webhook_notify_failed_log_uses_redacted_url(
     joined = " | ".join(r.getMessage() for r in caplog.records)
     assert "payload_type=tbox_sync_summary" in joined
     assert "sync_id=s1" in joined
+    assert "attempt_elapsed_ms=" in joined
+    assert "total_elapsed_ms=" in joined
     assert "https://***@host.invalid/hook" in joined
     assert "SECRET" not in joined
 
@@ -396,6 +398,7 @@ def test_send_webhook_notification_logs_ok_at_debug(
     assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
     assert any("payload_type=tbox_sync_summary" in m for m in msgs)
     assert any("sync_id=abc" in m for m in msgs)
+    assert any("attempt_elapsed_ms=" in m and "total_elapsed_ms=" in m for m in msgs)
     assert any("https://hooks.example.invalid/webhook" in m and "token=" not in m for m in msgs)
 
 

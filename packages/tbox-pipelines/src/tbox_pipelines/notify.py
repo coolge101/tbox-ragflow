@@ -160,22 +160,31 @@ def _post_webhook_json(
     log_url = _webhook_url_for_logs(webhook_url)
     payload_type = str(payload.get("type", "") or "unknown")
     sync_id = str(payload.get("sync_id", "") or "")
+    started_at = time.monotonic()
     for attempt in range(1, attempts + 1):
+        attempt_started_at = time.monotonic()
         try:
             with httpx.Client(timeout=timeout_seconds) as client:
                 response = client.post(webhook_url, headers=headers, json=payload)
                 response.raise_for_status()
+            attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
+            total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.debug(
-                "webhook_notify_ok payload_type=%s sync_id=%s url=%s http_status=%s attempt=%s/%s",
+                "webhook_notify_ok payload_type=%s sync_id=%s url=%s http_status=%s attempt=%s/%s "
+                "attempt_elapsed_ms=%s total_elapsed_ms=%s",
                 payload_type,
                 sync_id,
                 log_url,
                 response.status_code,
                 attempt,
                 attempts,
+                attempt_elapsed_ms,
+                total_elapsed_ms,
             )
             return True
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+            attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
+            total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             retry_eligible = _webhook_failure_is_transient(exc)
             will_retry = retry_eligible and attempt < attempts
             retry_reason = _webhook_retry_reason(exc, will_retry)
@@ -198,7 +207,7 @@ def _post_webhook_json(
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
-                "retry_reason=%s error=%s",
+                "retry_reason=%s attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 payload_type,
                 sync_id,
                 log_url,
@@ -212,6 +221,8 @@ def _post_webhook_json(
                 retry_after_seconds,
                 sleep_seconds,
                 retry_reason,
+                attempt_elapsed_ms,
+                total_elapsed_ms,
                 exc,
             )
             if not will_retry:
@@ -219,12 +230,14 @@ def _post_webhook_json(
             if sleep_seconds and sleep_seconds > 0:
                 time.sleep(sleep_seconds)
         except Exception as exc:  # noqa: BLE001
+            attempt_elapsed_ms = int((time.monotonic() - attempt_started_at) * 1000)
+            total_elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.warning(
                 "webhook_notify_failed payload_type=%s sync_id=%s url=%s attempt=%s/%s retry=%s "
                 "retry_policy=%s "
                 "retry_eligible=%s retries_remaining=%s http_status=%s "
                 "retry_after_seconds=%s retry_in_seconds=%s "
-                "retry_reason=%s error=%s",
+                "retry_reason=%s attempt_elapsed_ms=%s total_elapsed_ms=%s error=%s",
                 payload_type,
                 sync_id,
                 log_url,
@@ -238,6 +251,8 @@ def _post_webhook_json(
                 None,
                 None,
                 "unexpected_error",
+                attempt_elapsed_ms,
+                total_elapsed_ms,
                 exc,
             )
             return False
