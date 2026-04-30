@@ -22,6 +22,8 @@ from tbox_pipelines.notify import (
 
 
 class _DummyResponse:
+    status_code = 200
+
     def raise_for_status(self) -> None:
         return None
 
@@ -233,6 +235,23 @@ def test_send_webhook_no_retry_on_non_transient_http(
 def test_should_notify_default_failed_only() -> None:
     assert should_notify({"status": "failed"}, notify_on_success=False)
     assert not should_notify({"status": "ok"}, notify_on_success=False)
+
+
+def test_send_webhook_notification_logs_ok_at_debug(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_webhook_notification(
+        "https://hooks.example.invalid/webhook?token=x",
+        {"status": "failed", "sync_id": "abc"},
+    )
+    assert ok
+    msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG]
+    assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
+    assert any("https://hooks.example.invalid/webhook" in m and "token=" not in m for m in msgs)
 
 
 def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> None:

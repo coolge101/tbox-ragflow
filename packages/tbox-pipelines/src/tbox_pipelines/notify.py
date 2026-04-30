@@ -118,6 +118,13 @@ def _post_webhook_json(
             with httpx.Client(timeout=timeout_seconds) as client:
                 response = client.post(webhook_url, headers=headers, json=payload)
                 response.raise_for_status()
+            logger.debug(
+                "webhook_notify_ok url=%s http_status=%s attempt=%s/%s",
+                log_url,
+                response.status_code,
+                attempt,
+                attempts,
+            )
             return True
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             will_retry = _webhook_failure_is_transient(exc) and attempt < attempts
