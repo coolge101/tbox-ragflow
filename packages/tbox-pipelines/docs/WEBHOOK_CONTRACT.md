@@ -61,6 +61,8 @@ Copy-ready sample files:
 - [`examples/webhook_alerting_monitor_as_code.prometheus.rendered.yaml`](examples/webhook_alerting_monitor_as_code.prometheus.rendered.yaml) (Prometheus/Loki rendered example)
 - [`examples/webhook_alerting_render_spec.md`](examples/webhook_alerting_render_spec.md) (render invariants/spec)
 - [`examples/webhook_alerting_render_acceptance_checklist.md`](examples/webhook_alerting_render_acceptance_checklist.md) (render merge gate)
+- [`examples/webhook_alerting_render_change_log.template.md`](examples/webhook_alerting_render_change_log.template.md) (render change audit template)
+- [`examples/webhook_alerting_render_change_log.sample.md`](examples/webhook_alerting_render_change_log.sample.md) (render change audit sample)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -275,6 +277,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.152 起新增 `webhook_alerting_monitor_as_code.template.yaml`，将参数化基线映射为通用 monitor-as-code 结构，便于平台渲染。
 > S3.153 起新增 Datadog/Prometheus 渲染样例（`*.rendered.yaml`），提供从通用模板到平台规则的即用参考。
 > S3.154 起新增 render 规范与验收清单（`render_spec` + `render_acceptance_checklist`），约束模板与渲染结果的一致性。
+> S3.155 起新增 render 变更记录模板与样例（`render_change_log.*`），统一沉淀渲染变更审计与回滚信息。
 
 ## Field Consolidation (Phase A)
 

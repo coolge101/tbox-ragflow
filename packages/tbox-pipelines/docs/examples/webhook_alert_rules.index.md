@@ -20,6 +20,8 @@ reference across different log/monitoring platforms.
 - Prometheus rendered monitor bundle: [`webhook_alerting_monitor_as_code.prometheus.rendered.yaml`](webhook_alerting_monitor_as_code.prometheus.rendered.yaml)
 - Render specification: [`webhook_alerting_render_spec.md`](webhook_alerting_render_spec.md)
 - Render acceptance checklist: [`webhook_alerting_render_acceptance_checklist.md`](webhook_alerting_render_acceptance_checklist.md)
+- Render change log template: [`webhook_alerting_render_change_log.template.md`](webhook_alerting_render_change_log.template.md)
+- Render change log sample: [`webhook_alerting_render_change_log.sample.md`](webhook_alerting_render_change_log.sample.md)
 
 ## Core rule categories
 
@@ -68,3 +70,5 @@ Use these logical fields as the stable contract, then adapt to each platform's q
 10. Apply [`webhook_alerting_render_spec.md`](webhook_alerting_render_spec.md) and
     [`webhook_alerting_render_acceptance_checklist.md`](webhook_alerting_render_acceptance_checklist.md)
     before merge
+11. Record each render update using
+    [`webhook_alerting_render_change_log.template.md`](webhook_alerting_render_change_log.template.md)
