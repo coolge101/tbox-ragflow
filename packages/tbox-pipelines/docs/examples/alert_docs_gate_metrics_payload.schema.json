@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Alert docs gate metrics payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event",
+    "summary_version",
+    "metrics_emit_version",
+    "required_example_files",
+    "required_stage_rules",
+    "examples_readme_required_tokens"
+  ],
+  "properties": {
+    "event": {
+      "type": "string",
+      "const": "alert_docs_gate_ok"
+    },
+    "summary_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "metrics_emit_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "required_example_files": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "required_stage_rules": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "examples_readme_required_tokens": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

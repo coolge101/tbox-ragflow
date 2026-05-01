@@ -12,11 +12,60 @@ Each `send_*` call adds **`Idempotency-Key`** (S3.112): a 64-char lowercase hex 
 
 **Log URLs (S3.114):** `webhook_notify_failed` lines pass a **redacted** URL: **query** and **fragment** are stripped, and **`user:pass@`** in `netloc` is replaced with **`***@`**. The real URL is still used for the HTTP `POST`.
 
-**URL allowlist (S3.115):** `send_*` accepts only absolute **`http`** or **`https`** URLs with a non-empty **host** (`netloc`). Other schemes (e.g. `file:`) or host-less URLs are rejected with `webhook_notify_skipped_invalid_url` and a **redacted** `url` field; no HTTP request is made.
+**URL allowlist (S3.115 / S3.130):** `send_*` accepts only absolute **`http`** or **`https`** URLs with a non-empty **host** (`netloc`). Other schemes (e.g. `file:`) or host-less URLs are rejected with `webhook_notify_skipped_invalid_url`; no HTTP request is made. Skip logs include a **redacted** `url`, plus `payload_type`, `sync_id`, and `skip_reason=invalid_url`.
 
 **Success observability (S3.116):** After a successful `POST` (`raise_for_status` passes), `notify` emits **`webhook_notify_ok`** at **DEBUG** with **redacted** `url`, **`http_status`**, and **`attempt`/`attempts`** (useful when retries occurred).
 
-**Retries (S3.109 / S3.111 / S3.117):** **408**, **429**, **500**, **502**, **503**, **504**, and transport errors (`httpx.RequestError`) are retried. Base sleep is `retry_backoff_seconds * attempt`. When a transient HTTP response includes `Retry-After` with parseable seconds, `notify` sleeps `max(base_backoff, retry_after_seconds)` before the next attempt. Other HTTP status codes are not retried. `run_sync` passes per-webhook `max_retries` / `retry_backoff_seconds` from `notify_webhook_*` and `rbac_alert_webhook_*` pipeline fields; when omitted they **inherit** the resolved `http_max_retries` / `http_retry_backoff_seconds` (same source as `RagflowClient`: `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` and JSON `http_max_retries` / `http_retry_backoff_seconds`). Override with JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES`, `RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS`, `TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES`, `TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS`. Library callers of `send_*` may keep defaults (`max_retries=0`) or override.
+**Retries (S3.109 / S3.111 / S3.117 / S3.118 / S3.119 / S3.120 / S3.121 / S3.122 / S3.123 / S3.124 / S3.125 / S3.126 / S3.127 / S3.128 / S3.129 / S3.130 / S3.131 / S3.132 / S3.133 / S3.134 / S3.135 / S3.136 / S3.137 / S3.138 / S3.139 / S3.140):** **408**, **429**, **500**, **502**, **503**, **504**, and transport errors (`httpx.RequestError`) are retried. Base sleep is `retry_backoff_seconds * attempt`. When a transient HTTP response includes `Retry-After`, `notify` accepts either seconds or HTTP-date and sleeps `max(base_backoff, retry_after_seconds)` before the next attempt. Retry warning logs include `log_schema_version`, `outcome=failure`, `delivery_state` (`retrying` or `failed`), `final` (whether this failure ends the send call), `payload_type` (`tbox_sync_summary` / `tbox_rbac_alert`), `sync_id`, `attempt_index`, `attempt_total`, `retry_policy` (`backoff`, `retry_after`, `none`), `retry_eligible` (whether the failure type is retryable), `retries_remaining` (attempts left after current failure), `http_status` (`HTTPStatusError` code or `None`), `retry_after_seconds` (parsed `Retry-After` value when available), `retry_after_source`, `backoff_seconds`, `retry_in_seconds`, `retry_window_ms`, `retry_reason` (standardized values such as `http_429`, `http_non_retryable_403`, `transport_retryable`), `retry_reason_group` (stable coarse bucket: `http_retryable`, `http_non_retryable`, `transport_retryable`, `transport_non_retryable`, `unexpected`), `retry_reason_version` (current taxonomy version, now `1`), `error_class` (Python exception class name), `error_family` (`http`, `transport`, `unexpected`), `attempt_elapsed_ms`, and `total_elapsed_ms` (wall-clock timing for attempt and whole send call). Success logs include `log_schema_version`, `outcome=success`, `delivery_state=delivered`, and the same correlation/timing basics (`payload_type`, `sync_id`, `attempt`, `attempt_index`, `attempt_total`, timing fields). Skip logs include `log_schema_version`, `payload_type`, `sync_id`, `skip_reason`, and redacted `url`. S3.131 adds tests that enforce core-field consistency across success/failure/skip paths. Other HTTP status codes are not retried. `run_sync` passes per-webhook `max_retries` / `retry_backoff_seconds` from `notify_webhook_*` and `rbac_alert_webhook_*` pipeline fields; when omitted they **inherit** the resolved `http_max_retries` / `http_retry_backoff_seconds` (same source as `RagflowClient`: `RAGFLOW_HTTP_MAX_RETRIES` / `RAGFLOW_HTTP_RETRY_BACKOFF_SECONDS` and JSON `http_max_retries` / `http_retry_backoff_seconds`). Override with JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_MAX_RETRIES`, `RAGFLOW_NOTIFY_WEBHOOK_RETRY_BACKOFF_SECONDS`, `TBOX_RBAC_ALERT_WEBHOOK_MAX_RETRIES`, `TBOX_RBAC_ALERT_WEBHOOK_RETRY_BACKOFF_SECONDS`. Library callers of `send_*` may keep defaults (`max_retries=0`) or override.
+
+### Alerting templates (S3.141 / S3.142)
+
+Use `outcome=failure` and `payload_type` as base filters, then route by `delivery_state` and `retry_reason_group`:
+
+1. **Final delivery failures (page-level):**
+   - Filter: `delivery_state=failed final=True`
+   - Group by: `payload_type`, `retry_reason_group`, `http_status`, `error_class`
+   - Purpose: catch notifications that exhausted retry budget or were non-retryable.
+2. **Retrying spike (warn-level):**
+   - Filter: `delivery_state=retrying final=False`
+   - Group by: `payload_type`, `retry_reason_group`
+   - Suggested threshold: sudden >3x increase vs previous 15-minute baseline.
+3. **Transport instability (infra-level):**
+   - Filter: `retry_reason_group=transport_retryable OR retry_reason_group=transport_non_retryable`
+   - Group by: `error_class`, `payload_type`
+   - Purpose: quickly isolate DNS/TLS/network/connectivity incidents.
+4. **Rate-limit pressure (integration-level):**
+   - Filter: `retry_reason_group=http_retryable AND http_status=429`
+   - Group by: `payload_type`, `sync_id`
+   - Purpose: identify receiver-side throttling and decide whether to tune retry/backoff.
+
+Compatibility guidance:
+- Prefer `retry_reason_group` for long-lived dashboards and alert routes.
+- Use `retry_reason` for drill-down detail only.
+- Keep `retry_reason_version` in parser output and branch logic by version only when taxonomy changes.
+
+Copy-ready sample files:
+- [`examples/README.md`](examples/README.md) (directory overview and maintenance conventions)
+- [`examples/alert_docs_gate_rules.schema.json`](examples/alert_docs_gate_rules.schema.json) (gate rules schema)
+- [`examples/alert_docs_gate_metrics_payload.schema.json`](examples/alert_docs_gate_metrics_payload.schema.json) (CI metrics JSON payload schema)
+- [`examples/webhook_alert_rules.index.md`](examples/webhook_alert_rules.index.md) (cross-platform index + field mapping)
+- [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
+- [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
+- [`examples/webhook_alert_rules.promql.sample.md`](examples/webhook_alert_rules.promql.sample.md) (Loki/Prometheus style)
+- [`examples/webhook_alert_rules.openobserve.sample.md`](examples/webhook_alert_rules.openobserve.sample.md) (OpenObserve query style)
+- [`examples/webhook_alert_rules.elasticsearch.sample.md`](examples/webhook_alert_rules.elasticsearch.sample.md) (Elasticsearch/KQL style)
+- [`examples/webhook_alert_rules.migration_checklist.md`](examples/webhook_alert_rules.migration_checklist.md) (rollout checklist)
+- [`examples/webhook_alert_rules.troubleshooting.md`](examples/webhook_alert_rules.troubleshooting.md) (noise/missing-alert triage)
+- [`examples/webhook_alerting_runbook.md`](examples/webhook_alerting_runbook.md) (incident operations SOP)
+- [`examples/webhook_alerting_baseline.md`](examples/webhook_alerting_baseline.md) (governance baseline pack)
+- [`examples/webhook_alerting_baseline.parameterized.md`](examples/webhook_alerting_baseline.parameterized.md) (critical/non-critical parameterized template)
+- [`examples/webhook_alerting_monitor_as_code.template.yaml`](examples/webhook_alerting_monitor_as_code.template.yaml) (generic monitor-as-code mapping)
+- [`examples/webhook_alerting_monitor_as_code.datadog.rendered.yaml`](examples/webhook_alerting_monitor_as_code.datadog.rendered.yaml) (Datadog rendered example)
+- [`examples/webhook_alerting_monitor_as_code.prometheus.rendered.yaml`](examples/webhook_alerting_monitor_as_code.prometheus.rendered.yaml) (Prometheus/Loki rendered example)
+- [`examples/webhook_alerting_render_spec.md`](examples/webhook_alerting_render_spec.md) (render invariants/spec)
+- [`examples/webhook_alerting_render_acceptance_checklist.md`](examples/webhook_alerting_render_acceptance_checklist.md) (render merge gate)
+- [`examples/webhook_alerting_render_change_log.template.md`](examples/webhook_alerting_render_change_log.template.md) (render change audit template)
+- [`examples/webhook_alerting_render_change_log.sample.md`](examples/webhook_alerting_render_change_log.sample.md) (render change audit sample)
 
 **Timeouts (S3.110):** `run_sync` passes per-webhook `timeout_seconds` from `notify_webhook_timeout_seconds` / `rbac_alert_webhook_timeout_seconds` in pipeline config (JSON keys or `RAGFLOW_NOTIFY_WEBHOOK_TIMEOUT_SECONDS` / `TBOX_RBAC_ALERT_WEBHOOK_TIMEOUT_SECONDS`; default **10** seconds each, clamped to at least **1**).
 
@@ -194,6 +243,82 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.115 起仅允许绝对 `http`/`https` 且含 host 的 webhook URL；否则记录 `webhook_notify_skipped_invalid_url` 并不发起请求。
 > S3.116 起成功投递后打 `webhook_notify_ok`（DEBUG，脱敏 `url`、`http_status`、`attempt/total`）。
 > S3.117 起 webhook 可重试 HTTP 失败若带 `Retry-After` 秒值，则重试等待采用 `max(retry_backoff_seconds * attempt, Retry-After)`；无效/缺失时回退到原退避。
+> S3.118 起 `Retry-After` 额外支持 HTTP-date（除秒值外），统一折算后仍采用 `max(线性退避, Retry-After)`。
+> S3.119 起 `webhook_notify_failed` 增加 `retry_in_seconds` 字段，记录下一次重试前实际等待时长（不重试时为 `None`）。
+> S3.120 起 `webhook_notify_failed` 增加 `retry_policy`（`backoff` / `retry_after` / `none`），便于区分重试等待来源。
+> S3.121 起 `webhook_notify_failed` 增加 `retry_after_seconds`（成功解析时为秒数，否则为 `None`），便于观察服务端 `Retry-After` 对重试的影响。
+> S3.122 起 `webhook_notify_failed` 增加 `retry_reason`（如 `request_error`、`http_status_429`、`http_status_non_retryable`），便于按失败类型聚合告警。
+> S3.123 起 `webhook_notify_failed` 增加 `http_status`（HTTP 异常时记录状态码，否则为 `None`），便于直接按状态码检索失败日志。
+> S3.124 起 `webhook_notify_failed` 增加 `retries_remaining`（当前失败后剩余重试次数），便于快速判断是否接近重试上限。
+> S3.125 起 `webhook_notify_failed` 增加 `retry_eligible`（失败类型本身是否可重试），与 `retry`（当前是否会继续重试）配合更清晰。
+> S3.126 起 `webhook_notify_ok` / `webhook_notify_failed` 均增加 `payload_type`，便于按 webhook 类型做日志分流与聚合。
+> S3.127 起 `webhook_notify_ok` / `webhook_notify_failed` 均增加 `sync_id`，便于与同步任务日志直接关联排障。
+> S3.128 起 `webhook_notify_ok` / `webhook_notify_failed` 均增加 `attempt_elapsed_ms` 与 `total_elapsed_ms`，支持按耗时维度观测 webhook 投递表现。
+> S3.129 起日志语义统一：`webhook_notify_ok` 增加 `outcome=success`，`webhook_notify_failed` 增加 `outcome=failure` 与 `final`，便于区分重试中失败与最终失败。
+> S3.130 起 `webhook_notify_skipped_invalid_url` 增加 `payload_type`、`sync_id`、`skip_reason=invalid_url`，让“跳过路径”与成功/失败日志具备一致关联上下文。
+> S3.131 起新增 notify 日志一致性测试，约束 success/failure/skip 三条路径核心字段持续齐全，降低后续字段回归风险。
+> S3.132 起 success/failure 日志新增 `attempt_index` 与 `attempt_total`（保留原 `attempt=x/y`），便于机器消费与指标聚合。
+> S3.133 起新增 `delivery_state`：成功为 `delivered`，失败为 `retrying`/`failed`，让告警规则可直接按终态分流。
+> S3.134 起 success/failure/skip 三路径统一增加 `log_schema_version`（当前 `1`），便于日志解析器按版本演进。
+> S3.135 起 failure 日志增加 `error_class`（异常类名），便于告警与统计按异常类型聚合。
+> S3.136 起 failure 日志增加 `error_family`（`http`/`transport`/`unexpected`），便于聚合规则稳定分组。
+> S3.137 起将重试计算抽为 `_webhook_retry_decision`，并增加 `retry_after_source`、`backoff_seconds`、`retry_window_ms` 与表驱动测试，统一重试诊断语义。
+> S3.138 起 `retry_reason` 标准化为稳定枚举（如 `http_429`、`http_non_retryable_403`、`transport_retryable`），减少规则匹配歧义。
+> S3.139 起 failure 日志新增 `retry_reason_version=1`，为后续重试原因枚举升级提供兼容锚点。
+> S3.140 起 failure 日志新增 `retry_reason_group`（粗粒度稳定分组），便于告警规则按大类聚合并降低枚举变动影响。
+> S3.141 起补充基于 `retry_reason_group` 的告警模板，明确 `failed`/`retrying` 分流与稳定聚合建议。
+> S3.142 起新增 `docs/examples/webhook_alert_rules.sample.md`，提供可复制改造的告警规则样例。
+> S3.143 起新增 `docs/examples/webhook_alert_rules.datadog.sample.md`，提供 Datadog 查询语法版告警样例。
+> S3.144 起新增 `docs/examples/webhook_alert_rules.promql.sample.md`，提供 Loki/Prometheus 风格告警样例。
+> S3.145 起新增 `docs/examples/webhook_alert_rules.openobserve.sample.md`，提供 OpenObserve 查询语法版告警样例。
+> S3.146 起新增 `docs/examples/webhook_alert_rules.elasticsearch.sample.md`，提供 Elasticsearch/KQL 风格告警样例。
+> S3.147 起新增 `docs/examples/webhook_alert_rules.index.md`，统一聚合各平台样例并补充字段映射速查。
+> S3.148 起新增告警迁移清单与排障指南（`migration_checklist` + `troubleshooting`），补齐从模板到生产落地的操作闭环。
+> S3.149 起新增平台无关 `webhook_alerting_runbook.md`（分级响应/值班交接/复盘模板），补齐生产运维 SOP。
+> S3.150 起新增 `webhook_alerting_baseline.md`，沉淀阈值/分环境/抑制/升级/变更管理的告警治理基线包。
+> S3.151 起新增 `webhook_alerting_baseline.parameterized.md`，提供 critical/non-critical 双档参数化治理模板，降低落地改造成本。
+> S3.152 起新增 `webhook_alerting_monitor_as_code.template.yaml`，将参数化基线映射为通用 monitor-as-code 结构，便于平台渲染。
+> S3.153 起新增 Datadog/Prometheus 渲染样例（`*.rendered.yaml`），提供从通用模板到平台规则的即用参考。
+> S3.154 起新增 render 规范与验收清单（`render_spec` + `render_acceptance_checklist`），约束模板与渲染结果的一致性。
+> S3.155 起新增 render 变更记录模板与样例（`render_change_log.*`），统一沉淀渲染变更审计与回滚信息。
+> S3.156 起新增 `docs/examples/README.md`，统一说明 examples 目录职责分层、维护约定与合并门禁。
+> S3.157 起新增 `scripts/validate_alert_docs_links.py` 与对应测试，提供 examples 关键互链完整性的轻量门禁。
+> S3.158 起将 alert docs link 校验接入 CI，并标准化脚本失败输出（`fail total_errors` + 编号错误项）以提升排障效率。
+> S3.159 起扩展 docs-link gate，增加 `README`/`WEBHOOK_CONTRACT` 关键 S3 changelog 与证据 token 一致性抽检，降低文档漂移风险。
+> S3.160 起将 docs gate 规则外置到 `docs/examples/alert_docs_gate_rules.json`，后续扩展阶段检查可只改规则文件。
+> S3.161 起新增 `alert_docs_gate_rules.schema.json` 并在 gate 脚本中执行 schema 级结构校验，降低规则误配风险。
+> S3.162 起新增 gate 失败案例样本库（`docs/examples/gate_rules_invalid/*.json`）并在测试中校验预期错误，增强回归覆盖。
+> S3.163 起为 `validate_alert_docs_links.py` 增加 `--verbose` 诊断模式，输出规则加载与检查统计，便于 CI 失败快速定位。
+> S3.164 起 CI 默认启用 gate `--verbose` 并用 GitHub Actions 日志分组包裹输出，提升流水线日志可读性。
+> S3.165 起 gate 成功路径新增结构化 `summary` 单行输出（JSON），便于后续 CI 侧做指标采集与趋势观测。
+> S3.166 起 `summary` 输出新增 `summary_version=1`，为后续摘要字段扩展提供兼容锚点。
+> S3.167 起 CI 新增 gate summary 提取与固定字段回显（`alert_docs_gate_metrics ...`），便于后续接入指标系统。
+> S3.169 起将 gate summary 字段白名单配置化（`summary_contract.metric_keys`），由 `alert_docs_gate_rules.json` 控制输出键集合并由 schema 校验。
+> S3.170 起 CI 改为调用 `emit_alert_docs_gate_metrics.py` 提取并回显 `alert_docs_gate_metrics`，指标键从 summary JSON 动态继承，避免 workflow 内联 Python 引号陷阱。
+> S3.171 起 `emit_alert_docs_gate_metrics.py` 读取 `summary_contract` 并强制校验 `event`/`summary_version`/`metric_keys`，对未知或缺失指标键直接失败，避免“看似成功但指标漂移”。
+> S3.172 起 `emit_alert_docs_gate_metrics.py` 增加 `--emit-json`，除 kv 行外额外输出 `alert_docs_gate_metrics_json {..}`，CI 默认开启双格式回显以支持机器侧解析。
+> S3.173 起 `emit_alert_docs_gate_metrics.py` 额外校验每个指标值必须是非负整数（拒绝负值/布尔/字符串），确保 CI 侧采集的计数语义稳定且可比较。
+> S3.174 起 `emit_alert_docs_gate_metrics.py` 支持 `--write-github-output`：当存在 `GITHUB_OUTPUT` 环境变量时，把指标追加写入该文件；在 GitHub Actions 中把指标写入 step outputs（`alert_docs_gate_metrics_kv`、`alert_docs_gate_metrics_json_line`、`alert_docs_gate_metrics_json`），并在 CI job 顶层暴露同名 outputs，供后续步骤或其它 job 引用。
+> S3.175 起 `emit_alert_docs_gate_metrics.py` 支持 `--write-step-summary`：当存在 `GITHUB_STEP_SUMMARY` 时追加 Markdown 指标表到 Step Summary；CI 新增 `alert-docs-gate-consumer` job，读取 `needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json` 并校验 JSON 可解析且含 `event`/`summary_version`。
+> S3.176 起规则文件增加 `metrics_emit_contract`（当前 `emit_version=1`），`emit_alert_docs_gate_metrics.py` 输出的 JSON 与 kv 行增加 `metrics_emit_version`；`alert_docs_gate_rules.schema.json` 与 gate 运行时校验同步约束；consumer job 断言 `metrics_emit_version==1`。
+> S3.177 起新增 `alert_docs_gate_metrics_payload.schema.json`，约束 CI 侧 docs gate **metrics payload**（`alert_docs_gate_metrics_json` job output）的字段与类型；`emit_alert_docs_gate_metrics.py` 在发出指标前按该 schema 做运行时校验。
+> S3.178 起将同一套 metrics payload 校验逻辑集中到 `alert_docs_gate_metrics_schema`（包内模块），并提供 `validate_alert_docs_metrics_payload.py` CLI；consumer job 对 job output 走 CLI + schema，避免 workflow 内联 Python 与 emitter 校验分叉。
+> S3.179 起 CLI 逻辑迁入 `metrics_payload_validate_cli`，通过 `[project.scripts]` 暴露 `validate-alert-docs-metrics-payload`；CI consumer 调用该入口；亦可用 `python -m tbox_pipelines.metrics_payload_validate_cli`。
+> S3.180 起 emitter 迁入 `metrics_emit_cli`，注册 `emit-alert-docs-gate-metrics`；CI 主 job 的 gate 步骤调用该入口；亦可用 `python -m tbox_pipelines.metrics_emit_cli`。
+> S3.181 起 docs 互链校验迁入 `alert_docs_links_validate_cli`，注册 `validate-alert-docs-links`；CI gate 第一步调用该入口；亦可用 `python -m tbox_pipelines.alert_docs_links_validate_cli`。
+> S3.182 起新增 `alert-docs-gate`（`alert_docs_gate_cli`）：`ci` 子命令内联 tee + emit，CI 用单进程替代 `validate | tee` + `emit` 两段 shell；`validate` 子命令为薄封装。
+> S3.183 起 `alert-docs-gate metrics-validate` 承接跨 job metrics JSON 校验；`alert-docs-gate consumer` job 使用该子命令，仍依赖 `alert_docs_gate_metrics_payload.schema.json` 与共享校验实现。
+> S3.184 起 `alert-docs-gate emit` 将后续 **argv** 转发至 `metrics_emit_cli`，与独立 `emit-alert-docs-gate-metrics` 控制台入口行为对齐。
+> S3.185 起 `_invoke_emit_cli` 统一 `ci` 与 `emit` 对 emitter 的调用；`alert-docs-gate version` 使用 **importlib.metadata** 输出版本号。
+> S3.186 起 `_invoke_cli_argv` 统一 **subcommand** 委托时的 argv 切换；links / metrics payload 校验与 emitter 调用路径复用。
+> S3.187 起 CI 在 `::group::alert-docs-gate` 内先于 `alert-docs-gate ci` 执行 `alert-docs-gate version`，记录已安装 **tbox-pipelines** 版本。
+> S3.188 起 `alert-docs-gate-consumer` 使用 `::group::alert-docs-gate-consumer` 并在 `metrics-validate` 前打印版本；**uv.lock** 加入包目录 `.gitignore` 避免误提交。
+> S3.189 起 `alert-docs-gate commands` 输出固定摘要行，标明 **pre-argparse** 的 `emit` 与常规 **subcommand** 的差异。
+> S3.190 起 CI 在两条 gate 日志组内于 `version` 后执行 `alert-docs-gate commands`，作为 **CI diagnostics** 便于对照子命令列表。
+> S3.191 起 `alert-docs-gate doctor` 汇总版本、**commands** 行与关键路径存在性（含 **PACKAGE_ROOT** 下契约与 schema）；每路径前缀 **`doctor ok`**，末行 `alert-docs-gate doctor: ok`。
+> S3.192 起 CI 以 `alert-docs-gate doctor` 替代分步 `version`/`commands`（**workflow simplification**），两条 gate 日志组行为一致。
+> S3.193 起以包内测试加固 **workflow invariant**（`ci.yml` 仅 `doctor`、禁止误回退 `version`/`commands` 行）；主 job **sparse-checkout** 增补 **`.github`**，供 `test_alert_docs_gate_ci_workflow` 在 CI 检出下读取 `.github/workflows/ci.yml`。
+> S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)
 

@@ -1,0 +1,134 @@
+# Webhook alerting monitor-as-code generic template
+# Purpose:
+# - Map S3.151 parameterized baseline variables into a portable YAML model.
+# - Serve as a source template for platform renderers (Datadog/Terraform/custom).
+
+version: 1
+template_id: webhook-alerting-baseline-generic
+
+metadata:
+  owner_team: "<ONCALL_PRIMARY>"
+  escalation_team: "<ONCALL_SECONDARY>"
+  environment: "<ENV>" # prod|staging|dev
+  profile: "<PROFILE>" # critical|non_critical
+  channel_name: "<CHANNEL_NAME>"
+
+compatibility:
+  route_by: retry_reason_group
+  drilldown_by: retry_reason
+  taxonomy_version_field: retry_reason_version
+
+suppression:
+  maintenance_policy: "<MAINTENANCE_SUPPRESSION>"
+  dedup_keys:
+    - payload_type
+    - retry_reason_group
+    - http_status
+    - error_class
+  warning_cooldown: "<WARNING_COOLDOWN>" # e.g. 15m / 30m
+
+escalation:
+  no_ack_after: "<ESCALATE_NO_ACK>"
+  no_mitigation_after: "<ESCALATE_NO_MITIGATION>"
+  path:
+    - primary_oncall
+    - secondary_oncall
+    - integration_owner
+    - infrastructure_owner
+
+variables:
+  A_FINAL_FAIL_THRESHOLD: "<A_FINAL_FAIL_THRESHOLD>"
+  A_FINAL_FAIL_WINDOW: "<A_FINAL_FAIL_WINDOW>"
+  B_RETRY_SPIKE_MULTIPLIER: "<B_RETRY_SPIKE_MULTIPLIER>"
+  B_RETRY_SPIKE_WINDOW: "<B_RETRY_SPIKE_WINDOW>"
+  C_TRANSPORT_WARN_THRESHOLD: "<C_TRANSPORT_WARN_THRESHOLD>"
+  C_TRANSPORT_HIGH_THRESHOLD: "<C_TRANSPORT_HIGH_THRESHOLD>"
+  C_TRANSPORT_WINDOW: "<C_TRANSPORT_WINDOW>"
+  D_429_WARN_THRESHOLD: "<D_429_WARN_THRESHOLD>"
+  D_429_WINDOW: "<D_429_WINDOW>"
+
+monitors:
+  - id: final-delivery-failure
+    severity: critical
+    enabled_envs: [prod, staging]
+    route:
+      prod: page
+      staging: ticket
+      dev: disabled
+    query_contract:
+      event: webhook_notify_failed
+      outcome: failure
+      delivery_state: failed
+      final: true
+    group_by: [payload_type, retry_reason_group, http_status, error_class]
+    trigger:
+      op: gte
+      value_from_var: A_FINAL_FAIL_THRESHOLD
+      window_from_var: A_FINAL_FAIL_WINDOW
+
+  - id: retrying-spike
+    severity: warning
+    enabled_envs: [prod, staging, dev]
+    route:
+      prod: warning
+      staging: warning
+      dev: ticket
+    query_contract:
+      event: webhook_notify_failed
+      outcome: failure
+      delivery_state: retrying
+      final: false
+    group_by: [payload_type, retry_reason_group]
+    trigger:
+      kind: ratio_vs_previous_window
+      ratio_from_var: B_RETRY_SPIKE_MULTIPLIER
+      window_from_var: B_RETRY_SPIKE_WINDOW
+
+  - id: transport-instability
+    severity: warning
+    enabled_envs: [prod, staging, dev]
+    route:
+      prod: warning
+      staging: warning
+      dev: ticket
+    query_contract:
+      event: webhook_notify_failed
+      retry_reason_group_in: [transport_retryable, transport_non_retryable]
+    group_by: [payload_type, error_class]
+    trigger:
+      warning:
+        op: gte
+        value_from_var: C_TRANSPORT_WARN_THRESHOLD
+        window_from_var: C_TRANSPORT_WINDOW
+      high:
+        op: gte
+        value_from_var: C_TRANSPORT_HIGH_THRESHOLD
+        window_from_var: C_TRANSPORT_WINDOW
+
+  - id: rate-limit-pressure-429
+    severity: warning
+    enabled_envs: [prod, staging, dev]
+    route:
+      prod: warning
+      staging: warning
+      dev: ticket
+    query_contract:
+      event: webhook_notify_failed
+      retry_reason_group: http_retryable
+      http_status: 429
+    group_by: [payload_type, sync_id]
+    trigger:
+      op: gte
+      value_from_var: D_429_WARN_THRESHOLD
+      window_from_var: D_429_WINDOW
+
+review:
+  kpis:
+    - final_delivery_failure_rate_by_payload_type
+    - retrying_spike_frequency
+    - transport_error_share
+    - rate_limit_pressure_duration
+    - alert_noise_ratio
+    - mtta
+    - mttr
+  cadence: monthly

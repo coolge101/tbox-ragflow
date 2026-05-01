@@ -45,6 +45,11 @@ class _DummyClient:
         return _DummyResponse()
 
 
+def _assert_log_contains_fields(message: str, fields: tuple[str, ...]) -> None:
+    for field in fields:
+        assert f"{field}=" in message
+
+
 def test_webhook_user_agent_fallback_when_package_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     def _raise(_name: str) -> str:
         raise importlib.metadata.PackageNotFoundError
@@ -80,6 +85,13 @@ def test_webhook_notify_failed_log_uses_redacted_url(
     )
     assert not ok
     joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
+    assert "delivery_state=failed" in joined
+    assert "payload_type=tbox_sync_summary" in joined
+    assert "sync_id=s1" in joined
+    assert "attempt_elapsed_ms=" in joined
+    assert "total_elapsed_ms=" in joined
     assert "https://***@host.invalid/hook" in joined
     assert "SECRET" not in joined
 
@@ -107,7 +119,35 @@ def test_send_webhook_skips_invalid_url_scheme(
     )
     assert not ok
     assert _DummyClient.calls == []
-    assert any("webhook_notify_skipped_invalid_url" in r.getMessage() for r in caplog.records)
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "webhook_notify_skipped_invalid_url" in joined
+    assert "log_schema_version=1" in joined
+    assert "payload_type=tbox_sync_summary" in joined
+    assert "sync_id=a" in joined
+    assert "skip_reason=invalid_url" in joined
+    assert "url=file:///tmp/x" in joined
+
+
+def test_send_rbac_webhook_skips_invalid_url_with_context(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.WARNING)
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+
+    ok = send_rbac_webhook_notification(
+        "file:///tmp/rbac",
+        {"status": "failed", "sync_id": "rb1", "reason": "permission_denied"},
+    )
+    assert not ok
+    assert _DummyClient.calls == []
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "webhook_notify_skipped_invalid_url" in joined
+    assert "log_schema_version=1" in joined
+    assert "payload_type=tbox_rbac_alert" in joined
+    assert "sync_id=rb1" in joined
+    assert "skip_reason=invalid_url" in joined
+    assert "url=file:///tmp/rbac" in joined
 
 
 def test_webhook_url_for_logs_strips_query_fragment_and_masks_userinfo() -> None:
@@ -148,6 +188,62 @@ def test_webhook_idempotency_key_non_json_values_use_default_str() -> None:
         {"d": date(2026, 4, 30)},
     )
     assert len(k) == 64
+
+
+@pytest.mark.parametrize(
+    (
+        "status_code",
+        "retry_after",
+        "backoff",
+        "expected_policy",
+        "expected_retry_in",
+        "expected_source",
+    ),
+    [
+        (429, "3", 0.1, "retry_after", 3.0, "header"),
+        (429, None, 0.2, "backoff", 0.2, None),
+        (429, "soon", 0.2, "backoff", 0.2, None),
+    ],
+)
+def test_webhook_retry_decision_http_status_cases(
+    status_code: int,
+    retry_after: str | None,
+    backoff: float,
+    expected_policy: str,
+    expected_retry_in: float,
+    expected_source: str | None,
+) -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    headers = {"Retry-After": retry_after} if retry_after is not None else {}
+    req = httpx.Request("POST", "http://example.invalid/webhook")
+    resp = httpx.Response(status_code, request=req, headers=headers)
+    exc = httpx.HTTPStatusError("boom", request=req, response=resp)
+    d = notify_mod._webhook_retry_decision(exc=exc, attempt=1, attempts=2, backoff=backoff)
+    assert d.will_retry
+    assert not d.is_final
+    assert d.delivery_state == "retrying"
+    assert d.retry_policy == expected_policy
+    assert d.retry_in_seconds == expected_retry_in
+    assert d.retry_after_source == expected_source
+    assert d.retry_window_ms == int(expected_retry_in * 1000)
+
+
+def test_webhook_retry_decision_non_retryable_http_final() -> None:
+    import tbox_pipelines.notify as notify_mod
+
+    req = httpx.Request("POST", "http://example.invalid/webhook")
+    resp = httpx.Response(403, request=req)
+    exc = httpx.HTTPStatusError("forbidden", request=req, response=resp)
+    d = notify_mod._webhook_retry_decision(exc=exc, attempt=1, attempts=3, backoff=0.5)
+    assert not d.will_retry
+    assert d.is_final
+    assert d.delivery_state == "failed"
+    assert d.retry_policy == "none"
+    assert d.retry_eligible is False
+    assert d.retries_remaining == 2
+    assert d.retry_in_seconds is None
+    assert d.retry_window_ms is None
 
 
 def test_send_webhook_omits_sync_header_when_empty(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -198,8 +294,9 @@ def test_send_webhook_retries_transient_connect_errors(
 
 
 def test_send_webhook_no_retry_on_non_transient_http(
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    caplog.set_level(logging.WARNING)
     monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda _s: None)
 
     class _Client403:
@@ -230,11 +327,20 @@ def test_send_webhook_no_retry_on_non_transient_http(
     )
     assert not ok
     assert _Client403.n == 1
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
+    assert "delivery_state=failed" in joined
+    assert "final=True" in joined
+    assert "retry=False" in joined
+    assert "retry_reason=http_non_retryable_403" in joined
+    assert "retry_reason_group=http_non_retryable" in joined
 
 
 def test_send_webhook_retry_honors_retry_after_header(
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    caplog.set_level(logging.WARNING)
     slept: list[float] = []
     monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
 
@@ -269,11 +375,31 @@ def test_send_webhook_retry_honors_retry_after_header(
     assert ok
     assert _Client429.n == 2
     assert slept == [3.0]
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
+    assert "delivery_state=retrying" in joined
+    assert "final=False" in joined
+    assert "retry_policy=retry_after" in joined
+    assert "retry_eligible=True" in joined
+    assert "retries_remaining=1" in joined
+    assert "http_status=429" in joined
+    assert "retry_after_seconds=3.0" in joined
+    assert "retry_after_source=header" in joined
+    assert "backoff_seconds=0.1" in joined
+    assert "retry_in_seconds=3.0" in joined
+    assert "retry_window_ms=3000" in joined
+    assert "retry_reason=http_429" in joined
+    assert "retry_reason_group=http_retryable" in joined
+    assert "retry_reason_version=1" in joined
+    assert "error_class=HTTPStatusError" in joined
+    assert "error_family=http" in joined
 
 
 def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
-    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    caplog.set_level(logging.WARNING)
     slept: list[float] = []
     monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
 
@@ -308,6 +434,70 @@ def test_send_webhook_retry_after_invalid_falls_back_to_backoff(
     assert ok
     assert _Client429Invalid.n == 2
     assert slept == [0.2]
+    joined = " | ".join(r.getMessage() for r in caplog.records)
+    assert "outcome=failure" in joined
+    assert "log_schema_version=1" in joined
+    assert "delivery_state=retrying" in joined
+    assert "final=False" in joined
+    assert "retry_policy=backoff" in joined
+    assert "retry_eligible=True" in joined
+    assert "retries_remaining=1" in joined
+    assert "http_status=429" in joined
+    assert "retry_after_seconds=None" in joined
+    assert "retry_after_source=None" in joined
+    assert "backoff_seconds=0.2" in joined
+    assert "retry_in_seconds=0.2" in joined
+    assert "retry_window_ms=200" in joined
+    assert "retry_reason=http_429" in joined
+    assert "retry_reason_group=http_retryable" in joined
+    assert "retry_reason_version=1" in joined
+    assert "error_class=HTTPStatusError" in joined
+    assert "error_family=http" in joined
+
+
+def test_send_webhook_retry_after_http_date_supported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    slept: list[float] = []
+    monkeypatch.setattr("tbox_pipelines.notify.time.sleep", lambda s: slept.append(float(s)))
+    monkeypatch.setattr("tbox_pipelines.notify.time.time", lambda: 1000.0)
+
+    class _Client429Date:
+        n = 0
+
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_Client429Date":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            _Client429Date.n += 1
+            if _Client429Date.n == 1:
+                req = httpx.Request("POST", url)
+                # 1005s epoch => 5 seconds after mocked now.
+                resp = httpx.Response(
+                    429,
+                    request=req,
+                    headers={"Retry-After": "Thu, 01 Jan 1970 00:16:45 GMT"},
+                )
+                raise httpx.HTTPStatusError("rate limited", request=req, response=resp)
+            return _DummyResponse()
+
+    _Client429Date.n = 0
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _Client429Date)
+    ok = send_webhook_notification(
+        "http://example.invalid/webhook",
+        {"status": "failed", "sync_id": "ra3"},
+        max_retries=1,
+        retry_backoff_seconds=0.1,
+    )
+    assert ok
+    assert _Client429Date.n == 2
+    assert slept == [5.0]
 
 
 def test_should_notify_default_failed_only() -> None:
@@ -329,7 +519,122 @@ def test_send_webhook_notification_logs_ok_at_debug(
     assert ok
     msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG]
     assert any("webhook_notify_ok" in m and "http_status=200" in m for m in msgs)
+    assert any("log_schema_version=1" in m for m in msgs)
+    assert any("outcome=success" in m for m in msgs)
+    assert any("delivery_state=delivered" in m for m in msgs)
+    assert any("payload_type=tbox_sync_summary" in m for m in msgs)
+    assert any("sync_id=abc" in m for m in msgs)
+    assert any("attempt_elapsed_ms=" in m and "total_elapsed_ms=" in m for m in msgs)
     assert any("https://hooks.example.invalid/webhook" in m and "token=" not in m for m in msgs)
+
+
+def test_webhook_log_context_fields_consistent_across_paths(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    caplog.set_level(logging.DEBUG)
+
+    # success path
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _DummyClient)
+    _DummyClient.calls = []
+    assert send_webhook_notification(
+        "http://example.invalid/ok",
+        {"status": "failed", "sync_id": "ctx1"},
+    )
+    success_msg = next(
+        r.getMessage() for r in caplog.records if "webhook_notify_ok" in r.getMessage()
+    )
+    _assert_log_contains_fields(
+        success_msg,
+        (
+            "log_schema_version",
+            "outcome",
+            "payload_type",
+            "sync_id",
+            "url",
+            "attempt",
+            "delivery_state",
+            "attempt_index",
+            "attempt_total",
+            "http_status",
+            "attempt_elapsed_ms",
+            "total_elapsed_ms",
+        ),
+    )
+
+    # failure path
+    class _AlwaysFailClient:
+        def __init__(self, *_a, **_k) -> None:
+            pass
+
+        def __enter__(self) -> "_AlwaysFailClient":
+            return self
+
+        def __exit__(self, *_e) -> None:
+            return None
+
+        def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> _DummyResponse:
+            req = httpx.Request("POST", url)
+            resp = httpx.Response(403, request=req)
+            raise httpx.HTTPStatusError("forbidden", request=req, response=resp)
+
+    monkeypatch.setattr("tbox_pipelines.notify.httpx.Client", _AlwaysFailClient)
+    assert not send_webhook_notification(
+        "http://example.invalid/fail",
+        {"status": "failed", "sync_id": "ctx2"},
+        max_retries=0,
+    )
+    failed_msg = next(
+        r.getMessage()
+        for r in reversed(caplog.records)
+        if "webhook_notify_failed" in r.getMessage()
+    )
+    _assert_log_contains_fields(
+        failed_msg,
+        (
+            "log_schema_version",
+            "outcome",
+            "payload_type",
+            "sync_id",
+            "url",
+            "attempt",
+            "delivery_state",
+            "attempt_index",
+            "attempt_total",
+            "retry",
+            "final",
+            "retry_policy",
+            "retry_eligible",
+            "retries_remaining",
+            "http_status",
+            "retry_after_seconds",
+            "retry_after_source",
+            "backoff_seconds",
+            "retry_in_seconds",
+            "retry_window_ms",
+            "retry_reason",
+            "retry_reason_group",
+            "retry_reason_version",
+            "error_class",
+            "error_family",
+            "attempt_elapsed_ms",
+            "total_elapsed_ms",
+        ),
+    )
+
+    # skipped path
+    assert not send_webhook_notification(
+        "file:///tmp/skip",
+        {"status": "failed", "sync_id": "ctx3"},
+    )
+    skipped_msg = next(
+        r.getMessage()
+        for r in reversed(caplog.records)
+        if "webhook_notify_skipped_invalid_url" in r.getMessage()
+    )
+    _assert_log_contains_fields(
+        skipped_msg,
+        ("log_schema_version", "payload_type", "sync_id", "skip_reason", "url"),
+    )
 
 
 def test_send_webhook_notification_success(monkeypatch: pytest.MonkeyPatch) -> None:

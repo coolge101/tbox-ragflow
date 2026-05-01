@@ -1,0 +1,232 @@
+{
+  "required_example_files": [
+    "README.md",
+    "alert_docs_gate_rules.schema.json",
+    "alert_docs_gate_metrics_payload.schema.json",
+    "webhook_alert_rules.index.md",
+    "webhook_alert_rules.sample.md",
+    "webhook_alert_rules.datadog.sample.md",
+    "webhook_alert_rules.promql.sample.md",
+    "webhook_alert_rules.openobserve.sample.md",
+    "webhook_alert_rules.elasticsearch.sample.md",
+    "webhook_alert_rules.migration_checklist.md",
+    "webhook_alert_rules.troubleshooting.md",
+    "webhook_alerting_runbook.md",
+    "webhook_alerting_baseline.md",
+    "webhook_alerting_baseline.parameterized.md",
+    "webhook_alerting_monitor_as_code.template.yaml",
+    "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
+    "webhook_alerting_monitor_as_code.prometheus.rendered.yaml",
+    "webhook_alerting_render_spec.md",
+    "webhook_alerting_render_acceptance_checklist.md",
+    "webhook_alerting_render_change_log.template.md",
+    "webhook_alerting_render_change_log.sample.md"
+  ],
+  "required_changelog_stage_tokens": [
+    {
+      "stage": "S3.153",
+      "evidence_tokens": [
+        "webhook_alerting_monitor_as_code.datadog.rendered.yaml",
+        "webhook_alerting_monitor_as_code.prometheus.rendered.yaml"
+      ]
+    },
+    {
+      "stage": "S3.154",
+      "evidence_tokens": [
+        "webhook_alerting_render_spec.md",
+        "webhook_alerting_render_acceptance_checklist.md"
+      ]
+    },
+    {
+      "stage": "S3.155",
+      "evidence_tokens": [
+        "webhook_alerting_render_change_log.template.md",
+        "webhook_alerting_render_change_log.sample.md"
+      ]
+    },
+    {
+      "stage": "S3.156",
+      "evidence_tokens": [
+        "docs/examples/README.md"
+      ]
+    },
+    {
+      "stage": "S3.157",
+      "evidence_tokens": [
+        "validate_alert_docs_links.py"
+      ]
+    },
+    {
+      "stage": "S3.158",
+      "evidence_tokens": [
+        "validate_alert_docs_links.py",
+        "CI"
+      ]
+    },
+    {
+      "stage": "S3.159",
+      "evidence_tokens": [
+        "README",
+        "WEBHOOK_CONTRACT",
+        "一致性"
+      ]
+    },
+    {
+      "stage": "S3.174",
+      "evidence_tokens": [
+        "GITHUB_OUTPUT",
+        "write-github-output"
+      ]
+    },
+    {
+      "stage": "S3.175",
+      "evidence_tokens": [
+        "GITHUB_STEP_SUMMARY",
+        "alert-docs-gate-consumer"
+      ]
+    },
+    {
+      "stage": "S3.176",
+      "evidence_tokens": [
+        "metrics_emit_contract",
+        "metrics_emit_version"
+      ]
+    },
+    {
+      "stage": "S3.177",
+      "evidence_tokens": [
+        "alert_docs_gate_metrics_payload.schema.json",
+        "metrics payload"
+      ]
+    },
+    {
+      "stage": "S3.178",
+      "evidence_tokens": [
+        "validate_alert_docs_metrics_payload.py",
+        "alert_docs_gate_metrics_schema"
+      ]
+    },
+    {
+      "stage": "S3.179",
+      "evidence_tokens": [
+        "validate-alert-docs-metrics-payload",
+        "metrics_payload_validate_cli"
+      ]
+    },
+    {
+      "stage": "S3.180",
+      "evidence_tokens": [
+        "emit-alert-docs-gate-metrics",
+        "metrics_emit_cli"
+      ]
+    },
+    {
+      "stage": "S3.181",
+      "evidence_tokens": [
+        "validate-alert-docs-links",
+        "alert_docs_links_validate_cli"
+      ]
+    },
+    {
+      "stage": "S3.182",
+      "evidence_tokens": [
+        "alert-docs-gate",
+        "alert_docs_gate_cli"
+      ]
+    },
+    {
+      "stage": "S3.183",
+      "evidence_tokens": [
+        "metrics-validate",
+        "alert-docs-gate consumer"
+      ]
+    },
+    {
+      "stage": "S3.184",
+      "evidence_tokens": [
+        "alert-docs-gate emit",
+        "argv"
+      ]
+    },
+    {
+      "stage": "S3.185",
+      "evidence_tokens": [
+        "alert-docs-gate version",
+        "_invoke_emit_cli"
+      ]
+    },
+    {
+      "stage": "S3.186",
+      "evidence_tokens": [
+        "_invoke_cli_argv",
+        "subcommand"
+      ]
+    },
+    {
+      "stage": "S3.187",
+      "evidence_tokens": [
+        "::group::alert-docs-gate",
+        "alert-docs-gate version"
+      ]
+    },
+    {
+      "stage": "S3.188",
+      "evidence_tokens": [
+        "::group::alert-docs-gate-consumer",
+        "uv.lock"
+      ]
+    },
+    {
+      "stage": "S3.189",
+      "evidence_tokens": [
+        "alert-docs-gate commands",
+        "pre-argparse"
+      ]
+    },
+    {
+      "stage": "S3.190",
+      "evidence_tokens": [
+        "alert-docs-gate commands",
+        "CI diagnostics"
+      ]
+    },
+    {
+      "stage": "S3.191",
+      "evidence_tokens": [
+        "alert-docs-gate doctor",
+        "doctor ok"
+      ]
+    },
+    {
+      "stage": "S3.192",
+      "evidence_tokens": [
+        "alert-docs-gate doctor",
+        "workflow simplification"
+      ]
+    },
+    {
+      "stage": "S3.193",
+      "evidence_tokens": [
+        "workflow invariant",
+        "sparse-checkout"
+      ]
+    }
+  ],
+  "examples_readme_required_tokens": [
+    "webhook_alert_rules.index.md",
+    "webhook_alerting_monitor_as_code.template.yaml",
+    "webhook_alerting_render_spec.md"
+  ],
+  "summary_contract": {
+    "event": "alert_docs_gate_ok",
+    "summary_version": 1,
+    "metric_keys": [
+      "required_example_files",
+      "required_stage_rules",
+      "examples_readme_required_tokens"
+    ]
+  },
+  "metrics_emit_contract": {
+    "emit_version": 1
+  }
+}

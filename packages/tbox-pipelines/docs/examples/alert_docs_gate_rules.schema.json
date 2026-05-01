@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Alert docs gate rules",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "required_example_files",
+    "required_changelog_stage_tokens",
+    "examples_readme_required_tokens",
+    "summary_contract",
+    "metrics_emit_contract"
+  ],
+  "properties": {
+    "required_example_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required_changelog_stage_tokens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stage",
+          "evidence_tokens"
+        ],
+        "properties": {
+          "stage": {
+            "type": "string",
+            "pattern": "^S[0-9]+\\.[0-9]+$"
+          },
+          "evidence_tokens": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "examples_readme_required_tokens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "summary_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event",
+        "summary_version",
+        "metric_keys"
+      ],
+      "properties": {
+        "event": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "metric_keys": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "required_example_files",
+              "required_stage_rules",
+              "examples_readme_required_tokens"
+            ]
+          }
+        }
+      }
+    },
+    "metrics_emit_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "emit_version"
+      ],
+      "properties": {
+        "emit_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
