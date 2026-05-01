@@ -175,6 +175,13 @@
         "::group::alert-docs-gate-consumer",
         "uv.lock"
       ]
+    },
+    {
+      "stage": "S3.189",
+      "evidence_tokens": [
+        "alert-docs-gate commands",
+        "pre-argparse"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
