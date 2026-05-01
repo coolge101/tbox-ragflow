@@ -82,7 +82,7 @@ Before merging docs changes in this directory:
   - Add `--write-step-summary` (with `GITHUB_STEP_SUMMARY` set) to append a Markdown metrics table to the job step summary.
   - `metrics_emit_contract.emit_version` in rules drives `metrics_emit_version` on emitted metrics payloads.
   - `alert_docs_gate_metrics_payload.schema.json` documents and is enforced for the CI metrics JSON payload shape.
-  - `scripts/validate_alert_docs_metrics_payload.py` validates a metrics JSON object against that schema (stdin or `--payload-path`); CI consumer job uses it for `alert_docs_gate_metrics_json`. Shared logic lives in `tbox_pipelines.alert_docs_gate_metrics_schema`.
+  - `scripts/validate_alert_docs_metrics_payload.py` validates a metrics JSON object against that schema (stdin or `--payload-path`); after `pip install -e .`, use `validate-alert-docs-metrics-payload` or `python -m tbox_pipelines.metrics_payload_validate_cli`. CI consumer job pipes `METRICS_JSON` into the console entry. Implementation lives in `tbox_pipelines.metrics_payload_validate_cli`; shared Draft-07 checks in `tbox_pipelines.alert_docs_gate_metrics_schema`.
   - Metric values must be non-negative integers; invalid types/ranges fail fast.
   - This gate now also checks selected S3 changelog consistency in both
     `README.md` and `WEBHOOK_CONTRACT.md`.

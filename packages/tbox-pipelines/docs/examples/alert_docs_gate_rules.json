@@ -105,6 +105,13 @@
         "validate_alert_docs_metrics_payload.py",
         "alert_docs_gate_metrics_schema"
       ]
+    },
+    {
+      "stage": "S3.179",
+      "evidence_tokens": [
+        "validate-alert-docs-metrics-payload",
+        "metrics_payload_validate_cli"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

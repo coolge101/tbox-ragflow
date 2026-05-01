@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 _VALIDATE = _ROOT / "scripts" / "validate_alert_docs_metrics_payload.py"
+
+
+def _pkg_env() -> dict[str, str]:
+    return {**os.environ, "PYTHONPATH": str(_ROOT / "src")}
+
 
 _GOOD = {
     "event": "alert_docs_gate_ok",
@@ -27,11 +33,30 @@ def _run_payload(data: object) -> subprocess.CompletedProcess[str]:
         check=False,
         capture_output=True,
         text=True,
+        env=_pkg_env(),
+    )
+
+
+def _run_payload_module(data: object) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.metrics_payload_validate_cli"],
+        cwd=_ROOT,
+        input=json.dumps(data, ensure_ascii=True),
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
     )
 
 
 def test_validate_alert_docs_metrics_payload_ok_stdin() -> None:
     res = _run_payload(_GOOD)
+    assert res.returncode == 0, res.stderr
+    assert "validate_alert_docs_metrics_payload.py: ok" in res.stdout
+
+
+def test_validate_alert_docs_metrics_payload_ok_stdin_via_module() -> None:
+    res = _run_payload_module(_GOOD)
     assert res.returncode == 0, res.stderr
     assert "validate_alert_docs_metrics_payload.py: ok" in res.stdout
 
@@ -58,6 +83,7 @@ def test_validate_alert_docs_metrics_payload_empty_stdin_fails() -> None:
         check=False,
         capture_output=True,
         text=True,
+        env=_pkg_env(),
     )
     assert res.returncode == 1
     assert "empty payload" in res.stderr

@@ -115,4 +115,4 @@ jobs:
             echo "empty alert_docs_gate_metrics_json job output" >&2
             exit 1
           fi
-          printf '%s' "$METRICS_JSON" | python scripts/validate_alert_docs_metrics_payload.py
+          printf '%s' "$METRICS_JSON" | validate-alert-docs-metrics-payload

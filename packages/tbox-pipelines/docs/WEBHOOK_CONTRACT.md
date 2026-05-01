@@ -303,6 +303,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.176 起规则文件增加 `metrics_emit_contract`（当前 `emit_version=1`），`emit_alert_docs_gate_metrics.py` 输出的 JSON 与 kv 行增加 `metrics_emit_version`；`alert_docs_gate_rules.schema.json` 与 gate 运行时校验同步约束；consumer job 断言 `metrics_emit_version==1`。
 > S3.177 起新增 `alert_docs_gate_metrics_payload.schema.json`，约束 CI 侧 docs gate **metrics payload**（`alert_docs_gate_metrics_json` job output）的字段与类型；`emit_alert_docs_gate_metrics.py` 在发出指标前按该 schema 做运行时校验。
 > S3.178 起将同一套 metrics payload 校验逻辑集中到 `alert_docs_gate_metrics_schema`（包内模块），并提供 `validate_alert_docs_metrics_payload.py` CLI；consumer job 对 job output 走 CLI + schema，避免 workflow 内联 Python 与 emitter 校验分叉。
+> S3.179 起 CLI 逻辑迁入 `metrics_payload_validate_cli`，通过 `[project.scripts]` 暴露 `validate-alert-docs-metrics-payload`；CI consumer 调用该入口；亦可用 `python -m tbox_pipelines.metrics_payload_validate_cli`。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)
