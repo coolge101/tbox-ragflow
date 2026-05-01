@@ -10,6 +10,9 @@ _ROOT = Path(__file__).resolve().parent.parent
 _SCRIPT = _ROOT / "scripts" / "validate_alert_docs_links.py"
 _RULES = _ROOT / "docs" / "examples" / "alert_docs_gate_rules.json"
 _RULES_SCHEMA = _ROOT / "docs" / "examples" / "alert_docs_gate_rules.schema.json"
+_METRICS_PAYLOAD_SCHEMA = (
+    _ROOT / "docs" / "examples" / "alert_docs_gate_metrics_payload.schema.json"
+)
 _INVALID_RULES_DIR = _ROOT / "docs" / "examples" / "gate_rules_invalid"
 
 
@@ -22,6 +25,8 @@ def test_validate_alert_docs_links_rules_file_is_valid_json() -> None:
     assert isinstance(data.get("examples_readme_required_tokens"), list)
     assert isinstance(data.get("summary_contract"), dict)
     assert isinstance(data.get("metrics_emit_contract"), dict)
+    metrics_schema = json.loads(_METRICS_PAYLOAD_SCHEMA.read_text(encoding="utf-8"))
+    assert metrics_schema.get("type") == "object"
 
 
 def test_validate_alert_docs_links_script_passes() -> None:

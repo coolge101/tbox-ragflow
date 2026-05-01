@@ -47,6 +47,7 @@ Compatibility guidance:
 Copy-ready sample files:
 - [`examples/README.md`](examples/README.md) (directory overview and maintenance conventions)
 - [`examples/alert_docs_gate_rules.schema.json`](examples/alert_docs_gate_rules.schema.json) (gate rules schema)
+- [`examples/alert_docs_gate_metrics_payload.schema.json`](examples/alert_docs_gate_metrics_payload.schema.json) (CI metrics JSON payload schema)
 - [`examples/webhook_alert_rules.index.md`](examples/webhook_alert_rules.index.md) (cross-platform index + field mapping)
 - [`examples/webhook_alert_rules.sample.md`](examples/webhook_alert_rules.sample.md)
 - [`examples/webhook_alert_rules.datadog.sample.md`](examples/webhook_alert_rules.datadog.sample.md) (Datadog query style)
@@ -300,6 +301,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.174 起 `emit_alert_docs_gate_metrics.py` 支持 `--write-github-output`：当存在 `GITHUB_OUTPUT` 环境变量时，把指标追加写入该文件；在 GitHub Actions 中把指标写入 step outputs（`alert_docs_gate_metrics_kv`、`alert_docs_gate_metrics_json_line`、`alert_docs_gate_metrics_json`），并在 CI job 顶层暴露同名 outputs，供后续步骤或其它 job 引用。
 > S3.175 起 `emit_alert_docs_gate_metrics.py` 支持 `--write-step-summary`：当存在 `GITHUB_STEP_SUMMARY` 时追加 Markdown 指标表到 Step Summary；CI 新增 `alert-docs-gate-consumer` job，读取 `needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json` 并校验 JSON 可解析且含 `event`/`summary_version`。
 > S3.176 起规则文件增加 `metrics_emit_contract`（当前 `emit_version=1`），`emit_alert_docs_gate_metrics.py` 输出的 JSON 与 kv 行增加 `metrics_emit_version`；`alert_docs_gate_rules.schema.json` 与 gate 运行时校验同步约束；consumer job 断言 `metrics_emit_version==1`。
+> S3.177 起新增 `alert_docs_gate_metrics_payload.schema.json`，约束 CI 侧 docs gate **metrics payload**（`alert_docs_gate_metrics_json` job output）的字段与类型；`emit_alert_docs_gate_metrics.py` 在发出指标前按该 schema 做运行时校验。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)

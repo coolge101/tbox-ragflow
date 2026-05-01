@@ -2,6 +2,7 @@
   "required_example_files": [
     "README.md",
     "alert_docs_gate_rules.schema.json",
+    "alert_docs_gate_metrics_payload.schema.json",
     "webhook_alert_rules.index.md",
     "webhook_alert_rules.sample.md",
     "webhook_alert_rules.datadog.sample.md",
@@ -89,6 +90,13 @@
       "evidence_tokens": [
         "metrics_emit_contract",
         "metrics_emit_version"
+      ]
+    },
+    {
+      "stage": "S3.177",
+      "evidence_tokens": [
+        "alert_docs_gate_metrics_payload.schema.json",
+        "metrics payload"
       ]
     }
   ],

@@ -7,6 +7,7 @@ reference across different log/monitoring platforms.
 
 - Directory overview: [`README.md`](README.md)
 - Gate rules schema: [`alert_docs_gate_rules.schema.json`](alert_docs_gate_rules.schema.json)
+- Docs gate metrics payload schema: [`alert_docs_gate_metrics_payload.schema.json`](alert_docs_gate_metrics_payload.schema.json)
 - Generic template: [`webhook_alert_rules.sample.md`](webhook_alert_rules.sample.md)
 - Datadog style: [`webhook_alert_rules.datadog.sample.md`](webhook_alert_rules.datadog.sample.md)
 - Loki/Prometheus style: [`webhook_alert_rules.promql.sample.md`](webhook_alert_rules.promql.sample.md)
