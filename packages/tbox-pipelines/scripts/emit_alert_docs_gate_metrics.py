@@ -9,56 +9,10 @@ import os
 import sys
 from pathlib import Path
 
-_DEFAULT_METRICS_SCHEMA_PATH = str(
-    Path(__file__).resolve().parent.parent
-    / "docs"
-    / "examples"
-    / "alert_docs_gate_metrics_payload.schema.json"
+from tbox_pipelines.alert_docs_gate_metrics_schema import (
+    DEFAULT_METRICS_SCHEMA_PATH,
+    validate_metrics_payload_against_schema,
 )
-
-
-def _validate_metrics_payload_against_schema(
-    payload: dict[str, object],
-    schema: object,
-) -> None:
-    """Subset of Draft-07 checks for the metrics JSON payload (no external deps)."""
-    if not isinstance(schema, dict):
-        raise ValueError("metrics payload schema must be a JSON object")
-    if schema.get("type") != "object":
-        raise ValueError("metrics payload schema root type must be object")
-
-    properties = schema.get("properties")
-    if not isinstance(properties, dict):
-        raise ValueError("metrics payload schema properties must be an object")
-
-    additional = schema.get("additionalProperties")
-    if additional is False:
-        for key in payload:
-            if key not in properties:
-                raise ValueError(f"metrics payload unexpected key: {key}")
-
-    required = schema.get("required", [])
-    if isinstance(required, list):
-        for key in required:
-            if isinstance(key, str) and key not in payload:
-                raise ValueError(f"metrics payload missing required key: {key}")
-
-    for key, spec in properties.items():
-        if key not in payload:
-            continue
-        if not isinstance(spec, dict):
-            continue
-        value = payload[key]
-        stype = spec.get("type")
-        if stype == "string":
-            if not isinstance(value, str) or not value:
-                raise ValueError(f"metrics payload {key} must be a non-empty string")
-        elif stype == "integer":
-            if not isinstance(value, int) or isinstance(value, bool):
-                raise ValueError(f"metrics payload {key} must be an integer")
-            minimum = spec.get("minimum")
-            if isinstance(minimum, int) and value < minimum:
-                raise ValueError(f"metrics payload {key} must be >= {minimum}")
 
 
 def _load_emit_settings(rules_path: Path) -> tuple[str, int, tuple[str, ...], int]:
@@ -285,7 +239,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--metrics-schema-path",
-        default=_DEFAULT_METRICS_SCHEMA_PATH,
+        default=DEFAULT_METRICS_SCHEMA_PATH,
         help="JSON Schema path for metrics payload validation",
     )
     args = parser.parse_args()
@@ -317,7 +271,7 @@ def main() -> int:
             )
         )
         metrics_schema = json.loads(metrics_schema_path.read_text(encoding="utf-8"))
-        _validate_metrics_payload_against_schema(metrics_payload, metrics_schema)
+        validate_metrics_payload_against_schema(metrics_payload, metrics_schema)
         metrics_payload_json = json.dumps(
             metrics_payload,
             ensure_ascii=True,

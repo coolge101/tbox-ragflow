@@ -12,6 +12,13 @@ _EMIT_SCRIPT = _ROOT / "scripts" / "emit_alert_docs_gate_metrics.py"
 _RULES = _ROOT / "docs" / "examples" / "alert_docs_gate_rules.json"
 
 
+def _emit_env(overrides: dict[str, str] | None = None) -> dict[str, str]:
+    env = {**os.environ, "PYTHONPATH": str(_ROOT / "src")}
+    if overrides:
+        env.update(overrides)
+    return env
+
+
 def test_emit_alert_docs_gate_metrics_from_validator_output(tmp_path: Path) -> None:
     log_path = tmp_path / "alert_docs_gate.log"
     validate_res = subprocess.run(
@@ -30,6 +37,7 @@ def test_emit_alert_docs_gate_metrics_from_validator_output(tmp_path: Path) -> N
         check=False,
         capture_output=True,
         text=True,
+        env=_emit_env(),
     )
     assert emit_res.returncode == 0, emit_res.stderr
     assert emit_res.stdout.startswith(
@@ -63,6 +71,7 @@ def test_emit_alert_docs_gate_metrics_enforces_contract_keys(tmp_path: Path) -> 
         check=False,
         capture_output=True,
         text=True,
+        env=_emit_env(),
     )
     assert emit_res.returncode != 0
     assert "summary payload has unexpected key(s): unknown_metric" in emit_res.stderr
@@ -78,6 +87,7 @@ def test_emit_alert_docs_gate_metrics_missing_summary_line_fails(tmp_path: Path)
         check=False,
         capture_output=True,
         text=True,
+        env=_emit_env(),
     )
     assert emit_res.returncode != 0
     assert "missing alert docs gate summary line" in emit_res.stderr
@@ -107,6 +117,7 @@ def test_emit_alert_docs_gate_metrics_json_mirror_output(tmp_path: Path) -> None
         check=False,
         capture_output=True,
         text=True,
+        env=_emit_env(),
     )
     assert emit_res.returncode == 0, emit_res.stderr
     lines = [line for line in emit_res.stdout.splitlines() if line.strip()]
@@ -147,6 +158,7 @@ def test_emit_alert_docs_gate_metrics_enforces_metric_value_type(tmp_path: Path)
         check=False,
         capture_output=True,
         text=True,
+        env=_emit_env(),
     )
     assert emit_res.returncode != 0
     assert (
@@ -168,7 +180,6 @@ def test_emit_alert_docs_gate_metrics_writes_github_output(tmp_path: Path) -> No
     assert validate_res.returncode == 0, validate_res.stderr
     log_path.write_text(validate_res.stdout, encoding="utf-8")
 
-    env = {**os.environ, "GITHUB_OUTPUT": str(gh_out)}
     emit_res = subprocess.run(
         [
             sys.executable,
@@ -182,7 +193,7 @@ def test_emit_alert_docs_gate_metrics_writes_github_output(tmp_path: Path) -> No
         check=False,
         capture_output=True,
         text=True,
-        env=env,
+        env=_emit_env({"GITHUB_OUTPUT": str(gh_out)}),
     )
     assert emit_res.returncode == 0, emit_res.stderr
     text = gh_out.read_text(encoding="utf-8")
@@ -224,14 +235,13 @@ def test_emit_alert_docs_gate_metrics_fails_on_schema_mismatch(tmp_path: Path) -
     assert validate_res.returncode == 0, validate_res.stderr
     log_path.write_text(validate_res.stdout, encoding="utf-8")
 
-    env = {**os.environ, "ALERT_DOCS_GATE_METRICS_SCHEMA_PATH": str(bad_schema)}
     emit_res = subprocess.run(
         [sys.executable, str(_EMIT_SCRIPT), "--log-path", str(log_path)],
         cwd=_ROOT,
         check=False,
         capture_output=True,
         text=True,
-        env=env,
+        env=_emit_env({"ALERT_DOCS_GATE_METRICS_SCHEMA_PATH": str(bad_schema)}),
     )
     assert emit_res.returncode != 0
     assert "metrics payload missing required key: bogus" in emit_res.stderr
@@ -250,7 +260,6 @@ def test_emit_alert_docs_gate_metrics_writes_step_summary(tmp_path: Path) -> Non
     assert validate_res.returncode == 0, validate_res.stderr
     log_path.write_text(validate_res.stdout, encoding="utf-8")
 
-    env = {**os.environ, "GITHUB_STEP_SUMMARY": str(step_summary)}
     emit_res = subprocess.run(
         [
             sys.executable,
@@ -263,7 +272,7 @@ def test_emit_alert_docs_gate_metrics_writes_step_summary(tmp_path: Path) -> Non
         check=False,
         capture_output=True,
         text=True,
-        env=env,
+        env=_emit_env({"GITHUB_STEP_SUMMARY": str(step_summary)}),
     )
     assert emit_res.returncode == 0, emit_res.stderr
     text = step_summary.read_text(encoding="utf-8")
