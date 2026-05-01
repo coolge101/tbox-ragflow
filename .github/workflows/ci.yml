@@ -51,12 +51,11 @@ jobs:
       - name: Pytest
         run: pytest -q
 
-      - name: Validate alert docs links
+      - name: Alert docs gate (validate + metrics)
         id: alert_docs_gate
         run: |
-          echo "::group::alert-docs-link-gate"
-          validate-alert-docs-links --verbose | tee /tmp/alert_docs_gate.log
-          emit-alert-docs-gate-metrics --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
+          echo "::group::alert-docs-gate"
+          alert-docs-gate ci --verbose --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
           echo "::endgroup::"
 
       - name: Validate .node-version format

@@ -75,6 +75,7 @@ Before merging docs changes in this directory:
   - Use `--verbose` for CI-style diagnostics.
   - Success summary output includes `summary_version` (current `1`) for parser compatibility.
   - Summary metric keys are controlled by `summary_contract.metric_keys` in rules.
+  - CI runs the full gate as one command: `alert-docs-gate ci --verbose --log-path ... --emit-json --write-github-output --write-step-summary` (or the separate `validate-alert-docs-links` + `emit-alert-docs-gate-metrics` / `-m` equivalents).
   - CI metric replay uses `emit-alert-docs-gate-metrics --log-path ...` (or `python -m tbox_pipelines.metrics_emit_cli` / `python scripts/emit_alert_docs_gate_metrics.py` with `PYTHONPATH=src`).
   - Metrics emitter enforces `summary_contract` strictly (event/version/metric_keys).
   - Use `--emit-json` to output `alert_docs_gate_metrics_json` mirror for machine parsing.
