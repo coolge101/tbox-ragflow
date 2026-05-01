@@ -154,6 +154,13 @@
         "alert-docs-gate version",
         "_invoke_emit_cli"
       ]
+    },
+    {
+      "stage": "S3.186",
+      "evidence_tokens": [
+        "_invoke_cli_argv",
+        "subcommand"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
