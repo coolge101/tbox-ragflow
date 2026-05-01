@@ -98,6 +98,13 @@
         "alert_docs_gate_metrics_payload.schema.json",
         "metrics payload"
       ]
+    },
+    {
+      "stage": "S3.178",
+      "evidence_tokens": [
+        "validate_alert_docs_metrics_payload.py",
+        "alert_docs_gate_metrics_schema"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

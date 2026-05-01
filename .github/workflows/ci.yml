@@ -89,18 +89,30 @@ jobs:
     needs:
       - tbox-pipelines
     steps:
-      - name: Assert alert docs gate metrics JSON output
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            packages/tbox-pipelines
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install tbox-pipelines (metrics payload validator)
+        working-directory: packages/tbox-pipelines
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Validate alert docs gate metrics JSON (schema + CLI)
+        working-directory: packages/tbox-pipelines
         env:
           METRICS_JSON: ${{ needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json }}
         run: |
-          python3 - <<'PY'
-          import json
-          import os
-
-          raw = os.environ.get("METRICS_JSON", "")
-          assert raw.strip(), "empty alert_docs_gate_metrics_json job output"
-          data = json.loads(raw)
-          assert data.get("event") == "alert_docs_gate_ok"
-          assert isinstance(data.get("summary_version"), int)
-          assert data.get("metrics_emit_version") == 1
-          PY
+          if [[ -z "${METRICS_JSON// }" ]]; then
+            echo "empty alert_docs_gate_metrics_json job output" >&2
+            exit 1
+          fi
+          printf '%s' "$METRICS_JSON" | python scripts/validate_alert_docs_metrics_payload.py
