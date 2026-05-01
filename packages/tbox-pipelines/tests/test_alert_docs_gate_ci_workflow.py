@@ -8,7 +8,10 @@ _CI_YML = _REPO_ROOT / ".github" / "workflows" / "ci.yml"
 
 
 def test_ci_yml_alert_docs_gate_workflow_invariant() -> None:
-    """Lock CI diagnostics to `doctor` only (see S3.192); keep file readable under sparse-checkout."""
+    """Lock CI diagnostics to `doctor` only (S3.192).
+
+    Requires `.github` in sparse-checkout so `ci.yml` exists in CI.
+    """
     assert _CI_YML.is_file(), f"expected {_CI_YML}"
     text = _CI_YML.read_text(encoding="utf-8")
     assert text.count("alert-docs-gate doctor") == 2
