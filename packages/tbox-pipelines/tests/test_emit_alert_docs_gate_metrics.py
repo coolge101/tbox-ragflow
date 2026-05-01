@@ -191,6 +191,52 @@ def test_emit_alert_docs_gate_metrics_writes_github_output(tmp_path: Path) -> No
     assert "alert_docs_gate_metrics_json<<" in text
 
 
+def test_emit_alert_docs_gate_metrics_fails_on_schema_mismatch(tmp_path: Path) -> None:
+    log_path = tmp_path / "alert_docs_gate.log"
+    bad_schema = tmp_path / "bad_metrics.schema.json"
+    bad_schema.write_text(
+        json.dumps(
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["event", "summary_version", "metrics_emit_version", "bogus"],
+                "properties": {
+                    "event": {"type": "string", "minLength": 1},
+                    "summary_version": {"type": "integer", "minimum": 1},
+                    "metrics_emit_version": {"type": "integer", "minimum": 1},
+                    "required_example_files": {"type": "integer", "minimum": 0},
+                    "required_stage_rules": {"type": "integer", "minimum": 0},
+                    "examples_readme_required_tokens": {"type": "integer", "minimum": 0},
+                    "bogus": {"type": "integer", "minimum": 0},
+                },
+            },
+            ensure_ascii=True,
+        ),
+        encoding="utf-8",
+    )
+    validate_res = subprocess.run(
+        [sys.executable, str(_VALIDATE_SCRIPT), "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert validate_res.returncode == 0, validate_res.stderr
+    log_path.write_text(validate_res.stdout, encoding="utf-8")
+
+    env = {**os.environ, "ALERT_DOCS_GATE_METRICS_SCHEMA_PATH": str(bad_schema)}
+    emit_res = subprocess.run(
+        [sys.executable, str(_EMIT_SCRIPT), "--log-path", str(log_path)],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert emit_res.returncode != 0
+    assert "metrics payload missing required key: bogus" in emit_res.stderr
+
+
 def test_emit_alert_docs_gate_metrics_writes_step_summary(tmp_path: Path) -> None:
     log_path = tmp_path / "alert_docs_gate.log"
     step_summary = tmp_path / "step_summary.md"
