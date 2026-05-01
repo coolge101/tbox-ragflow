@@ -126,6 +126,13 @@
         "validate-alert-docs-links",
         "alert_docs_links_validate_cli"
       ]
+    },
+    {
+      "stage": "S3.182",
+      "evidence_tokens": [
+        "alert-docs-gate",
+        "alert_docs_gate_cli"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
