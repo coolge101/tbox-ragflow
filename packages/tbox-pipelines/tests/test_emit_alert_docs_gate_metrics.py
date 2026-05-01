@@ -188,3 +188,37 @@ def test_emit_alert_docs_gate_metrics_writes_github_output(tmp_path: Path) -> No
     assert "alert_docs_gate_metrics_kv<<" in text
     assert "alert_docs_gate_metrics_json_line<<" in text
     assert "alert_docs_gate_metrics_json<<" in text
+
+
+def test_emit_alert_docs_gate_metrics_writes_step_summary(tmp_path: Path) -> None:
+    log_path = tmp_path / "alert_docs_gate.log"
+    step_summary = tmp_path / "step_summary.md"
+    validate_res = subprocess.run(
+        [sys.executable, str(_VALIDATE_SCRIPT), "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert validate_res.returncode == 0, validate_res.stderr
+    log_path.write_text(validate_res.stdout, encoding="utf-8")
+
+    env = {**os.environ, "GITHUB_STEP_SUMMARY": str(step_summary)}
+    emit_res = subprocess.run(
+        [
+            sys.executable,
+            str(_EMIT_SCRIPT),
+            "--log-path",
+            str(log_path),
+            "--write-step-summary",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert emit_res.returncode == 0, emit_res.stderr
+    text = step_summary.read_text(encoding="utf-8")
+    assert "### Alert docs gate metrics" in text
+    assert "| summary_version |" in text

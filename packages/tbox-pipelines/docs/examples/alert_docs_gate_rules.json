@@ -76,6 +76,13 @@
         "GITHUB_OUTPUT",
         "write-github-output"
       ]
+    },
+    {
+      "stage": "S3.175",
+      "evidence_tokens": [
+        "GITHUB_STEP_SUMMARY",
+        "alert-docs-gate-consumer"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

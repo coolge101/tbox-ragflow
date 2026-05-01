@@ -56,7 +56,7 @@ jobs:
         run: |
           echo "::group::alert-docs-link-gate"
           python scripts/validate_alert_docs_links.py --verbose | tee /tmp/alert_docs_gate.log
-          python scripts/emit_alert_docs_gate_metrics.py --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output
+          python scripts/emit_alert_docs_gate_metrics.py --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
           echo "::endgroup::"
 
       - name: Validate .node-version format
@@ -82,3 +82,24 @@ jobs:
       # TBOX_WEBHOOK_LOG_COMPAT_V1 was removed after migration cutoff 2026-06-30 (UTC); see WEBHOOK_CONTRACT.md.
       - name: Validate webhook example JSON (JSON Schema)
         run: bash scripts/validate_webhook_examples.sh
+
+  alert-docs-gate-consumer:
+    name: alert-docs-gate consumer (job outputs)
+    runs-on: ubuntu-latest
+    needs:
+      - tbox-pipelines
+    steps:
+      - name: Assert alert docs gate metrics JSON output
+        env:
+          METRICS_JSON: ${{ needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          raw = os.environ.get("METRICS_JSON", "")
+          assert raw.strip(), "empty alert_docs_gate_metrics_json job output"
+          data = json.loads(raw)
+          assert data.get("event") == "alert_docs_gate_ok"
+          assert isinstance(data.get("summary_version"), int)
+          PY
