@@ -79,6 +79,47 @@ def test_alert_docs_gate_metrics_validate_matches_standalone_module() -> None:
     assert gate.stdout == direct.stdout
 
 
+def test_alert_docs_gate_emit_forwards_to_metrics_emit_cli(tmp_path: Path) -> None:
+    log_path = tmp_path / "alert_docs_gate.log"
+    validate = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.alert_docs_links_validate_cli", "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
+    )
+    assert validate.returncode == 0, validate.stderr
+    log_path.write_text(validate.stdout, encoding="utf-8")
+
+    gate = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "tbox_pipelines.alert_docs_gate_cli",
+            "emit",
+            "--log-path",
+            str(log_path),
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
+    )
+    direct = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.metrics_emit_cli", "--log-path", str(log_path)],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
+    )
+    assert gate.returncode == 0, gate.stderr
+    assert direct.returncode == 0, direct.stderr
+    assert gate.stdout == direct.stdout
+
+
 def test_alert_docs_gate_validate_matches_standalone_verbose() -> None:
     gate = subprocess.run(
         [sys.executable, "-m", "tbox_pipelines.alert_docs_gate_cli", "validate", "--verbose"],

@@ -140,6 +140,13 @@
         "metrics-validate",
         "alert-docs-gate consumer"
       ]
+    },
+    {
+      "stage": "S3.184",
+      "evidence_tokens": [
+        "alert-docs-gate emit",
+        "argv"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

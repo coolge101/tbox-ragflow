@@ -1,4 +1,4 @@
-"""Unified CLI for alert-docs gate: validate links, metrics payload, emit, and CI bundle."""
+"""Unified CLI for alert-docs gate: validate, metrics-validate, emit forward, and CI bundle."""
 
 from __future__ import annotations
 
@@ -13,6 +13,26 @@ from tbox_pipelines import (
     metrics_payload_validate_cli,
 )
 from tbox_pipelines.alert_docs_gate_metrics_schema import DEFAULT_METRICS_SCHEMA_PATH
+
+
+def _argv_tail_after_invocation(argv: list[str]) -> list[str]:
+    """Strip interpreter / -m module prefix so tail[0] is the gate subcommand."""
+    if len(argv) >= 3 and argv[1] == "-m":
+        return list(argv[3:])
+    return list(argv[1:])
+
+
+def _try_emit_forward() -> int | None:
+    """If argv is `... emit [EMIT_ARGS...]`, forward to metrics_emit_cli; else None."""
+    tail = _argv_tail_after_invocation(sys.argv)
+    if len(tail) < 1 or tail[0] != "emit":
+        return None
+    prev = sys.argv
+    sys.argv = ["emit-alert-docs-gate-metrics", *tail[1:]]
+    try:
+        return metrics_emit_cli.main()
+    finally:
+        sys.argv = prev
 
 
 class _TeeStdout:
@@ -103,9 +123,14 @@ def _run_ci(
 
 
 def main() -> int:
+    emit_rv = _try_emit_forward()
+    if emit_rv is not None:
+        return emit_rv
+
     parser = argparse.ArgumentParser(
         prog="alert-docs-gate",
         description="Alert docs gate: link validation, metrics payload checks, and emission",
+        epilog="Emit: `alert-docs-gate emit ...` forwards argv to emit-alert-docs-gate-metrics.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
