@@ -7,7 +7,8 @@
     "required_example_files",
     "required_changelog_stage_tokens",
     "examples_readme_required_tokens",
-    "summary_contract"
+    "summary_contract",
+    "metrics_emit_contract"
   ],
   "properties": {
     "required_example_files": {
@@ -81,6 +82,19 @@
               "examples_readme_required_tokens"
             ]
           }
+        }
+      }
+    },
+    "metrics_emit_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "emit_version"
+      ],
+      "properties": {
+        "emit_version": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     }

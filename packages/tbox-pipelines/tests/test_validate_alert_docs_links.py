@@ -21,6 +21,7 @@ def test_validate_alert_docs_links_rules_file_is_valid_json() -> None:
     assert isinstance(data.get("required_changelog_stage_tokens"), list)
     assert isinstance(data.get("examples_readme_required_tokens"), list)
     assert isinstance(data.get("summary_contract"), dict)
+    assert isinstance(data.get("metrics_emit_contract"), dict)
 
 
 def test_validate_alert_docs_links_script_passes() -> None:

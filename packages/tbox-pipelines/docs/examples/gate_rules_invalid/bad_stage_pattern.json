@@ -21,5 +21,8 @@
       "required_stage_rules",
       "examples_readme_required_tokens"
     ]
+  },
+  "metrics_emit_contract": {
+    "emit_version": 1
   }
 }

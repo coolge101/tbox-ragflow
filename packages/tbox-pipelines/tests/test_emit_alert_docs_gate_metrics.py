@@ -33,7 +33,7 @@ def test_emit_alert_docs_gate_metrics_from_validator_output(tmp_path: Path) -> N
     )
     assert emit_res.returncode == 0, emit_res.stderr
     assert emit_res.stdout.startswith(
-        "alert_docs_gate_metrics event=alert_docs_gate_ok summary_version=1 "
+        "alert_docs_gate_metrics event=alert_docs_gate_ok summary_version=1 metrics_emit_version=1 "
     )
     assert "required_example_files=" in emit_res.stdout
     assert "required_stage_rules=" in emit_res.stdout
@@ -119,6 +119,7 @@ def test_emit_alert_docs_gate_metrics_json_mirror_output(tmp_path: Path) -> None
     summary_contract = rules["summary_contract"]
     assert json_payload["event"] == summary_contract["event"]
     assert json_payload["summary_version"] == summary_contract["summary_version"]
+    assert json_payload.get("metrics_emit_version") == 1
     for key in summary_contract["metric_keys"]:
         assert isinstance(json_payload[key], int)
 
@@ -222,3 +223,4 @@ def test_emit_alert_docs_gate_metrics_writes_step_summary(tmp_path: Path) -> Non
     text = step_summary.read_text(encoding="utf-8")
     assert "### Alert docs gate metrics" in text
     assert "| summary_version |" in text
+    assert "| metrics_emit_version |" in text

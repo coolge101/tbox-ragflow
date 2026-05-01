@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 
-def _load_summary_contract(rules_path: Path) -> tuple[str, int, tuple[str, ...]]:
+def _load_emit_settings(rules_path: Path) -> tuple[str, int, tuple[str, ...], int]:
     rules = json.loads(rules_path.read_text(encoding="utf-8"))
     if not isinstance(rules, dict):
         raise ValueError("rules payload must be a JSON object")
@@ -37,7 +37,15 @@ def _load_summary_contract(rules_path: Path) -> tuple[str, int, tuple[str, ...]]
         raise ValueError("summary_contract.metric_keys must contain non-empty strings")
     if len(metric_keys) != len(set(metric_keys)):
         raise ValueError("summary_contract.metric_keys must not contain duplicates")
-    return event, summary_version, tuple(metric_keys)
+
+    metrics_emit_contract = rules.get("metrics_emit_contract")
+    if not isinstance(metrics_emit_contract, dict):
+        raise ValueError("metrics_emit_contract must be an object")
+    emit_version = metrics_emit_contract.get("emit_version")
+    if not isinstance(emit_version, int) or isinstance(emit_version, bool) or emit_version < 1:
+        raise ValueError("metrics_emit_contract.emit_version must be an integer >= 1")
+
+    return event, summary_version, tuple(metric_keys), emit_version
 
 
 def _extract_summary_payload(log_path: Path, prefix: str) -> dict[str, object]:
@@ -56,6 +64,7 @@ def _to_metrics_line(
     expected_event: str,
     expected_summary_version: int,
     metric_keys: tuple[str, ...],
+    metrics_emit_version: int | None = None,
 ) -> str:
     if payload.get("event") != expected_event:
         raise ValueError(
@@ -88,6 +97,8 @@ def _to_metrics_line(
     parts: list[str] = ["alert_docs_gate_metrics"]
     parts.append(f"event={payload['event']}")
     parts.append(f"summary_version={payload['summary_version']}")
+    if metrics_emit_version is not None:
+        parts.append(f"metrics_emit_version={metrics_emit_version}")
     for key in metric_keys:
         parts.append(f"{key}={payload[key]}")
     return " ".join(parts)
@@ -97,8 +108,13 @@ def _to_metrics_json(
     payload: dict[str, object],
     *,
     metric_keys: tuple[str, ...],
+    metrics_emit_version: int,
 ) -> str:
-    metrics_payload = _metrics_payload_dict(payload, metric_keys=metric_keys)
+    metrics_payload = _metrics_payload_dict(
+        payload,
+        metric_keys=metric_keys,
+        metrics_emit_version=metrics_emit_version,
+    )
     return "alert_docs_gate_metrics_json " + json.dumps(
         metrics_payload,
         ensure_ascii=True,
@@ -110,10 +126,12 @@ def _metrics_payload_dict(
     payload: dict[str, object],
     *,
     metric_keys: tuple[str, ...],
+    metrics_emit_version: int,
 ) -> dict[str, object]:
     metrics_payload: dict[str, object] = {
         "event": payload["event"],
         "summary_version": payload["summary_version"],
+        "metrics_emit_version": metrics_emit_version,
     }
     for key in metric_keys:
         metrics_payload[key] = payload[key]
@@ -166,6 +184,7 @@ def _write_step_summary(
         "|-------|-------|",
         f"| event | `{metrics_payload['event']}` |",
         f"| summary_version | {metrics_payload['summary_version']} |",
+        f"| metrics_emit_version | {metrics_payload['metrics_emit_version']} |",
     ]
     for key in metric_keys:
         lines.append(f"| {key} | {metrics_payload[key]} |")
@@ -216,7 +235,9 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        event, summary_version, metric_keys = _load_summary_contract(Path(args.rules_path))
+        event, summary_version, metric_keys, metrics_emit_version = _load_emit_settings(
+            Path(args.rules_path)
+        )
         summary_payload = _extract_summary_payload(
             log_path=Path(args.log_path),
             prefix=args.summary_prefix,
@@ -226,10 +247,12 @@ def main() -> int:
             expected_event=event,
             expected_summary_version=summary_version,
             metric_keys=metric_keys,
+            metrics_emit_version=metrics_emit_version,
         )
         metrics_payload = _metrics_payload_dict(
             summary_payload,
             metric_keys=metric_keys,
+            metrics_emit_version=metrics_emit_version,
         )
         metrics_payload_json = json.dumps(
             metrics_payload,
@@ -243,7 +266,11 @@ def main() -> int:
     print(metrics_line)
     json_line: str | None = None
     if args.emit_json:
-        json_line = _to_metrics_json(summary_payload, metric_keys=metric_keys)
+        json_line = _to_metrics_json(
+            summary_payload,
+            metric_keys=metric_keys,
+            metrics_emit_version=metrics_emit_version,
+        )
         print(json_line)
 
     if args.write_github_output:
