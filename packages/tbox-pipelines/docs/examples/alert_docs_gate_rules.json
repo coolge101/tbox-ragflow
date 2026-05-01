@@ -196,6 +196,13 @@
         "alert-docs-gate doctor",
         "doctor ok"
       ]
+    },
+    {
+      "stage": "S3.192",
+      "evidence_tokens": [
+        "alert-docs-gate doctor",
+        "workflow simplification"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
