@@ -71,8 +71,8 @@ Recommended reading order:
 Before merging docs changes in this directory:
 
 - Run lint/test validation commands used by this project.
-- Run `python scripts/validate_alert_docs_links.py` from `packages/tbox-pipelines`.
-  - Use `python scripts/validate_alert_docs_links.py --verbose` for CI-style diagnostics.
+- Run `validate-alert-docs-links` from `packages/tbox-pipelines` after `pip install -e .` (or `python -m tbox_pipelines.alert_docs_links_validate_cli` / `python scripts/validate_alert_docs_links.py` with `PYTHONPATH=src`).
+  - Use `--verbose` for CI-style diagnostics.
   - Success summary output includes `summary_version` (current `1`) for parser compatibility.
   - Summary metric keys are controlled by `summary_contract.metric_keys` in rules.
   - CI metric replay uses `emit-alert-docs-gate-metrics --log-path ...` (or `python -m tbox_pipelines.metrics_emit_cli` / `python scripts/emit_alert_docs_gate_metrics.py` with `PYTHONPATH=src`).

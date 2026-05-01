@@ -8,6 +8,15 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 _SCRIPT = _ROOT / "scripts" / "validate_alert_docs_links.py"
+
+
+def _links_pkg_env(overrides: dict[str, str] | None = None) -> dict[str, str]:
+    env = {**os.environ, "PYTHONPATH": str(_ROOT / "src")}
+    if overrides:
+        env.update(overrides)
+    return env
+
+
 _RULES = _ROOT / "docs" / "examples" / "alert_docs_gate_rules.json"
 _RULES_SCHEMA = _ROOT / "docs" / "examples" / "alert_docs_gate_rules.schema.json"
 _METRICS_PAYLOAD_SCHEMA = (
@@ -82,6 +91,19 @@ def test_validate_alert_docs_links_script_verbose_mode() -> None:
     assert res.returncode == 0, res.stderr
     assert "verbose rules_loaded" in res.stdout
     assert "verbose check_summary" in res.stdout
+    assert "ok all required doc links present" in res.stdout
+
+
+def test_validate_alert_docs_links_ok_via_python_module() -> None:
+    res = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.alert_docs_links_validate_cli"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_links_pkg_env(),
+    )
+    assert res.returncode == 0, res.stderr
     assert "ok all required doc links present" in res.stdout
 
 

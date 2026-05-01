@@ -16,6 +16,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
+validate-alert-docs-links = "tbox_pipelines.alert_docs_links_validate_cli:main"
 validate-alert-docs-metrics-payload = "tbox_pipelines.metrics_payload_validate_cli:main"
 emit-alert-docs-gate-metrics = "tbox_pipelines.metrics_emit_cli:main"
 

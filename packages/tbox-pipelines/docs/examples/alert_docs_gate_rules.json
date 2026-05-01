@@ -119,6 +119,13 @@
         "emit-alert-docs-gate-metrics",
         "metrics_emit_cli"
       ]
+    },
+    {
+      "stage": "S3.181",
+      "evidence_tokens": [
+        "validate-alert-docs-links",
+        "alert_docs_links_validate_cli"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
