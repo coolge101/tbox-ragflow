@@ -147,6 +147,13 @@
         "alert-docs-gate emit",
         "argv"
       ]
+    },
+    {
+      "stage": "S3.185",
+      "evidence_tokens": [
+        "alert-docs-gate version",
+        "_invoke_emit_cli"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

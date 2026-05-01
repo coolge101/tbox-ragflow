@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import os
 import sys
 from pathlib import Path
@@ -13,6 +14,16 @@ from tbox_pipelines import (
     metrics_payload_validate_cli,
 )
 from tbox_pipelines.alert_docs_gate_metrics_schema import DEFAULT_METRICS_SCHEMA_PATH
+
+
+def _invoke_emit_cli(emit_args: list[str]) -> int:
+    """Run metrics_emit_cli with argv ``emit-alert-docs-gate-metrics`` + emit_args."""
+    prev = sys.argv
+    sys.argv = ["emit-alert-docs-gate-metrics", *emit_args]
+    try:
+        return metrics_emit_cli.main()
+    finally:
+        sys.argv = prev
 
 
 def _argv_tail_after_invocation(argv: list[str]) -> list[str]:
@@ -27,12 +38,7 @@ def _try_emit_forward() -> int | None:
     tail = _argv_tail_after_invocation(sys.argv)
     if len(tail) < 1 or tail[0] != "emit":
         return None
-    prev = sys.argv
-    sys.argv = ["emit-alert-docs-gate-metrics", *tail[1:]]
-    try:
-        return metrics_emit_cli.main()
-    finally:
-        sys.argv = prev
+    return _invoke_emit_cli(tail[1:])
 
 
 class _TeeStdout:
@@ -73,6 +79,15 @@ def _run_metrics_validate(*, schema_path: str, payload_path: str) -> int:
         sys.argv = prev
 
 
+def _run_version_print() -> int:
+    try:
+        print(importlib.metadata.version("tbox-pipelines"))
+    except importlib.metadata.PackageNotFoundError:
+        print("0.0.0", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _run_validate_only(*, verbose: bool) -> int:
     prev = sys.argv
     sys.argv = ["validate-alert-docs-links", *([] if not verbose else ["--verbose"])]
@@ -104,22 +119,14 @@ def _run_ci(
     if rv != 0:
         return rv
 
-    emit_argv = [
-        "emit-alert-docs-gate-metrics",
-        "--log-path",
-        str(log_path),
-    ]
+    emit_args: list[str] = ["--log-path", str(log_path)]
     if emit_json:
-        emit_argv.append("--emit-json")
+        emit_args.append("--emit-json")
     if write_github_output:
-        emit_argv.append("--write-github-output")
+        emit_args.append("--write-github-output")
     if write_step_summary:
-        emit_argv.append("--write-step-summary")
-    sys.argv = emit_argv
-    try:
-        return metrics_emit_cli.main()
-    finally:
-        sys.argv = prev_argv
+        emit_args.append("--write-step-summary")
+    return _invoke_emit_cli(emit_args)
 
 
 def main() -> int:
@@ -172,6 +179,11 @@ def main() -> int:
         help="Path to JSON payload file (default: read stdin)",
     )
 
+    sub.add_parser(
+        "version",
+        help="Print tbox-pipelines distribution version (importlib.metadata)",
+    )
+
     args = parser.parse_args()
     if args.command == "ci":
         return _run_ci(
@@ -188,6 +200,8 @@ def main() -> int:
             schema_path=str(args.schema_path),
             payload_path=str(args.payload_path),
         )
+    if args.command == "version":
+        return _run_version_print()
     return 1
 
 

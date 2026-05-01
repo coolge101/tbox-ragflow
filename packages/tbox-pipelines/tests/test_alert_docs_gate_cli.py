@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata
 import json
 import os
 import subprocess
@@ -77,6 +78,20 @@ def test_alert_docs_gate_metrics_validate_matches_standalone_module() -> None:
     assert gate.returncode == 0
     assert direct.returncode == 0
     assert gate.stdout == direct.stdout
+
+
+def test_alert_docs_gate_version_matches_distribution_metadata() -> None:
+    expected = importlib.metadata.version("tbox-pipelines")
+    res = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.alert_docs_gate_cli", "version"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
+    )
+    assert res.returncode == 0, res.stderr
+    assert res.stdout.strip() == expected
 
 
 def test_alert_docs_gate_emit_forwards_to_metrics_emit_cli(tmp_path: Path) -> None:
