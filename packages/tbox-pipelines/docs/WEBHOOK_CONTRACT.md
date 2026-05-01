@@ -307,6 +307,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.180 起 emitter 迁入 `metrics_emit_cli`，注册 `emit-alert-docs-gate-metrics`；CI 主 job 的 gate 步骤调用该入口；亦可用 `python -m tbox_pipelines.metrics_emit_cli`。
 > S3.181 起 docs 互链校验迁入 `alert_docs_links_validate_cli`，注册 `validate-alert-docs-links`；CI gate 第一步调用该入口；亦可用 `python -m tbox_pipelines.alert_docs_links_validate_cli`。
 > S3.182 起新增 `alert-docs-gate`（`alert_docs_gate_cli`）：`ci` 子命令内联 tee + emit，CI 用单进程替代 `validate | tee` + `emit` 两段 shell；`validate` 子命令为薄封装。
+> S3.183 起 `alert-docs-gate metrics-validate` 承接跨 job metrics JSON 校验；`alert-docs-gate consumer` job 使用该子命令，仍依赖 `alert_docs_gate_metrics_payload.schema.json` 与共享校验实现。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)

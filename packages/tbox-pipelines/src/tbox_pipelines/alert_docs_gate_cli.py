@@ -1,12 +1,18 @@
-"""Unified CLI for alert-docs gate: validate links, emit metrics, and CI bundle."""
+"""Unified CLI for alert-docs gate: validate links, metrics payload, emit, and CI bundle."""
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
-from tbox_pipelines import alert_docs_links_validate_cli, metrics_emit_cli
+from tbox_pipelines import (
+    alert_docs_links_validate_cli,
+    metrics_emit_cli,
+    metrics_payload_validate_cli,
+)
+from tbox_pipelines.alert_docs_gate_metrics_schema import DEFAULT_METRICS_SCHEMA_PATH
 
 
 class _TeeStdout:
@@ -33,6 +39,18 @@ class _TeeStdout:
     def isatty(self) -> bool:
         isatty = getattr(self._primary, "isatty", None)
         return bool(isatty()) if callable(isatty) else False
+
+
+def _run_metrics_validate(*, schema_path: str, payload_path: str) -> int:
+    prev = sys.argv
+    argv = ["validate-alert-docs-metrics-payload", "--schema-path", schema_path]
+    if payload_path:
+        argv.extend(["--payload-path", payload_path])
+    sys.argv = argv
+    try:
+        return metrics_payload_validate_cli.main()
+    finally:
+        sys.argv = prev
 
 
 def _run_validate_only(*, verbose: bool) -> int:
@@ -87,7 +105,7 @@ def _run_ci(
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="alert-docs-gate",
-        description="Alert docs gate: link validation and metrics emission",
+        description="Alert docs gate: link validation, metrics payload checks, and emission",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -111,6 +129,24 @@ def main() -> int:
     )
     p_val.add_argument("--verbose", action="store_true")
 
+    p_mv = sub.add_parser(
+        "metrics-validate",
+        help="Same as validate-alert-docs-metrics-payload (stdin or --payload-path)",
+    )
+    p_mv.add_argument(
+        "--schema-path",
+        default=os.environ.get(
+            "ALERT_DOCS_GATE_METRICS_SCHEMA_PATH",
+            DEFAULT_METRICS_SCHEMA_PATH,
+        ),
+        help="Path to metrics payload JSON Schema",
+    )
+    p_mv.add_argument(
+        "--payload-path",
+        default="",
+        help="Path to JSON payload file (default: read stdin)",
+    )
+
     args = parser.parse_args()
     if args.command == "ci":
         return _run_ci(
@@ -122,6 +158,11 @@ def main() -> int:
         )
     if args.command == "validate":
         return _run_validate_only(verbose=args.verbose)
+    if args.command == "metrics-validate":
+        return _run_metrics_validate(
+            schema_path=str(args.schema_path),
+            payload_path=str(args.payload_path),
+        )
     return 1
 
 

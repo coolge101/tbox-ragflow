@@ -133,6 +133,13 @@
         "alert-docs-gate",
         "alert_docs_gate_cli"
       ]
+    },
+    {
+      "stage": "S3.183",
+      "evidence_tokens": [
+        "metrics-validate",
+        "alert-docs-gate consumer"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
