@@ -182,6 +182,13 @@
         "alert-docs-gate commands",
         "pre-argparse"
       ]
+    },
+    {
+      "stage": "S3.190",
+      "evidence_tokens": [
+        "alert-docs-gate commands",
+        "CI diagnostics"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
