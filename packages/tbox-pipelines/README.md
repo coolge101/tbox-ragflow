@@ -226,6 +226,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.171 起 `emit_alert_docs_gate_metrics.py` 强制校验 `summary_contract`（event/version/metric_keys），并拒绝未知或缺失指标键，保证 CI 回显与契约一致。
 > S3.172 起 metrics emitter 支持 `--emit-json` 输出 `alert_docs_gate_metrics_json` 镜像行，CI 同时回显 kv 与 JSON 两种格式，便于后续机器采集。
 > S3.173 起 metrics emitter 强制 `metric_keys` 对应值为非负整数；负值、布尔值或字符串等非法值会直接失败，避免异常计数污染监控指标。
+> S3.174 起 metrics emitter 支持 `--write-github-output`：在 CI 将 kv 行、JSON 镜像行与纯 JSON 负载写入 `GITHUB_OUTPUT`，并在 workflow job 上暴露 `alert_docs_gate_metrics_*` outputs，便于后续 job 或调用方消费。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发

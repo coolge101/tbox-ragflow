@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -97,16 +98,57 @@ def _to_metrics_json(
     *,
     metric_keys: tuple[str, ...],
 ) -> str:
+    metrics_payload = _metrics_payload_dict(payload, metric_keys=metric_keys)
+    return "alert_docs_gate_metrics_json " + json.dumps(
+        metrics_payload,
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+
+
+def _metrics_payload_dict(
+    payload: dict[str, object],
+    *,
+    metric_keys: tuple[str, ...],
+) -> dict[str, object]:
     metrics_payload: dict[str, object] = {
         "event": payload["event"],
         "summary_version": payload["summary_version"],
     }
     for key in metric_keys:
         metrics_payload[key] = payload[key]
-    return "alert_docs_gate_metrics_json " + json.dumps(
-        metrics_payload,
-        ensure_ascii=True,
-        sort_keys=True,
+    return metrics_payload
+
+
+def _append_github_output(path: Path, name: str, value: str) -> None:
+    """Write one GitHub Actions output using heredoc form (safe for JSON)."""
+    delimiter = f"EOF_ALERT_DOCS_GATE_{name.upper()}"
+    while delimiter in value:
+        delimiter = f"{delimiter}_X"
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(f"{name}<<{delimiter}\n")
+        fh.write(value)
+        fh.write(f"\n{delimiter}\n")
+
+
+def _write_github_outputs(
+    *,
+    github_output: Path,
+    metrics_kv_line: str,
+    metrics_json_line: str | None,
+    metrics_payload_json: str,
+) -> None:
+    _append_github_output(github_output, "alert_docs_gate_metrics_kv", metrics_kv_line)
+    if metrics_json_line is not None:
+        _append_github_output(
+            github_output,
+            "alert_docs_gate_metrics_json_line",
+            metrics_json_line,
+        )
+    _append_github_output(
+        github_output,
+        "alert_docs_gate_metrics_json",
+        metrics_payload_json,
     )
 
 
@@ -139,6 +181,11 @@ def main() -> int:
         action="store_true",
         help="Also emit JSON mirror line for machine ingestion",
     )
+    parser.add_argument(
+        "--write-github-output",
+        action="store_true",
+        help="Append metrics to GITHUB_OUTPUT when that env var is set (CI)",
+    )
     args = parser.parse_args()
 
     try:
@@ -153,13 +200,34 @@ def main() -> int:
             expected_summary_version=summary_version,
             metric_keys=metric_keys,
         )
+        metrics_payload = _metrics_payload_dict(
+            summary_payload,
+            metric_keys=metric_keys,
+        )
+        metrics_payload_json = json.dumps(
+            metrics_payload,
+            ensure_ascii=True,
+            sort_keys=True,
+        )
     except Exception as exc:  # noqa: BLE001
         print(str(exc), file=sys.stderr)
         return 1
 
     print(metrics_line)
+    json_line: str | None = None
     if args.emit_json:
-        print(_to_metrics_json(summary_payload, metric_keys=metric_keys))
+        json_line = _to_metrics_json(summary_payload, metric_keys=metric_keys)
+        print(json_line)
+
+    if args.write_github_output:
+        out_path = os.environ.get("GITHUB_OUTPUT")
+        if out_path:
+            _write_github_outputs(
+                github_output=Path(out_path),
+                metrics_kv_line=metrics_line,
+                metrics_json_line=json_line,
+                metrics_payload_json=metrics_payload_json,
+            )
     return 0
 
 

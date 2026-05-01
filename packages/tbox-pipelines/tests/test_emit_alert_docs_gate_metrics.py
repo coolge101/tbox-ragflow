@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -151,3 +152,39 @@ def test_emit_alert_docs_gate_metrics_enforces_metric_value_type(tmp_path: Path)
         "summary payload metric value must be a non-negative integer for key(s): "
         f"{metric_keys[1]},{metric_keys[2]}"
     ) in emit_res.stderr
+
+
+def test_emit_alert_docs_gate_metrics_writes_github_output(tmp_path: Path) -> None:
+    log_path = tmp_path / "alert_docs_gate.log"
+    gh_out = tmp_path / "github_output.txt"
+    validate_res = subprocess.run(
+        [sys.executable, str(_VALIDATE_SCRIPT), "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert validate_res.returncode == 0, validate_res.stderr
+    log_path.write_text(validate_res.stdout, encoding="utf-8")
+
+    env = {**os.environ, "GITHUB_OUTPUT": str(gh_out)}
+    emit_res = subprocess.run(
+        [
+            sys.executable,
+            str(_EMIT_SCRIPT),
+            "--log-path",
+            str(log_path),
+            "--emit-json",
+            "--write-github-output",
+        ],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert emit_res.returncode == 0, emit_res.stderr
+    text = gh_out.read_text(encoding="utf-8")
+    assert "alert_docs_gate_metrics_kv<<" in text
+    assert "alert_docs_gate_metrics_json_line<<" in text
+    assert "alert_docs_gate_metrics_json<<" in text
