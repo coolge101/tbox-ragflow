@@ -77,6 +77,7 @@ Before merging docs changes in this directory:
   - Summary metric keys are controlled by `summary_contract.metric_keys` in rules.
   - CI runs the full gate as one command: `alert-docs-gate ci --verbose --log-path ... --emit-json --write-github-output --write-step-summary` (or the separate `validate-alert-docs-links` + `emit-alert-docs-gate-metrics` / `-m` equivalents); the workflow runs `alert-docs-gate doctor` inside `::group::alert-docs-gate` before `ci` (bundles version + commands summary + path checks).
   - Consumer job validates `alert_docs_gate_metrics_json` with `alert-docs-gate metrics-validate` (stdin); standalone `validate-alert-docs-metrics-payload` remains available. CI groups consumer steps under `::group::alert-docs-gate-consumer`, runs `alert-docs-gate doctor`, then validates. Ignore stray `uv.lock` under `packages/tbox-pipelines` (see `.gitignore` there).
+  - **workflow invariant**: `pytest` runs `test_alert_docs_gate_ci_workflow` against `.github/workflows/ci.yml`; the main CI job **sparse-checkout** includes **`.github`** alongside `packages/tbox-pipelines` so that file is present during tests.
   - Optional: `alert-docs-gate emit --log-path ...` forwards argv to the same emitter as `emit-alert-docs-gate-metrics` (useful outside the built-in `ci` bundle).
   - `alert-docs-gate version` prints the installed `tbox-pipelines` version (PEP 566 metadata).
   - Internal: `_invoke_cli_argv` centralizes argv save/restore for delegated **subcommand** entrypoints.

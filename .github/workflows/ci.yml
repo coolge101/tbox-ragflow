@@ -30,6 +30,7 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: |
+            .github
             packages/tbox-pipelines
           sparse-checkout-cone-mode: true
 

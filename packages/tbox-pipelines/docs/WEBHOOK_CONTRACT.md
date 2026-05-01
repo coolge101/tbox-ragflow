@@ -317,6 +317,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.190 起 CI 在两条 gate 日志组内于 `version` 后执行 `alert-docs-gate commands`，作为 **CI diagnostics** 便于对照子命令列表。
 > S3.191 起 `alert-docs-gate doctor` 汇总版本、**commands** 行与关键路径存在性（含 **PACKAGE_ROOT** 下契约与 schema）；每路径前缀 **`doctor ok`**，末行 `alert-docs-gate doctor: ok`。
 > S3.192 起 CI 以 `alert-docs-gate doctor` 替代分步 `version`/`commands`（**workflow simplification**），两条 gate 日志组行为一致。
+> S3.193 起以包内测试加固 **workflow invariant**（`ci.yml` 仅 `doctor`、禁止误回退 `version`/`commands` 行）；主 job **sparse-checkout** 增补 **`.github`**，供 `test_alert_docs_gate_ci_workflow` 在 CI 检出下读取 `.github/workflows/ci.yml`。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)
