@@ -56,6 +56,7 @@ jobs:
         run: |
           echo "::group::alert-docs-gate"
           alert-docs-gate version
+          alert-docs-gate commands
           alert-docs-gate ci --verbose --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
           echo "::endgroup::"
 
@@ -113,6 +114,7 @@ jobs:
         run: |
           echo "::group::alert-docs-gate-consumer"
           alert-docs-gate version
+          alert-docs-gate commands
           if [[ -z "${METRICS_JSON// }" ]]; then
             echo "empty alert_docs_gate_metrics_json job output" >&2
             exit 1
