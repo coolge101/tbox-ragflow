@@ -161,6 +161,13 @@
         "_invoke_cli_argv",
         "subcommand"
       ]
+    },
+    {
+      "stage": "S3.187",
+      "evidence_tokens": [
+        "::group::alert-docs-gate",
+        "alert-docs-gate version"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

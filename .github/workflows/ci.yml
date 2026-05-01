@@ -55,6 +55,7 @@ jobs:
         id: alert_docs_gate
         run: |
           echo "::group::alert-docs-gate"
+          alert-docs-gate version
           alert-docs-gate ci --verbose --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
           echo "::endgroup::"
 
