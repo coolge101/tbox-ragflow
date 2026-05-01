@@ -17,6 +17,10 @@ jobs:
   tbox-pipelines:
     name: tbox-pipelines (lint + tests)
     runs-on: ubuntu-latest
+    outputs:
+      alert_docs_gate_metrics_kv: ${{ steps.alert_docs_gate.outputs.alert_docs_gate_metrics_kv }}
+      alert_docs_gate_metrics_json: ${{ steps.alert_docs_gate.outputs.alert_docs_gate_metrics_json }}
+      alert_docs_gate_metrics_json_line: ${{ steps.alert_docs_gate.outputs.alert_docs_gate_metrics_json_line }}
     defaults:
       run:
         working-directory: packages/tbox-pipelines
@@ -48,10 +52,11 @@ jobs:
         run: pytest -q
 
       - name: Validate alert docs links
+        id: alert_docs_gate
         run: |
           echo "::group::alert-docs-link-gate"
           python scripts/validate_alert_docs_links.py --verbose | tee /tmp/alert_docs_gate.log
-          python scripts/emit_alert_docs_gate_metrics.py --log-path /tmp/alert_docs_gate.log --emit-json
+          python scripts/emit_alert_docs_gate_metrics.py --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output
           echo "::endgroup::"
 
       - name: Validate .node-version format

@@ -69,6 +69,13 @@
         "WEBHOOK_CONTRACT",
         "一致性"
       ]
+    },
+    {
+      "stage": "S3.174",
+      "evidence_tokens": [
+        "GITHUB_OUTPUT",
+        "write-github-output"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
