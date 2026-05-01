@@ -312,6 +312,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.185 起 `_invoke_emit_cli` 统一 `ci` 与 `emit` 对 emitter 的调用；`alert-docs-gate version` 使用 **importlib.metadata** 输出版本号。
 > S3.186 起 `_invoke_cli_argv` 统一 **subcommand** 委托时的 argv 切换；links / metrics payload 校验与 emitter 调用路径复用。
 > S3.187 起 CI 在 `::group::alert-docs-gate` 内先于 `alert-docs-gate ci` 执行 `alert-docs-gate version`，记录已安装 **tbox-pipelines** 版本。
+> S3.188 起 `alert-docs-gate-consumer` 使用 `::group::alert-docs-gate-consumer` 并在 `metrics-validate` 前打印版本；**uv.lock** 加入包目录 `.gitignore` 避免误提交。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)

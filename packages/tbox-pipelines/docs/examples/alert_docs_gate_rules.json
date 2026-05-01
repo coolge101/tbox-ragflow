@@ -168,6 +168,13 @@
         "::group::alert-docs-gate",
         "alert-docs-gate version"
       ]
+    },
+    {
+      "stage": "S3.188",
+      "evidence_tokens": [
+        "::group::alert-docs-gate-consumer",
+        "uv.lock"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
