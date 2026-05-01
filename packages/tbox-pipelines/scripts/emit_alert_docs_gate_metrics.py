@@ -152,6 +152,28 @@ def _write_github_outputs(
     )
 
 
+def _write_step_summary(
+    path: Path,
+    *,
+    metrics_payload: dict[str, object],
+    metric_keys: tuple[str, ...],
+) -> None:
+    """Append a small Markdown table to GitHub Actions step summary."""
+    lines = [
+        "### Alert docs gate metrics",
+        "",
+        "| Field | Value |",
+        "|-------|-------|",
+        f"| event | `{metrics_payload['event']}` |",
+        f"| summary_version | {metrics_payload['summary_version']} |",
+    ]
+    for key in metric_keys:
+        lines.append(f"| {key} | {metrics_payload[key]} |")
+    lines.append("")
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Parse docs gate summary log and emit metrics line",
@@ -185,6 +207,11 @@ def main() -> int:
         "--write-github-output",
         action="store_true",
         help="Append metrics to GITHUB_OUTPUT when that env var is set (CI)",
+    )
+    parser.add_argument(
+        "--write-step-summary",
+        action="store_true",
+        help="Append metrics Markdown to GITHUB_STEP_SUMMARY when that env var is set (CI)",
     )
     args = parser.parse_args()
 
@@ -227,6 +254,15 @@ def main() -> int:
                 metrics_kv_line=metrics_line,
                 metrics_json_line=json_line,
                 metrics_payload_json=metrics_payload_json,
+            )
+
+    if args.write_step_summary:
+        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            _write_step_summary(
+                Path(summary_path),
+                metrics_payload=metrics_payload,
+                metric_keys=metric_keys,
             )
     return 0
 

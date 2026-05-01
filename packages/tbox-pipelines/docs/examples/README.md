@@ -79,6 +79,7 @@ Before merging docs changes in this directory:
   - Metrics emitter enforces `summary_contract` strictly (event/version/metric_keys).
   - Use `--emit-json` to output `alert_docs_gate_metrics_json` mirror for machine parsing.
   - In GitHub Actions, add `--write-github-output` (with `GITHUB_OUTPUT` set) to publish metrics as step/job outputs (`alert_docs_gate_metrics_kv`, `alert_docs_gate_metrics_json`, etc.).
+  - Add `--write-step-summary` (with `GITHUB_STEP_SUMMARY` set) to append a Markdown metrics table to the job step summary.
   - Metric values must be non-negative integers; invalid types/ranges fail fast.
   - This gate now also checks selected S3 changelog consistency in both
     `README.md` and `WEBHOOK_CONTRACT.md`.

@@ -298,6 +298,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.172 起 `emit_alert_docs_gate_metrics.py` 增加 `--emit-json`，除 kv 行外额外输出 `alert_docs_gate_metrics_json {..}`，CI 默认开启双格式回显以支持机器侧解析。
 > S3.173 起 `emit_alert_docs_gate_metrics.py` 额外校验每个指标值必须是非负整数（拒绝负值/布尔/字符串），确保 CI 侧采集的计数语义稳定且可比较。
 > S3.174 起 `emit_alert_docs_gate_metrics.py` 支持 `--write-github-output`：当存在 `GITHUB_OUTPUT` 环境变量时，把指标追加写入该文件；在 GitHub Actions 中把指标写入 step outputs（`alert_docs_gate_metrics_kv`、`alert_docs_gate_metrics_json_line`、`alert_docs_gate_metrics_json`），并在 CI job 顶层暴露同名 outputs，供后续步骤或其它 job 引用。
+> S3.175 起 `emit_alert_docs_gate_metrics.py` 支持 `--write-step-summary`：当存在 `GITHUB_STEP_SUMMARY` 时追加 Markdown 指标表到 Step Summary；CI 新增 `alert-docs-gate-consumer` job，读取 `needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json` 并校验 JSON 可解析且含 `event`/`summary_version`。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)
