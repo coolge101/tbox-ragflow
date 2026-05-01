@@ -16,6 +16,10 @@ from tbox_pipelines import (
 )
 from tbox_pipelines.alert_docs_gate_metrics_schema import DEFAULT_METRICS_SCHEMA_PATH
 
+_COMMANDS_LINE = (
+    "alert-docs-gate commands: ci validate metrics-validate version (emit=pre-argparse forward)"
+)
+
 
 def _invoke_cli_argv(main: Callable[[], int], argv: list[str]) -> int:
     """Run ``main()`` with ``sys.argv`` set to *argv*, then restore prior argv."""
@@ -83,6 +87,11 @@ def _run_metrics_validate(*, schema_path: str, payload_path: str) -> int:
     return _invoke_cli_argv(metrics_payload_validate_cli.main, argv)
 
 
+def _run_commands_list() -> int:
+    print(_COMMANDS_LINE)
+    return 0
+
+
 def _run_version_print() -> int:
     try:
         print(importlib.metadata.version("tbox-pipelines"))
@@ -139,7 +148,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         prog="alert-docs-gate",
         description="Alert docs gate: link validation, metrics payload checks, and emission",
-        epilog="Emit: `alert-docs-gate emit ...` forwards argv to emit-alert-docs-gate-metrics.",
+        epilog=(
+            "Emit: `alert-docs-gate emit ...` forwards argv to emit-alert-docs-gate-metrics "
+            "(pre-argparse). Use `commands` to list argparse subcommands."
+        ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -186,6 +198,11 @@ def main() -> int:
         help="Print tbox-pipelines distribution version (importlib.metadata)",
     )
 
+    sub.add_parser(
+        "commands",
+        help="Print known subcommand names (emit is pre-argparse; see epilog)",
+    )
+
     args = parser.parse_args()
     if args.command == "ci":
         return _run_ci(
@@ -204,6 +221,8 @@ def main() -> int:
         )
     if args.command == "version":
         return _run_version_print()
+    if args.command == "commands":
+        return _run_commands_list()
     return 1
 
 

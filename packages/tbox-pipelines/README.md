@@ -241,6 +241,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.186 起以 `_invoke_cli_argv` 统一各 **subcommand** 对下游 CLI `main()` 的 `sys.argv` 切换；`validate`、`metrics-validate`、`emit`（经 `_invoke_emit_cli`）与 `ci` 校验阶段共用同一套保存/恢复逻辑。
 > S3.187 起 CI 在 `::group::alert-docs-gate` 日志组内、执行 `alert-docs-gate ci` 之前先跑 `alert-docs-gate version`，将 **tbox-pipelines** 发行版写入 job 日志便于排障对齐。
 > S3.188 起 `alert-docs-gate-consumer` job 在 `::group::alert-docs-gate-consumer` 组内、`metrics-validate` 前同样打印 `alert-docs-gate version`；`packages/tbox-pipelines/.gitignore` 增加 **uv.lock** 以忽略本地 `uv` 试跑误生成文件。
+> S3.189 起新增 `alert-docs-gate commands` 子命令，单行列出 argparse **subcommand**（`emit` 单独标注为 **pre-argparse** 转发，与 `ci`/`validate` 等并列说明）。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发

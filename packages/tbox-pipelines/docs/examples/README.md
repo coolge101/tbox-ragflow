@@ -80,6 +80,7 @@ Before merging docs changes in this directory:
   - Optional: `alert-docs-gate emit --log-path ...` forwards argv to the same emitter as `emit-alert-docs-gate-metrics` (useful outside the built-in `ci` bundle).
   - `alert-docs-gate version` prints the installed `tbox-pipelines` version (PEP 566 metadata).
   - Internal: `_invoke_cli_argv` centralizes argv save/restore for delegated **subcommand** entrypoints.
+  - `alert-docs-gate commands` prints a one-line summary of subcommands; `emit` is **pre-argparse** (see `alert_docs_gate_cli` epilog).
   - CI metric replay uses `emit-alert-docs-gate-metrics --log-path ...` (or `python -m tbox_pipelines.metrics_emit_cli` / `python scripts/emit_alert_docs_gate_metrics.py` with `PYTHONPATH=src`).
   - Metrics emitter enforces `summary_contract` strictly (event/version/metric_keys).
   - Use `--emit-json` to output `alert_docs_gate_metrics_json` mirror for machine parsing.

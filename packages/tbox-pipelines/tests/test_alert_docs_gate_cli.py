@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tbox_pipelines.alert_docs_gate_cli import _COMMANDS_LINE
+
 _ROOT = Path(__file__).resolve().parent.parent
 
 _GOOD_METRICS = {
@@ -78,6 +80,19 @@ def test_alert_docs_gate_metrics_validate_matches_standalone_module() -> None:
     assert gate.returncode == 0
     assert direct.returncode == 0
     assert gate.stdout == direct.stdout
+
+
+def test_alert_docs_gate_commands_subcommand() -> None:
+    res = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.alert_docs_gate_cli", "commands"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
+    )
+    assert res.returncode == 0, res.stderr
+    assert res.stdout.strip() == _COMMANDS_LINE
 
 
 def test_alert_docs_gate_version_matches_distribution_metadata() -> None:
