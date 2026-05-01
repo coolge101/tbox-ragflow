@@ -232,6 +232,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.177 起新增 `docs/examples/alert_docs_gate_metrics_payload.schema.json`，对 CI metrics JSON **metrics payload** 做结构契约；`emit_alert_docs_gate_metrics.py` 发出前校验，避免字段漂移污染下游 job。
 > S3.178 起将 metrics schema 校验下沉到可复用模块 `tbox_pipelines.alert_docs_gate_metrics_schema`，新增独立 CLI `scripts/validate_alert_docs_metrics_payload.py`（stdin 或 `--payload-path`）；CI `alert-docs-gate-consumer` 通过该脚本校验跨 job `alert_docs_gate_metrics_json` 输出，与 emitter 共用同一套 Draft-07 子集逻辑。
 > S3.179 起将校验 CLI 实现迁入 `tbox_pipelines.metrics_payload_validate_cli`，在 `pyproject.toml` 注册控制台入口 `validate-alert-docs-metrics-payload`；consumer job 使用该命令；仓库内 `scripts/validate_alert_docs_metrics_payload.py` 保留为薄包装以便未安装包时 `PYTHONPATH=src` 直跑。
+> S3.180 起将 metrics 发射逻辑迁入 `tbox_pipelines.metrics_emit_cli`，注册 `emit-alert-docs-gate-metrics`；CI docs gate 步骤改用该入口；`scripts/emit_alert_docs_gate_metrics.py` 保留薄包装。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发

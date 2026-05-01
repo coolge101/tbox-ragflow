@@ -279,3 +279,29 @@ def test_emit_alert_docs_gate_metrics_writes_step_summary(tmp_path: Path) -> Non
     assert "### Alert docs gate metrics" in text
     assert "| summary_version |" in text
     assert "| metrics_emit_version |" in text
+
+
+def test_emit_alert_docs_gate_metrics_ok_via_python_module(tmp_path: Path) -> None:
+    log_path = tmp_path / "alert_docs_gate.log"
+    validate_res = subprocess.run(
+        [sys.executable, str(_VALIDATE_SCRIPT), "--verbose"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert validate_res.returncode == 0, validate_res.stderr
+    log_path.write_text(validate_res.stdout, encoding="utf-8")
+
+    emit_res = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.metrics_emit_cli", "--log-path", str(log_path)],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_emit_env(),
+    )
+    assert emit_res.returncode == 0, emit_res.stderr
+    assert emit_res.stdout.startswith(
+        "alert_docs_gate_metrics event=alert_docs_gate_ok summary_version=1 metrics_emit_version=1 "
+    )

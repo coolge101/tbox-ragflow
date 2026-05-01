@@ -112,6 +112,13 @@
         "validate-alert-docs-metrics-payload",
         "metrics_payload_validate_cli"
       ]
+    },
+    {
+      "stage": "S3.180",
+      "evidence_tokens": [
+        "emit-alert-docs-gate-metrics",
+        "metrics_emit_cli"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

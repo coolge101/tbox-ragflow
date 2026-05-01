@@ -75,7 +75,7 @@ Before merging docs changes in this directory:
   - Use `python scripts/validate_alert_docs_links.py --verbose` for CI-style diagnostics.
   - Success summary output includes `summary_version` (current `1`) for parser compatibility.
   - Summary metric keys are controlled by `summary_contract.metric_keys` in rules.
-  - CI metric replay uses `python scripts/emit_alert_docs_gate_metrics.py --log-path ...`.
+  - CI metric replay uses `emit-alert-docs-gate-metrics --log-path ...` (or `python -m tbox_pipelines.metrics_emit_cli` / `python scripts/emit_alert_docs_gate_metrics.py` with `PYTHONPATH=src`).
   - Metrics emitter enforces `summary_contract` strictly (event/version/metric_keys).
   - Use `--emit-json` to output `alert_docs_gate_metrics_json` mirror for machine parsing.
   - In GitHub Actions, add `--write-github-output` (with `GITHUB_OUTPUT` set) to publish metrics as step/job outputs (`alert_docs_gate_metrics_kv`, `alert_docs_gate_metrics_json`, etc.).

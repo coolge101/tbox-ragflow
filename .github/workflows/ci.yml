@@ -56,7 +56,7 @@ jobs:
         run: |
           echo "::group::alert-docs-link-gate"
           python scripts/validate_alert_docs_links.py --verbose | tee /tmp/alert_docs_gate.log
-          python scripts/emit_alert_docs_gate_metrics.py --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
+          emit-alert-docs-gate-metrics --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
           echo "::endgroup::"
 
       - name: Validate .node-version format
