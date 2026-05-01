@@ -78,6 +78,7 @@ Before merging docs changes in this directory:
   - CI runs the full gate as one command: `alert-docs-gate ci --verbose --log-path ... --emit-json --write-github-output --write-step-summary` (or the separate `validate-alert-docs-links` + `emit-alert-docs-gate-metrics` / `-m` equivalents).
   - Consumer job validates `alert_docs_gate_metrics_json` with `alert-docs-gate metrics-validate` (stdin); standalone `validate-alert-docs-metrics-payload` remains available.
   - Optional: `alert-docs-gate emit --log-path ...` forwards argv to the same emitter as `emit-alert-docs-gate-metrics` (useful outside the built-in `ci` bundle).
+  - `alert-docs-gate version` prints the installed `tbox-pipelines` version (PEP 566 metadata).
   - CI metric replay uses `emit-alert-docs-gate-metrics --log-path ...` (or `python -m tbox_pipelines.metrics_emit_cli` / `python scripts/emit_alert_docs_gate_metrics.py` with `PYTHONPATH=src`).
   - Metrics emitter enforces `summary_contract` strictly (event/version/metric_keys).
   - Use `--emit-json` to output `alert_docs_gate_metrics_json` mirror for machine parsing.

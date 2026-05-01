@@ -237,6 +237,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.182 起新增统一入口 `alert-docs-gate`（`tbox_pipelines.alert_docs_gate_cli`）：`ci` 子命令在进程内串联「校验 stdout + tee 写日志」与 metrics emit，替代 shell 管道；`validate` 子命令等价于 `validate-alert-docs-links`；CI 主 job 的 gate 步骤合并为单条 `alert-docs-gate ci ...`。
 > S3.183 起 `alert-docs-gate` 增加 `metrics-validate` 子命令（等价 `validate-alert-docs-metrics-payload`）；CI `alert-docs-gate consumer` job 对 job output 改为 `alert-docs-gate metrics-validate`，与主 job 共用同一入口名。
 > S3.184 起支持 `alert-docs-gate emit ...`：将 `emit` 之后的 **argv** 原样交给 `metrics_emit_cli`（与 `emit-alert-docs-gate-metrics` 一致），便于在统一入口名下拼接与 `ci` 不同的 emit 参数。
+> S3.185 起抽取 `_invoke_emit_cli` 供 `ci` 第二阶段与 `emit` 转发共用；新增 `alert-docs-gate version` 子命令，通过 **importlib.metadata** 打印 `tbox-pipelines` 发行版本。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发
