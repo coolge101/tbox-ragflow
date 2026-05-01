@@ -189,6 +189,13 @@
         "alert-docs-gate commands",
         "CI diagnostics"
       ]
+    },
+    {
+      "stage": "S3.191",
+      "evidence_tokens": [
+        "alert-docs-gate doctor",
+        "doctor ok"
+      ]
     }
   ],
   "examples_readme_required_tokens": [

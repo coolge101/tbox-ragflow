@@ -14,10 +14,14 @@ from tbox_pipelines import (
     metrics_emit_cli,
     metrics_payload_validate_cli,
 )
-from tbox_pipelines.alert_docs_gate_metrics_schema import DEFAULT_METRICS_SCHEMA_PATH
+from tbox_pipelines.alert_docs_gate_metrics_schema import (
+    DEFAULT_METRICS_SCHEMA_PATH,
+    PACKAGE_ROOT,
+)
 
 _COMMANDS_LINE = (
-    "alert-docs-gate commands: ci validate metrics-validate version (emit=pre-argparse forward)"
+    "alert-docs-gate commands: ci validate metrics-validate version doctor "
+    "(emit=pre-argparse forward)"
 )
 
 
@@ -101,6 +105,28 @@ def _run_version_print() -> int:
     return 0
 
 
+def _run_doctor() -> int:
+    """Print version, commands summary, and verify key gate paths exist."""
+    print("alert-docs-gate doctor:", flush=True)
+    rv = _run_version_print()
+    if rv != 0:
+        return rv
+    _run_commands_list()
+    checks: list[tuple[Path, str]] = [
+        (PACKAGE_ROOT / "docs" / "examples" / "alert_docs_gate_rules.json", "rules"),
+        (PACKAGE_ROOT / "docs" / "examples" / "alert_docs_gate_rules.schema.json", "rules_schema"),
+        (Path(DEFAULT_METRICS_SCHEMA_PATH), "metrics_schema"),
+        (PACKAGE_ROOT / "docs" / "WEBHOOK_CONTRACT.md", "contract"),
+    ]
+    for path, label in checks:
+        if not path.is_file():
+            print(f"doctor missing {label}: {path}", file=sys.stderr)
+            return 1
+        print(f"doctor ok {label}: {path}", flush=True)
+    print("alert-docs-gate doctor: ok", flush=True)
+    return 0
+
+
 def _run_validate_only(*, verbose: bool) -> int:
     return _invoke_cli_argv(
         alert_docs_links_validate_cli.main,
@@ -150,7 +176,7 @@ def main() -> int:
         description="Alert docs gate: link validation, metrics payload checks, and emission",
         epilog=(
             "Emit: `alert-docs-gate emit ...` forwards argv to emit-alert-docs-gate-metrics "
-            "(pre-argparse). Use `commands` to list argparse subcommands."
+            "(pre-argparse). Use `commands` for subcommand names; `doctor` for quick checks."
         ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -203,6 +229,11 @@ def main() -> int:
         help="Print known subcommand names (emit is pre-argparse; see epilog)",
     )
 
+    sub.add_parser(
+        "doctor",
+        help="Print version + commands line and verify gate rules/schema paths",
+    )
+
     args = parser.parse_args()
     if args.command == "ci":
         return _run_ci(
@@ -223,6 +254,8 @@ def main() -> int:
         return _run_version_print()
     if args.command == "commands":
         return _run_commands_list()
+    if args.command == "doctor":
+        return _run_doctor()
     return 1
 
 

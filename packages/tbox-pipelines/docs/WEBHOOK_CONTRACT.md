@@ -315,6 +315,7 @@ curl -sS -X POST "$TBOX_RBAC_ALERT_WEBHOOK_URL" \
 > S3.188 起 `alert-docs-gate-consumer` 使用 `::group::alert-docs-gate-consumer` 并在 `metrics-validate` 前打印版本；**uv.lock** 加入包目录 `.gitignore` 避免误提交。
 > S3.189 起 `alert-docs-gate commands` 输出固定摘要行，标明 **pre-argparse** 的 `emit` 与常规 **subcommand** 的差异。
 > S3.190 起 CI 在两条 gate 日志组内于 `version` 后执行 `alert-docs-gate commands`，作为 **CI diagnostics** 便于对照子命令列表。
+> S3.191 起 `alert-docs-gate doctor` 汇总版本、**commands** 行与关键路径存在性（含 **PACKAGE_ROOT** 下契约与 schema）；每路径前缀 **`doctor ok`**，末行 `alert-docs-gate doctor: ok`。
 > S3.168 起新增 gate summary 指标断言测试，校验结构化摘要字段集合与类型，锁定输出契约。
 
 ## Field Consolidation (Phase A)
