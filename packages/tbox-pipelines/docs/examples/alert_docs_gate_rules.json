@@ -203,6 +203,13 @@
         "alert-docs-gate doctor",
         "workflow simplification"
       ]
+    },
+    {
+      "stage": "S3.193",
+      "evidence_tokens": [
+        "workflow invariant",
+        "sparse-checkout"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
