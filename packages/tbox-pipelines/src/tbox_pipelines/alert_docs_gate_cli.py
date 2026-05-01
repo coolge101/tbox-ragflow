@@ -1,4 +1,4 @@
-"""Unified CLI for alert-docs gate: validate, metrics-validate, emit forward, and CI bundle."""
+"""Unified CLI for alert-docs gate (subcommands share `_invoke_cli_argv` for argv handoff)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 import importlib.metadata
 import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from tbox_pipelines import (
@@ -16,14 +17,22 @@ from tbox_pipelines import (
 from tbox_pipelines.alert_docs_gate_metrics_schema import DEFAULT_METRICS_SCHEMA_PATH
 
 
-def _invoke_emit_cli(emit_args: list[str]) -> int:
-    """Run metrics_emit_cli with argv ``emit-alert-docs-gate-metrics`` + emit_args."""
+def _invoke_cli_argv(main: Callable[[], int], argv: list[str]) -> int:
+    """Run ``main()`` with ``sys.argv`` set to *argv*, then restore prior argv."""
     prev = sys.argv
-    sys.argv = ["emit-alert-docs-gate-metrics", *emit_args]
+    sys.argv = argv
     try:
-        return metrics_emit_cli.main()
+        return main()
     finally:
         sys.argv = prev
+
+
+def _invoke_emit_cli(emit_args: list[str]) -> int:
+    """Run metrics_emit_cli with argv ``emit-alert-docs-gate-metrics`` + emit_args."""
+    return _invoke_cli_argv(
+        metrics_emit_cli.main,
+        ["emit-alert-docs-gate-metrics", *emit_args],
+    )
 
 
 def _argv_tail_after_invocation(argv: list[str]) -> list[str]:
@@ -68,15 +77,10 @@ class _TeeStdout:
 
 
 def _run_metrics_validate(*, schema_path: str, payload_path: str) -> int:
-    prev = sys.argv
     argv = ["validate-alert-docs-metrics-payload", "--schema-path", schema_path]
     if payload_path:
         argv.extend(["--payload-path", payload_path])
-    sys.argv = argv
-    try:
-        return metrics_payload_validate_cli.main()
-    finally:
-        sys.argv = prev
+    return _invoke_cli_argv(metrics_payload_validate_cli.main, argv)
 
 
 def _run_version_print() -> int:
@@ -89,12 +93,10 @@ def _run_version_print() -> int:
 
 
 def _run_validate_only(*, verbose: bool) -> int:
-    prev = sys.argv
-    sys.argv = ["validate-alert-docs-links", *([] if not verbose else ["--verbose"])]
-    try:
-        return alert_docs_links_validate_cli.main()
-    finally:
-        sys.argv = prev
+    return _invoke_cli_argv(
+        alert_docs_links_validate_cli.main,
+        ["validate-alert-docs-links", *([] if not verbose else ["--verbose"])],
+    )
 
 
 def _run_ci(
@@ -106,16 +108,16 @@ def _run_ci(
     write_step_summary: bool,
 ) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    prev_argv = sys.argv
     prev_stdout = sys.stdout
     with log_path.open("w", encoding="utf-8") as logf:
         sys.stdout = _TeeStdout(prev_stdout, logf)
         try:
-            sys.argv = ["validate-alert-docs-links", *([] if not verbose else ["--verbose"])]
-            rv = alert_docs_links_validate_cli.main()
+            rv = _invoke_cli_argv(
+                alert_docs_links_validate_cli.main,
+                ["validate-alert-docs-links", *([] if not verbose else ["--verbose"])],
+            )
         finally:
             sys.stdout = prev_stdout
-            sys.argv = prev_argv
     if rv != 0:
         return rv
 
