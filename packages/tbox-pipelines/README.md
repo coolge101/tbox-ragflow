@@ -244,6 +244,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.189 起新增 `alert-docs-gate commands` 子命令，单行列出 argparse **subcommand**（`emit` 单独标注为 **pre-argparse** 转发，与 `ci`/`validate` 等并列说明）。
 > S3.190 起 CI 在主 job 与 `alert-docs-gate-consumer` 的 gate 日志组内，于 `alert-docs-gate version` 之后追加 `alert-docs-gate commands`，作为 **CI diagnostics** 输出固定摘要行。
 > S3.191 起新增 `alert-docs-gate doctor`：依次输出版本、`commands` 摘要行，并校验 **PACKAGE_ROOT** 下规则 JSON、规则 schema、metrics payload schema、`WEBHOOK_CONTRACT.md` 存在；成功末行 **`doctor ok`** 汇总为 `alert-docs-gate doctor: ok`。
+> S3.192 起 CI 两条 gate 日志组以单条 `alert-docs-gate doctor` 取代原先的 `alert-docs-gate version` 与 `alert-docs-gate commands` 顺序调用（**workflow simplification**）；诊断内容仍包含版本、commands 行与路径自检。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发

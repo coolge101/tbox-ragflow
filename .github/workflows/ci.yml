@@ -55,8 +55,7 @@ jobs:
         id: alert_docs_gate
         run: |
           echo "::group::alert-docs-gate"
-          alert-docs-gate version
-          alert-docs-gate commands
+          alert-docs-gate doctor
           alert-docs-gate ci --verbose --log-path /tmp/alert_docs_gate.log --emit-json --write-github-output --write-step-summary
           echo "::endgroup::"
 
@@ -113,8 +112,7 @@ jobs:
           METRICS_JSON: ${{ needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json }}
         run: |
           echo "::group::alert-docs-gate-consumer"
-          alert-docs-gate version
-          alert-docs-gate commands
+          alert-docs-gate doctor
           if [[ -z "${METRICS_JSON// }" ]]; then
             echo "empty alert_docs_gate_metrics_json job output" >&2
             exit 1
