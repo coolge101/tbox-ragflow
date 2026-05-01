@@ -102,4 +102,5 @@ jobs:
           data = json.loads(raw)
           assert data.get("event") == "alert_docs_gate_ok"
           assert isinstance(data.get("summary_version"), int)
+          assert data.get("metrics_emit_version") == 1
           PY

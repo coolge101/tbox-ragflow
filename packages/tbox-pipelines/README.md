@@ -228,6 +228,7 @@ TBOX 文档采集、清洗、调用 RAGFlow HTTP API / SDK 的批处理与工具
 > S3.173 起 metrics emitter 强制 `metric_keys` 对应值为非负整数；负值、布尔值或字符串等非法值会直接失败，避免异常计数污染监控指标。
 > S3.174 起 metrics emitter 支持 `--write-github-output`：在 CI 将 kv 行、JSON 镜像行与纯 JSON 负载写入 `GITHUB_OUTPUT`，并在 workflow job 上暴露 `alert_docs_gate_metrics_*` outputs，便于后续 job 或调用方消费。
 > S3.175 起 metrics emitter 支持 `--write-step-summary`：在存在 `GITHUB_STEP_SUMMARY` 时追加 Markdown 指标表；CI 新增 `alert-docs-gate-consumer` job，通过 `needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json` 校验跨 job outputs 传递。
+> S3.176 起在 `alert_docs_gate_rules.json` 增加 `metrics_emit_contract.emit_version`，metrics 的 kv/JSON/Step Summary/`GITHUB_OUTPUT` 均携带 `metrics_emit_version` 字段，便于与 gate `summary_version` 解耦演进。
 > S3.168 起新增 gate 指标断言测试，确保 summary JSON 的关键字段集合与类型稳定。
 
 ## 本地开发

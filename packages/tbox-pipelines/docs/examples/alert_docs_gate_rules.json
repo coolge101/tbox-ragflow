@@ -83,6 +83,13 @@
         "GITHUB_STEP_SUMMARY",
         "alert-docs-gate-consumer"
       ]
+    },
+    {
+      "stage": "S3.176",
+      "evidence_tokens": [
+        "metrics_emit_contract",
+        "metrics_emit_version"
+      ]
     }
   ],
   "examples_readme_required_tokens": [
@@ -98,5 +105,8 @@
       "required_stage_rules",
       "examples_readme_required_tokens"
     ]
+  },
+  "metrics_emit_contract": {
+    "emit_version": 1
   }
 }

@@ -105,6 +105,15 @@ def _validate_rules_payload(payload: object, schema: object) -> list[str]:
             if len(metric_keys) != len(set(metric_keys)):
                 errors.append("summary_contract.metric_keys must not contain duplicates")
 
+    # metrics_emit_contract: {emit_version}
+    metrics_emit_contract = payload.get("metrics_emit_contract")
+    if not isinstance(metrics_emit_contract, dict):
+        errors.append("metrics_emit_contract must be an object")
+    else:
+        emit_version = metrics_emit_contract.get("emit_version")
+        if not isinstance(emit_version, int) or isinstance(emit_version, bool) or emit_version < 1:
+            errors.append("metrics_emit_contract.emit_version must be an integer >= 1")
+
     return errors
 
 
