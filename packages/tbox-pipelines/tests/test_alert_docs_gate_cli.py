@@ -82,6 +82,23 @@ def test_alert_docs_gate_metrics_validate_matches_standalone_module() -> None:
     assert gate.stdout == direct.stdout
 
 
+def test_alert_docs_gate_doctor_succeeds() -> None:
+    res = subprocess.run(
+        [sys.executable, "-m", "tbox_pipelines.alert_docs_gate_cli", "doctor"],
+        cwd=_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=_pkg_env(),
+    )
+    assert res.returncode == 0, res.stderr
+    out = res.stdout
+    assert "alert-docs-gate doctor:" in out
+    assert "doctor ok rules:" in out
+    assert "alert-docs-gate doctor: ok" in out
+    assert _COMMANDS_LINE in out
+
+
 def test_alert_docs_gate_commands_subcommand() -> None:
     res = subprocess.run(
         [sys.executable, "-m", "tbox_pipelines.alert_docs_gate_cli", "commands"],
