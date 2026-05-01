@@ -111,8 +111,11 @@ jobs:
         env:
           METRICS_JSON: ${{ needs.tbox-pipelines.outputs.alert_docs_gate_metrics_json }}
         run: |
+          echo "::group::alert-docs-gate-consumer"
+          alert-docs-gate version
           if [[ -z "${METRICS_JSON// }" ]]; then
             echo "empty alert_docs_gate_metrics_json job output" >&2
             exit 1
           fi
           printf '%s' "$METRICS_JSON" | alert-docs-gate metrics-validate
+          echo "::endgroup::"
